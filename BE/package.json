@@ -1,0 +1,19 @@
+{
+  "name": "moa-backend",
+  "version": "1.0.0",
+  "description": "모아 백엔드 API 서버",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "keywords": ["moa", "gathering", "backend"],
+  "author": "Moa Team",
+  "license": "MIT"
+}
