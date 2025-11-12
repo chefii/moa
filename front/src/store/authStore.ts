@@ -13,6 +13,7 @@ interface User {
   name: string;
   role: UserRole;
   avatar?: string;
+  token?: string;
 }
 
 interface AuthState {

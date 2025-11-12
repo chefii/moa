@@ -7,6 +7,11 @@ import dotenv from 'dotenv';
 import { PrismaClient } from '@prisma/client';
 import Redis from 'ioredis';
 
+// Import routes
+import authRoutes from './routes/auth';
+import trustRoutes from './routes/trust';
+import usersRoutes from './routes/users';
+
 // Load environment variables
 dotenv.config();
 
@@ -74,64 +79,30 @@ app.get('/api', (req: Request, res: Response) => {
     description: '관심사로 모이는 사람들',
     endpoints: {
       health: '/health',
-      api: {
-        auth: '/api/auth',
-        users: '/api/users',
-        gatherings: '/api/gatherings',
-        trust: '/api/trust',
+      auth: {
+        register: 'POST /api/auth/register',
+        login: 'POST /api/auth/login',
+        me: 'GET /api/auth/me',
+        refresh: 'POST /api/auth/refresh',
+        logout: 'POST /api/auth/logout',
       },
+      trust: {
+        level: 'GET /api/trust/level/:userId?',
+        badges: 'GET /api/trust/badges/:userId?',
+        allBadges: 'GET /api/trust/badges',
+        streak: 'GET /api/trust/streak/:userId?',
+        points: 'GET /api/trust/points/:userId?',
+        transactions: 'GET /api/trust/points/transactions',
+      },
+      users: 'GET /api/users',
     },
   });
 });
 
-// Example route - Users
-app.get('/api/users', async (req: Request, res: Response) => {
-  try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
-      take: 10,
-    });
-
-    res.json({
-      success: true,
-      data: users,
-      count: users.length,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch users',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Example route - Trust System
-app.get('/api/trust/badges', async (req: Request, res: Response) => {
-  try {
-    const badges = await prisma.badge.findMany({
-      orderBy: { category: 'asc' },
-    });
-
-    res.json({
-      success: true,
-      data: badges,
-      count: badges.length,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch badges',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+// Mount routes
+app.use('/api/auth', authRoutes);
+app.use('/api/trust', trustRoutes);
+app.use('/api/users', usersRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {
