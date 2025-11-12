@@ -10,9 +10,10 @@
 
 ### 핵심 차별점
 - 🤖 **AI 큐레이션**: 하루 3개의 추천 모임만 (선택 피로 최소화)
-- 🌡️ **신뢰도 우선**: 매너온도 기반 신뢰 시스템
+- 🌱 **독창적 신뢰도 시스템**: 매너온도 대신 성장 레벨 + 뱃지 + 스트릭 시스템 ⭐
 - 👥 **소규모 집중**: 4-8명 깊은 교류 중심
 - 💼 **비즈니스 통합**: 일반 모임 + 유료 클래스 통합
+- 🎨 **프리미엄 디자인**: 글래스모피즘 + 다층 그라데이션 + Framer Motion
 
 ---
 
@@ -20,16 +21,27 @@
 
 ```
 moa/
-├── BE/                  # Backend (Express + Prisma)
-├── FE/                  # Frontend (Next.js 14)
+├── back/                # Backend (Express + Prisma + TypeScript)
+│   ├── src/            # 소스 코드
+│   ├── prisma/         # Prisma 스키마
+│   └── package.json
+├── front/               # Frontend (Next.js 14 + TypeScript)
+│   ├── src/            # 소스 코드
+│   │   ├── app/        # App Router
+│   │   ├── components/ # 컴포넌트 (신뢰도 시스템 포함)
+│   │   ├── store/      # Zustand 상태 관리
+│   │   └── types/      # TypeScript 타입
+│   └── package.json
 ├── Document/            # 프로젝트 문서
 │   ├── PRD.md          # 제품 요구사항 정의서
 │   ├── RBAC.md         # 권한 시스템 설계
+│   ├── TRUST_SYSTEM.md # 신뢰도 시스템 ⭐
+│   ├── DESIGN_SYSTEM.md # 디자인 시스템 ⭐
 │   ├── DB_SCHEMA.md    # 데이터베이스 스키마
 │   ├── TECH_STACK.md   # 기술 스택
 │   ├── ROADMAP.md      # 개발 로드맵
 │   └── SPRINT_1_GUIDE.md  # Sprint 1 가이드
-├── docker-compose.yml   # Docker 설정 (PostgreSQL, Redis)
+├── docker-compose.yml   # Docker 설정 (PostgreSQL, Redis, pgAdmin)
 └── README.md
 ```
 
@@ -39,62 +51,74 @@ moa/
 
 ### Prerequisites
 - Node.js 20+
-- Docker & Docker Compose (권장)
-- pnpm (권장) 또는 npm
+- Docker & Docker Compose
+- npm
 
-### 1. 레포지토리 클론
+### 1. 데이터베이스 실행 (Docker Compose)
 ```bash
-git clone <repository-url>
-cd socialN
-```
-
-### 2. 데이터베이스 실행 (Docker)
-```bash
-# PostgreSQL & Redis 실행
+# 프로젝트 루트에서
 docker-compose up -d
-
-# 확인
-docker ps
 ```
 
-### 3. Backend 설정
+이 명령으로 다음 서비스들이 실행됩니다:
+- **PostgreSQL** (포트 5432)
+- **Redis** (포트 6379)
+- **pgAdmin** (포트 5050)
+
+### 2. Backend 설정 및 실행
 ```bash
-cd BE
+cd back
 
 # 패키지 설치
 npm install
 
 # 환경 변수 설정
 cp .env.example .env
-# .env 파일을 열어 DATABASE_URL 등 수정
 
-# Prisma 마이그레이션 (아직 실행하지 마세요 - 패키지 설치 후)
-# npm run prisma:migrate
+# Prisma Client 생성
+npm run prisma:generate
+
+# 데이터베이스 마이그레이션
+npm run prisma:migrate
 
 # 개발 서버 실행
 npm run dev
 ```
 
-Backend 서버: http://localhost:4000
+**Backend 서버**: http://localhost:4000
+- Health Check: http://localhost:4000/health
+- API 정보: http://localhost:4000/api
 
-### 4. Frontend 설정
+### 3. Frontend 설정 및 실행
 ```bash
-cd FE
+cd front
 
-# Next.js 프로젝트 초기화 (최초 1회)
-npx create-next-app@latest . --typescript --tailwind --app --src-dir --import-alias "@/*"
-
-# 패키지 설치 (초기화 시 자동으로 설치됨)
-# 추가 패키지는 FE/README.md 참조
+# 패키지 설치
+npm install
 
 # 환경 변수 설정
-# .env.local 파일 생성 및 설정
+cp .env.local.example .env.local
 
 # 개발 서버 실행
 npm run dev
 ```
 
-Frontend 서버: http://localhost:3000
+**Frontend 서버**: http://localhost:3000
+
+### 4. 로그인 및 테스트
+1. http://localhost:3000 접속
+2. "로그인" 클릭
+3. 역할 선택 (일반 사용자 / 비즈니스 관리자 / 플랫폼 관리자)
+4. 역할에 맞는 대시보드 확인
+
+### 5. pgAdmin으로 데이터베이스 확인 (선택)
+1. http://localhost:5050 접속
+2. 로그인: `admin@moa.com` / `admin123`
+3. 서버 추가:
+   - Host: `postgres`
+   - Port: `5432`
+   - Username: `moa`
+   - Password: `moa123`
 
 ---
 
@@ -178,19 +202,28 @@ Frontend 서버: http://localhost:3000
 ## 📊 개발 현황
 
 ### ✅ 완료
-- 프로젝트 구조 생성
-- 기획 문서 작성 (PRD, RBAC, DB Schema 등)
-- 기술 스택 선정
-- 개발 로드맵 수립
+- ✓ 프로젝트 구조 생성
+- ✓ 기획 문서 작성 (PRD, RBAC, DB Schema, Trust System, Design System)
+- ✓ 기술 스택 선정
+- ✓ 개발 로드맵 수립
+- ✓ Docker Compose 환경 구축 (PostgreSQL, Redis, pgAdmin)
+- ✓ Backend 초기 셋업 (Express + Prisma + TypeScript)
+- ✓ Frontend 초기 셋업 (Next.js 14 + TypeScript)
+- ✓ **신뢰도 시스템 완전 구현** (7단계 성장 레벨, 20+ 뱃지, 스트릭, 포인트 등)
+- ✓ **RBAC 시스템 구현** (3가지 역할 + 역할 기반 대시보드)
+- ✓ 프로필 페이지 (신뢰도 시스템 전체 시각화)
+- ✓ 관리자 대시보드 (플랫폼 관리)
+- ✓ 비즈니스 대시보드 (클래스/공간 관리)
 
 ### 🚧 진행 중
-- Backend 초기 셋업
-- Frontend 초기 셋업
+- 인증 시스템 (JWT + 소셜 로그인)
+- 모임 생성/조회 API
+- 실시간 채팅 기능
 
 ### 📅 다음 단계
-- Week 1: 프로젝트 초기화 완료
-- Week 2: 회원가입/로그인 구현
-- Week 3: 사용자 프로필 구현
+- Week 2: 회원가입/로그인 완전 구현
+- Week 3: 모임 CRUD + 참여 기능
+- Week 4: AI 기반 모임 추천 시스템
 
 ---
 
