@@ -1,0 +1,26 @@
+{
+  "name": "moa",
+  "version": "1.0.0",
+  "description": "> 관심사로 모이는 사람들을 위한 AI 기반 모임 플랫폼",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/chefii1/moa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://gitlab.com/chefii1/moa/issues"
+  },
+  "homepage": "https://gitlab.com/chefii1/moa#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "prisma": "^6.19.0",
+    "typescript": "^5.9.3"
+  }
+}
