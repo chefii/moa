@@ -9,11 +9,45 @@
     "start": "node dist/main.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
+    "prisma:seed": "ts-node prisma/seed.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
   "keywords": ["moa", "gathering", "backend"],
   "author": "Moa Team",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "express": "^4.21.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "bcrypt": "^5.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "joi": "^17.14.0",
+    "ioredis": "^5.5.1",
+    "winston": "^3.17.0",
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.5.0",
+    "compression": "^1.7.5",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "@types/cors": "^2.8.17",
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/compression": "^1.7.6",
+    "@types/morgan": "^1.9.9",
+    "prisma": "^5.22.0",
+    "typescript": "^5.7.2",
+    "ts-node": "^10.9.2",
+    "nodemon": "^3.1.9",
+    "eslint": "^8.57.1",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "prettier": "^3.4.2"
+  }
 }

@@ -1,40 +1,71 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: moa-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: moa
       POSTGRES_PASSWORD: moa123
       POSTGRES_DB: moa
-    ports:
-      - "5432:5432"
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    restart: unless-stopped
+    networks:
+      - moa-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U moa"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: moa-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    command: redis-server --appendonly yes
     volumes:
       - redis-data:/data
-    restart: unless-stopped
+    networks:
+      - moa-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
 
+  # pgAdmin (선택사항 - 데이터베이스 관리 UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: moa-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@moa.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - moa-network
+    depends_on:
+      - postgres
+
 volumes:
   postgres-data:
     driver: local
   redis-data:
     driver: local
+  pgadmin-data:
+    driver: local
+
+networks:
+  moa-network:
+    driver: bridge
