@@ -1,0 +1,414 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  SUPER_ADMIN
+  BUSINESS_ADMIN
+  USER
+}
+
+enum GatheringType {
+  FREE
+  PAID_CLASS
+  DEPOSIT
+}
+
+enum GatheringStatus {
+  RECRUITING
+  FULL
+  COMPLETED
+  CANCELLED
+}
+
+enum ParticipantStatus {
+  PENDING
+  CONFIRMED
+  ATTENDED
+  NO_SHOW
+  CANCELLED
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWING
+  RESOLVED
+  REJECTED
+}
+
+enum SettlementStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum BadgeCategory {
+  BASIC
+  HOST
+  SPECIAL
+  SEASONAL
+}
+
+enum PointType {
+  EARN
+  SPEND
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  password          String
+  name              String
+  profileImage      String?  @map("profile_image")
+  bio               String?
+  phone             String?
+  role              Role     @default(USER)
+  isVerified        Boolean  @default(false) @map("is_verified")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  businessProfile   BusinessProfile?
+  userLevel         UserLevel?
+  userStreak        UserStreak?
+  hostedGatherings  Gathering[]             @relation("HostedGatherings")
+  participations    GatheringParticipant[]
+  interests         UserInterest[]
+  bookmarks         Bookmark[]
+  sentReviews       Review[]                @relation("SentReviews")
+  receivedReviews   Review[]                @relation("ReceivedReviews")
+  chatMessages      ChatMessage[]
+  sentReports       Report[]                @relation("SentReports")
+  receivedReports   Report[]                @relation("ReceivedReports")
+  userBadges        UserBadge[]
+  pointTransactions UserPoint[]
+  momentCollections MomentCollection[]
+  interestForest    InterestForest[]
+
+  @@map("users")
+}
+
+model UserLevel {
+  id            String   @id @default(uuid())
+  userId        String   @unique @map("user_id")
+  level         Int      @default(1)
+  growthPoints  Int      @default(0) @map("growth_points")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_levels")
+}
+
+model BusinessProfile {
+  id                  String    @id @default(uuid())
+  userId              String    @unique @map("user_id")
+  businessName        String    @map("business_name")
+  businessNumber      String    @unique @map("business_number")
+  businessAddress     String    @map("business_address")
+  businessPhone       String    @map("business_phone")
+  businessDescription String?   @map("business_description")
+  businessImage       String?   @map("business_image")
+  bankName            String?   @map("bank_name")
+  bankAccount         String?   @map("bank_account")
+  accountHolder       String?   @map("account_holder")
+  isApproved          Boolean   @default(false) @map("is_approved")
+  approvedBy          String?   @map("approved_by")
+  approvedAt          DateTime? @map("approved_at")
+  rejectionReason     String?   @map("rejection_reason")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  settlements Settlement[]
+
+  @@map("business_profiles")
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  slug        String    @unique
+  icon        String?
+  description String?
+  order       Int       @default(0)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  gatherings     Gathering[]
+  interests      UserInterest[]
+  interestForest InterestForest[]
+
+  @@map("categories")
+}
+
+model UserInterest {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  categoryId String   @map("category_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
+  @@map("user_interests")
+}
+
+model Gathering {
+  id                  String          @id @default(uuid())
+  hostId              String          @map("host_id")
+  categoryId          String          @map("category_id")
+  title               String
+  description         String
+  gatheringType       GatheringType   @default(FREE) @map("gathering_type")
+  image               String?
+  locationAddress     String          @map("location_address")
+  locationDetail      String?         @map("location_detail")
+  latitude            Decimal?        @db.Decimal(10, 8)
+  longitude           Decimal?        @db.Decimal(11, 8)
+  scheduledAt         DateTime        @map("scheduled_at")
+  durationMinutes     Int             @default(120) @map("duration_minutes")
+  maxParticipants     Int             @map("max_participants")
+  currentParticipants Int             @default(0) @map("current_participants")
+  price               Int             @default(0)
+  depositAmount       Int             @default(0) @map("deposit_amount")
+  status              GatheringStatus @default(RECRUITING)
+  tags                String[]
+  createdAt           DateTime        @default(now()) @map("created_at")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  host         User                   @relation("HostedGatherings", fields: [hostId], references: [id], onDelete: Cascade)
+  category     Category               @relation(fields: [categoryId], references: [id])
+  participants GatheringParticipant[]
+  bookmarks    Bookmark[]
+  reviews      Review[]
+  chatRoom     ChatRoom?
+  reports      Report[]
+  settlements  Settlement[]
+
+  @@map("gatherings")
+}
+
+model GatheringParticipant {
+  id              String            @id @default(uuid())
+  gatheringId     String            @map("gathering_id")
+  userId          String            @map("user_id")
+  status          ParticipantStatus @default(PENDING)
+  depositPaid     Boolean           @default(false) @map("deposit_paid")
+  depositRefunded Boolean           @default(false) @map("deposit_refunded")
+  paymentId       String?           @map("payment_id")
+  joinedAt        DateTime          @default(now()) @map("joined_at")
+  attendedAt      DateTime?         @map("attended_at")
+  cancelledAt     DateTime?         @map("cancelled_at")
+
+  gathering Gathering @relation(fields: [gatheringId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gatheringId, userId])
+  @@map("gathering_participants")
+}
+
+model Review {
+  id          String    @id @default(uuid())
+  gatheringId String    @map("gathering_id")
+  reviewerId  String    @map("reviewer_id")
+  revieweeId  String    @map("reviewee_id")
+  rating      Int
+  comment     String?
+  reply       String?
+  repliedAt   DateTime? @map("replied_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  gathering Gathering @relation(fields: [gatheringId], references: [id], onDelete: Cascade)
+  reviewer  User      @relation("SentReviews", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee  User      @relation("ReceivedReviews", fields: [revieweeId], references: [id], onDelete: Cascade)
+
+  @@unique([gatheringId, reviewerId, revieweeId])
+  @@map("reviews")
+}
+
+model ChatRoom {
+  id          String   @id @default(uuid())
+  gatheringId String   @unique @map("gathering_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  gathering Gathering     @relation(fields: [gatheringId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  roomId    String   @map("room_id")
+  userId    String   @map("user_id")
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  room ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model Bookmark {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  gatheringId String   @map("gathering_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gathering Gathering @relation(fields: [gatheringId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gatheringId])
+  @@map("bookmarks")
+}
+
+model Report {
+  id          String       @id @default(uuid())
+  reporterId  String       @map("reporter_id")
+  reportedId  String       @map("reported_id")
+  gatheringId String?      @map("gathering_id")
+  reason      String
+  description String?
+  status      ReportStatus @default(PENDING)
+  adminNote   String?      @map("admin_note")
+  resolvedBy  String?      @map("resolved_by")
+  resolvedAt  DateTime?    @map("resolved_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  reporter  User       @relation("SentReports", fields: [reporterId], references: [id])
+  reported  User       @relation("ReceivedReports", fields: [reportedId], references: [id])
+  gathering Gathering? @relation(fields: [gatheringId], references: [id])
+
+  @@map("reports")
+}
+
+model Settlement {
+  id                String           @id @default(uuid())
+  businessProfileId String           @map("business_profile_id")
+  gatheringId       String           @map("gathering_id")
+  totalAmount       Int              @map("total_amount")
+  platformFee       Int              @map("platform_fee")
+  settlementAmount  Int              @map("settlement_amount")
+  status            SettlementStatus @default(PENDING)
+  settledAt         DateTime?        @map("settled_at")
+  createdAt         DateTime         @default(now()) @map("created_at")
+
+  businessProfile BusinessProfile @relation(fields: [businessProfileId], references: [id])
+  gathering       Gathering        @relation(fields: [gatheringId], references: [id])
+
+  @@map("settlements")
+}
+
+// ============================================
+// TRUST SYSTEM MODELS
+// ============================================
+
+model Badge {
+  id             String        @id @default(uuid())
+  code           String        @unique
+  name           String
+  description    String
+  icon           String
+  category       BadgeCategory
+  conditionType  String        @map("condition_type")
+  conditionValue Int           @map("condition_value")
+  isActive       Boolean       @default(true) @map("is_active")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  userBadges UserBadge[]
+
+  @@map("badges")
+}
+
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  badgeId  String   @map("badge_id")
+  earnedAt DateTime @default(now()) @map("earned_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+  @@map("user_badges")
+}
+
+model UserPoint {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  points      Int
+  balance     Int
+  type        PointType
+  source      String
+  description String?
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_points")
+}
+
+model UserStreak {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  currentStreak    Int      @default(0) @map("current_streak")
+  longestStreak    Int      @default(0) @map("longest_streak")
+  lastActivityDate DateTime @map("last_activity_date") @db.Date
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_streaks")
+}
+
+model MomentCollection {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  momentCode String   @map("moment_code")
+  momentName String   @map("moment_name")
+  momentIcon String   @map("moment_icon")
+  isRare     Boolean  @default(false) @map("is_rare")
+  earnedAt   DateTime @default(now()) @map("earned_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, momentCode])
+  @@map("moment_collections")
+}
+
+model InterestForest {
+  id                 String   @id @default(uuid())
+  userId             String   @map("user_id")
+  categoryId         String   @map("category_id")
+  participationCount Int      @default(0) @map("participation_count")
+  treeLevel          Int      @default(1) @map("tree_level")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId])
+  @@map("interest_forest")
+}
