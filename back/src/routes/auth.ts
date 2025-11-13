@@ -37,7 +37,7 @@ router.post('/register', async (req: Request, res: Response) => {
     if (nickname) {
       const existingNickname = await prisma.user.findUnique({
         where: { nickname },
-      });
+      });   
 
       if (existingNickname) {
         res.status(409).json({
