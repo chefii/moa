@@ -229,7 +229,7 @@ export default function MenuManagementPage() {
         </div>
         <button
           onClick={handleCreateCategory}
-          className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
+          className="px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           카테고리 추가
@@ -269,7 +269,7 @@ export default function MenuManagementPage() {
                       )}
                     </button>
 
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-moa-primary to-moa-accent rounded-xl flex items-center justify-center">
                       <FolderOpen className="w-6 h-6 text-white" />
                     </div>
 
@@ -415,7 +415,7 @@ export default function MenuManagementPage() {
                     onChange={(e) =>
                       setCategoryFormData({ ...categoryFormData, name: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="예: 회원 관리"
                   />
                 </div>
@@ -430,7 +430,7 @@ export default function MenuManagementPage() {
                     onChange={(e) =>
                       setCategoryFormData({ ...categoryFormData, nameEn: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="예: User Management"
                   />
                 </div>
@@ -445,7 +445,7 @@ export default function MenuManagementPage() {
                   onChange={(e) =>
                     setCategoryFormData({ ...categoryFormData, description: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   rows={3}
                   placeholder="카테고리 설명"
                 />
@@ -462,7 +462,7 @@ export default function MenuManagementPage() {
                     onChange={(e) =>
                       setCategoryFormData({ ...categoryFormData, icon: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="예: UserCircle2"
                   />
                 </div>
@@ -481,7 +481,7 @@ export default function MenuManagementPage() {
                         order: isNaN(value) ? 0 : value,
                       });
                     }}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
               </div>
@@ -509,31 +509,31 @@ export default function MenuManagementPage() {
                           });
                         }
                       }}
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                     />
                     <span className="text-sm text-gray-700">SUPER_ADMIN</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={categoryFormData.requiredRoles?.includes('BUSINESS_ADMIN') || false}
+                      checked={categoryFormData.requiredRoles?.includes('BUSINESS_USER') || false}
                       onChange={(e) => {
                         const roles = categoryFormData.requiredRoles || [];
                         if (e.target.checked) {
                           setCategoryFormData({
                             ...categoryFormData,
-                            requiredRoles: [...roles, 'BUSINESS_ADMIN'],
+                            requiredRoles: [...roles, 'BUSINESS_USER'],
                           });
                         } else {
                           setCategoryFormData({
                             ...categoryFormData,
-                            requiredRoles: roles.filter((r) => r !== 'BUSINESS_ADMIN'),
+                            requiredRoles: roles.filter((r) => r !== 'BUSINESS_USER'),
                           });
                         }
                       }}
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                     />
-                    <span className="text-sm text-gray-700">BUSINESS_ADMIN</span>
+                    <span className="text-sm text-gray-700">BUSINESS_USER</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input
@@ -553,7 +553,7 @@ export default function MenuManagementPage() {
                           });
                         }
                       }}
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                     />
                     <span className="text-sm text-gray-700">USER</span>
                   </label>
@@ -568,7 +568,7 @@ export default function MenuManagementPage() {
                     onChange={(e) =>
                       setCategoryFormData({ ...categoryFormData, isActive: e.target.checked })
                     }
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                   />
                   <span className="text-sm font-semibold text-gray-700">활성화</span>
                 </label>
@@ -584,7 +584,7 @@ export default function MenuManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
+                  className="flex-1 px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
                 >
                   {categoryModalMode === 'create' ? '추가' : '저장'}
                 </button>
@@ -621,7 +621,7 @@ export default function MenuManagementPage() {
                   onChange={(e) =>
                     setItemFormData({ ...itemFormData, categoryId: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                 >
                   <option value="">선택하세요</option>
                   {categories.map((cat) => (
@@ -644,7 +644,7 @@ export default function MenuManagementPage() {
                     onChange={(e) =>
                       setItemFormData({ ...itemFormData, name: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="예: 사용자 관리"
                   />
                 </div>
@@ -659,7 +659,7 @@ export default function MenuManagementPage() {
                     onChange={(e) =>
                       setItemFormData({ ...itemFormData, nameEn: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="예: Users"
                   />
                 </div>
@@ -676,7 +676,7 @@ export default function MenuManagementPage() {
                   onChange={(e) =>
                     setItemFormData({ ...itemFormData, path: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="예: /admin/users"
                 />
               </div>
@@ -690,7 +690,7 @@ export default function MenuManagementPage() {
                   onChange={(e) =>
                     setItemFormData({ ...itemFormData, description: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   rows={2}
                   placeholder="메뉴 설명"
                 />
@@ -707,7 +707,7 @@ export default function MenuManagementPage() {
                     onChange={(e) =>
                       setItemFormData({ ...itemFormData, icon: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="Users"
                   />
                 </div>
@@ -723,7 +723,7 @@ export default function MenuManagementPage() {
                       const value = e.target.value === '' ? 0 : parseInt(e.target.value);
                       setItemFormData({ ...itemFormData, order: isNaN(value) ? 0 : value });
                     }}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
 
@@ -741,7 +741,7 @@ export default function MenuManagementPage() {
                         badge: value === '' ? undefined : parseInt(value),
                       });
                     }}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="숫자"
                   />
                 </div>
@@ -770,31 +770,31 @@ export default function MenuManagementPage() {
                           });
                         }
                       }}
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                     />
                     <span className="text-sm text-gray-700">SUPER_ADMIN</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
-                      checked={itemFormData.requiredRoles.includes('BUSINESS_ADMIN')}
+                      checked={itemFormData.requiredRoles.includes('BUSINESS_USER')}
                       onChange={(e) => {
                         const roles = itemFormData.requiredRoles || [];
                         if (e.target.checked) {
                           setItemFormData({
                             ...itemFormData,
-                            requiredRoles: [...roles, 'BUSINESS_ADMIN'],
+                            requiredRoles: [...roles, 'BUSINESS_USER'],
                           });
                         } else {
                           setItemFormData({
                             ...itemFormData,
-                            requiredRoles: roles.filter((r) => r !== 'BUSINESS_ADMIN'),
+                            requiredRoles: roles.filter((r) => r !== 'BUSINESS_USER'),
                           });
                         }
                       }}
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                     />
-                    <span className="text-sm text-gray-700">BUSINESS_ADMIN</span>
+                    <span className="text-sm text-gray-700">BUSINESS_USER</span>
                   </label>
                   <label className="flex items-center gap-2">
                     <input
@@ -814,7 +814,7 @@ export default function MenuManagementPage() {
                           });
                         }
                       }}
-                      className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                     />
                     <span className="text-sm text-gray-700">USER</span>
                   </label>
@@ -829,7 +829,7 @@ export default function MenuManagementPage() {
                     onChange={(e) =>
                       setItemFormData({ ...itemFormData, isActive: e.target.checked })
                     }
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                   />
                   <span className="text-sm font-semibold text-gray-700">활성화</span>
                 </label>
@@ -845,7 +845,7 @@ export default function MenuManagementPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
+                  className="flex-1 px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
                 >
                   {itemModalMode === 'create' ? '추가' : '저장'}
                 </button>

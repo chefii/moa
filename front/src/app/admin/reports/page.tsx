@@ -119,7 +119,7 @@ export default function ReportsPage() {
               placeholder="신고 사유, 신고자, 대상자로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             />
           </div>
 
@@ -130,7 +130,7 @@ export default function ReportsPage() {
                 setSelectedType(e.target.value as ReportType | '');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체 타입</option>
               {REPORT_TYPES.map((type) => (
@@ -146,7 +146,7 @@ export default function ReportsPage() {
                 setSelectedStatus(e.target.value as ReportStatus | '');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체 상태</option>
               {REPORT_STATUSES.map((status) => (
@@ -209,7 +209,7 @@ export default function ReportsPage() {
                   return (
                     <tr key={report.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
-                        <span className="inline-block px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                        <span className="inline-block px-2.5 py-1 bg-moa-primary/10 text-moa-primary text-xs font-semibold rounded-full">
                           {typeInfo?.label}
                         </span>
                       </td>
@@ -409,7 +409,7 @@ export default function ReportsPage() {
                 <textarea
                   value={resolution}
                   onChange={(e) => setResolution(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   rows={4}
                   placeholder="처리 내용을 입력하세요..."
                 />

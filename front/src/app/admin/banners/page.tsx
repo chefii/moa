@@ -162,7 +162,7 @@ export default function BannersPage() {
               placeholder="배너 제목으로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             />
           </div>
 
@@ -173,7 +173,7 @@ export default function BannersPage() {
                 setSelectedType(e.target.value as BannerType | '');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체 타입</option>
               {BANNER_TYPES.map((type) => (
@@ -189,7 +189,7 @@ export default function BannersPage() {
                 setFilterActive(e.target.value === '' ? '' : e.target.value === 'true');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체 상태</option>
               <option value="true">활성</option>
@@ -198,7 +198,7 @@ export default function BannersPage() {
 
             <button
               onClick={handleCreate}
-              className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
+              className="px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
               배너 추가
@@ -276,7 +276,7 @@ export default function BannersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-block px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                      <span className="inline-block px-2.5 py-1 bg-moa-primary/10 text-moa-primary text-xs font-semibold rounded-full">
                         {BANNER_TYPES.find((t) => t.value === banner.type)?.label}
                       </span>
                     </td>
@@ -390,7 +390,7 @@ export default function BannersPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, type: e.target.value as BannerType })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                 >
                   {BANNER_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -411,7 +411,7 @@ export default function BannersPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="배너 제목"
                 />
               </div>
@@ -425,7 +425,7 @@ export default function BannersPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   rows={3}
                   placeholder="배너 설명"
                 />
@@ -442,7 +442,7 @@ export default function BannersPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, imageUrl: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="https://example.com/image.jpg"
                 />
               </div>
@@ -457,7 +457,7 @@ export default function BannersPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, linkUrl: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="클릭 시 이동할 URL (선택)"
                 />
               </div>
@@ -474,7 +474,7 @@ export default function BannersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, startDate: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
 
@@ -489,7 +489,7 @@ export default function BannersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, endDate: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
               </div>
@@ -504,7 +504,7 @@ export default function BannersPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, order: parseInt(e.target.value) })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="숫자가 낮을수록 먼저 표시"
                 />
               </div>
@@ -517,7 +517,7 @@ export default function BannersPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, isActive: e.target.checked })
                     }
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                   />
                   <span className="text-sm font-semibold text-gray-700">활성화</span>
                 </label>
@@ -533,7 +533,7 @@ export default function BannersPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
+                  className="flex-1 px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
                 >
                   {modalMode === 'create' ? '추가' : '저장'}
                 </button>

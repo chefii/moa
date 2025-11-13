@@ -8,7 +8,14 @@ export default function AdminLayoutWrapper({
   children: React.ReactNode;
 }) {
   return (
-    <RoleGuard allowedRoles={[UserRole.SUPER_ADMIN, UserRole.BUSINESS_ADMIN]}>
+    <RoleGuard allowedRoles={[
+      UserRole.SUPER_ADMIN,
+      UserRole.ADMIN,
+      UserRole.MODERATOR,
+      UserRole.CONTENT_MANAGER,
+      UserRole.SUPPORT_MANAGER,
+      UserRole.SETTLEMENT_MANAGER,
+    ]}>
       <AdminLayout>{children}</AdminLayout>
     </RoleGuard>
   );

@@ -138,7 +138,7 @@ export default function CategoriesPage() {
               placeholder="카테고리명으로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             />
           </div>
 
@@ -149,7 +149,7 @@ export default function CategoriesPage() {
                 setFilterActive(e.target.value === '' ? '' : e.target.value === 'true');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체 상태</option>
               <option value="true">활성</option>
@@ -158,7 +158,7 @@ export default function CategoriesPage() {
 
             <button
               onClick={handleCreate}
-              className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
+              className="px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
               카테고리 추가
@@ -185,7 +185,7 @@ export default function CategoriesPage() {
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3 flex-1">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-to-br from-moa-primary to-moa-accent rounded-xl flex items-center justify-center flex-shrink-0">
                     {category.icon ? (
                       <span className="text-2xl">{category.icon}</span>
                     ) : (
@@ -288,7 +288,7 @@ export default function CategoriesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="예: 운동"
                 />
               </div>
@@ -302,7 +302,7 @@ export default function CategoriesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   rows={3}
                   placeholder="카테고리 설명"
                 />
@@ -319,7 +319,7 @@ export default function CategoriesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, icon: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="예: ⚽"
                   />
                 </div>
@@ -334,7 +334,7 @@ export default function CategoriesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, order: parseInt(e.target.value) })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
               </div>
@@ -347,7 +347,7 @@ export default function CategoriesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, isActive: e.target.checked })
                     }
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                   />
                   <span className="text-sm font-semibold text-gray-700">활성화</span>
                 </label>
@@ -363,7 +363,7 @@ export default function CategoriesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
+                  className="flex-1 px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
                 >
                   {modalMode === 'create' ? '추가' : '저장'}
                 </button>

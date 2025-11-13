@@ -4,7 +4,14 @@
       "WebSearch",
       "WebFetch(domain:www.somoim.co.kr)",
       "Bash(mkdir:*)",
-      "Bash(npm run prisma:seed-menu:*)"
+      "Bash(npm run prisma:seed-menu:*)",
+      "Bash(find:*)",
+      "Bash(./app/signup/page.tsx ./app/business/page.tsx ./app/verify-email/page.tsx)",
+      "Bash({} +)",
+      "Bash(npm run prisma:generate:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(npm run prisma:seed-gender:*)"
     ],
     "deny": [],
     "ask": []

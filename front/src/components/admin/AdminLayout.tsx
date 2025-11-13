@@ -34,6 +34,7 @@ import { menuCategoriesApi, MenuCategory as DBMenuCategory } from '@/lib/api/adm
 import * as LucideIcons from 'lucide-react';
 import { useMenuStore } from '@/store/menuStore';
 import AdminFooter from './AdminFooter';
+import { notificationsApi } from '@/lib/api/notifications';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -70,6 +71,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['회원 관리', '콘텐츠 관리']);
   const [menuCategories, setMenuCategories] = useState<MenuCategoryType[]>([]);
   const [menuLoading, setMenuLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Check if user has required role
   const hasRequiredRole = (requiredRoles: string[]): boolean => {
@@ -112,6 +114,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     loadMenu();
   }, [user?.role, refreshTrigger]);
+
+  // Load unread notifications count
+  useEffect(() => {
+    const loadUnreadCount = async () => {
+      try {
+        const count = await notificationsApi.getUnreadCount();
+        setUnreadCount(count);
+      } catch (error) {
+        console.error('Failed to load unread count:', error);
+      }
+    };
+
+    loadUnreadCount();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(loadUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const toggleCategory = (categoryName: string) => {
     setExpandedCategories((prev) =>
@@ -160,7 +180,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="w-10 h-10 flex items-center justify-center">
               <img src="/moa-logo.svg" alt="MOA Logo" className="w-full h-full" />
             </div>
-            <span className="font-black text-xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <span className="font-black text-xl text-moa-primary">
               모아 Admin
             </span>
           </Link>
@@ -176,7 +196,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           {/* Notifications */}
           <button className="p-2 hover:bg-gray-100 rounded-lg relative transition-colors" title="알림">
             <Bell className="w-5 h-5 text-gray-600" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
           </button>
 
           {/* Divider */}
@@ -185,7 +209,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           {/* User Profile Dropdown */}
           <div className="relative group">
             <button className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-lg transition-colors">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-moa-primary to-moa-accent rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-sm">
                   {user?.name?.charAt(0) || 'A'}
                 </span>
@@ -202,7 +226,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <div className="p-4 border-b border-gray-100">
                 <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
                 <p className="text-xs text-gray-500">{user?.email}</p>
-                <span className="inline-block mt-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
+                <span className="inline-block mt-2 px-2 py-1 bg-moa-primary/10 text-moa-primary text-xs font-medium rounded">
                   {user?.role}
                 </span>
               </div>
@@ -273,7 +297,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all mb-4
               ${
                 pathname === '/admin'
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                  ? 'bg-moa-primary text-white shadow-lg'
                   : 'text-gray-700 hover:bg-gray-100'
               }
             `}
@@ -345,7 +369,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                                 flex items-center gap-3 px-3 py-2 rounded-lg transition-all relative
                                 ${
                                   active
-                                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                                    ? 'bg-moa-primary text-white shadow-lg'
                                     : 'text-gray-700 hover:bg-gray-100'
                                 }
                               `}

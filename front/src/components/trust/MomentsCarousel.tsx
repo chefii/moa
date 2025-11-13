@@ -14,7 +14,7 @@ export function MomentsCarousel({ moments }: MomentsCarouselProps) {
   const rareMoments = moments.filter((m) => m.isRare);
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200/50 shadow-2xl p-6">
+    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-moa-primary/10 to-moa-accent/10 border border-moa-primary/30/50 shadow-2xl p-6">
       {/* Decorative background */}
       <motion.div
         animate={{
@@ -26,7 +26,7 @@ export function MomentsCarousel({ moments }: MomentsCarouselProps) {
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        className="absolute top-0 left-0 w-48 h-48 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl"
+        className="absolute top-0 left-0 w-48 h-48 bg-gradient-to-br from-moa-primary/20 to-moa-accent/20 rounded-full blur-3xl"
       />
 
       <div className="relative z-10">
@@ -44,7 +44,7 @@ export function MomentsCarousel({ moments }: MomentsCarouselProps) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 mb-4 border border-purple-200/30"
+            className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 mb-4 border border-moa-primary/30/30"
           >
             <p className="text-xs font-medium text-gray-500 mb-2">최근 순간</p>
             <div className="flex items-center gap-3">
@@ -100,7 +100,7 @@ export function MomentsCarousel({ moments }: MomentsCarouselProps) {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+          className="w-full mt-4 bg-gradient-to-r from-moa-primary to-moa-accent text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
         >
           모든 순간 보기
         </motion.button>

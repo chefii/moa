@@ -50,14 +50,14 @@ export default function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-orange-50 to-blue-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Card */}
-        <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-purple-100 overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl border border-moa-primary/20 overflow-hidden">
           {/* Header */}
           <div className={`px-8 py-10 text-center ${
             status === 'loading'
-              ? 'bg-gradient-to-r from-purple-500 to-pink-500'
+              ? 'bg-gradient-to-r from-moa-primary to-moa-accent'
               : status === 'success'
               ? 'bg-gradient-to-r from-green-500 to-emerald-500'
               : 'bg-gradient-to-r from-red-500 to-orange-500'
@@ -111,7 +111,7 @@ export default function VerifyEmailPage() {
 
                 <Link
                   href="/login"
-                  className="block w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all text-center"
+                  className="block w-full py-3 bg-moa-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all text-center"
                 >
                   <span className="flex items-center justify-center gap-2">
                     로그인 페이지로 이동
@@ -144,7 +144,7 @@ export default function VerifyEmailPage() {
 
                 <Link
                   href="/login"
-                  className="block w-full py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all text-center"
+                  className="block w-full py-3 bg-moa-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all text-center"
                 >
                   로그인 페이지로 이동
                 </Link>
@@ -169,8 +169,8 @@ export default function VerifyEmailPage() {
             {status === 'loading' && (
               <div className="text-center py-8">
                 <div className="flex justify-center space-x-2 mb-4">
-                  <div className="w-3 h-3 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-3 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-3 h-3 bg-moa-primary/100 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-3 h-3 bg-moa-accent rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                   <div className="w-3 h-3 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                 </div>
                 <p className="text-sm text-gray-500">
@@ -193,7 +193,7 @@ export default function VerifyEmailPage() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               문제가 계속되나요?{' '}
-              <a href="mailto:support@moa.com" className="text-purple-600 font-semibold hover:underline">
+              <a href="mailto:support@moa.com" className="text-moa-primary font-semibold hover:underline">
                 고객센터 문의
               </a>
             </p>

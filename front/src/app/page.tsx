@@ -5,16 +5,16 @@ import { useAuthStore, UserRole } from '@/store/authStore';
 import { User, Building2, Shield, LogOut, LogIn } from 'lucide-react';
 
 export default function Home() {
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, logout, isAdmin, isBusinessUser } = useAuthStore();
 
   const handleLogout = () => {
     logout();
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-orange-50">
       <div className="text-center max-w-4xl w-full">
-        <h1 className="text-6xl font-black mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <h1 className="text-6xl font-black mb-4 bg-moa-primary bg-clip-text text-transparent">
           모아
         </h1>
         <p className="text-xl text-gray-600 mb-12">
@@ -24,24 +24,24 @@ export default function Home() {
         {isAuthenticated && user ? (
           <>
             {/* User Info */}
-            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-purple-100 mb-8">
+            <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-moa-primary/20 mb-8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                  <div className="w-16 h-16 bg-gradient-to-br from-moa-primary-light to-moa-accent-light rounded-full flex items-center justify-center text-white text-2xl font-bold">
                     {user.name[0]}
                   </div>
                   <div className="text-left">
                     <p className="text-xl font-bold text-gray-900">{user.name}</p>
                     <p className="text-sm text-gray-600">{user.email}</p>
                     <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                      user.role === UserRole.SUPER_ADMIN
+                      isAdmin()
                         ? 'bg-red-100 text-red-700'
-                        : user.role === UserRole.BUSINESS_ADMIN
-                        ? 'bg-purple-100 text-purple-700'
+                        : isBusinessUser()
+                        ? 'bg-moa-primary/10 text-moa-primary'
                         : 'bg-blue-100 text-blue-700'
                     }`}>
-                      {user.role === UserRole.SUPER_ADMIN ? '플랫폼 관리자' :
-                       user.role === UserRole.BUSINESS_ADMIN ? '비즈니스 관리자' : '일반 사용자'}
+                      {isAdmin() ? '관리자' :
+                       isBusinessUser() ? '비즈니스' : '일반 사용자'}
                     </span>
                   </div>
                 </div>
@@ -59,7 +59,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Profile Card */}
               <Link href="/profile" className="group">
-                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow-lg border border-purple-100 hover:shadow-2xl hover:scale-105 transition-all">
+                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow-lg border border-moa-primary/20 hover:shadow-2xl hover:scale-105 transition-all">
                   <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                     <User className="w-8 h-8 text-white" />
                   </div>
@@ -68,11 +68,11 @@ export default function Home() {
                 </div>
               </Link>
 
-              {/* Business Dashboard (only for BUSINESS_ADMIN and SUPER_ADMIN) */}
-              {(user.role === UserRole.BUSINESS_ADMIN || user.role === UserRole.SUPER_ADMIN) && (
+              {/* Business Dashboard (only for business users and admins) */}
+              {(isBusinessUser() || isAdmin()) && (
                 <Link href="/business" className="group">
-                  <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow-lg border border-purple-100 hover:shadow-2xl hover:scale-105 transition-all">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow-lg border border-moa-primary/20 hover:shadow-2xl hover:scale-105 transition-all">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-moa-primary to-moa-accent rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                       <Building2 className="w-8 h-8 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-2">비즈니스</h3>
@@ -84,7 +84,7 @@ export default function Home() {
               {/* Admin Dashboard (only for SUPER_ADMIN) */}
               {user.role === UserRole.SUPER_ADMIN && (
                 <Link href="/admin" className="group">
-                  <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow-lg border border-purple-100 hover:shadow-2xl hover:scale-105 transition-all">
+                  <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow-lg border border-moa-primary/20 hover:shadow-2xl hover:scale-105 transition-all">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                       <Shield className="w-8 h-8 text-white" />
                     </div>
@@ -99,8 +99,8 @@ export default function Home() {
           <>
             {/* Login Button */}
             <Link href="/login" className="group inline-block">
-              <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow-lg border border-purple-100 hover:shadow-2xl hover:scale-105 transition-all">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow-lg border border-moa-primary/20 hover:shadow-2xl hover:scale-105 transition-all">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-moa-primary to-moa-accent rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
                   <LogIn className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">로그인</h3>

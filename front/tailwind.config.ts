@@ -15,6 +15,18 @@ const config: Config = {
         'glass': '0 8px 32px rgba(0, 0, 0, 0.1)',
       },
       colors: {
+        moa: {
+          primary: {
+            DEFAULT: '#4F46E5',  // Indigo 600
+            dark: '#4338CA',     // Indigo 700
+            light: '#818CF8',    // Indigo 400
+          },
+          accent: {
+            DEFAULT: '#F97316',  // Orange 500
+            dark: '#EA580C',     // Orange 600
+            light: '#FB923C',    // Orange 400
+          },
+        },
         level: {
           1: '#8B7355',
           2: '#90EE90',

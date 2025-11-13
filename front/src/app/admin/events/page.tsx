@@ -155,7 +155,7 @@ export default function EventsPage() {
               placeholder="이벤트 제목으로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             />
           </div>
 
@@ -166,7 +166,7 @@ export default function EventsPage() {
                 setSelectedStatus(e.target.value as EventStatus | '');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체 상태</option>
               {EVENT_STATUSES.map((status) => (
@@ -178,7 +178,7 @@ export default function EventsPage() {
 
             <button
               onClick={handleCreate}
-              className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
+              className="px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
               이벤트 추가
@@ -337,7 +337,7 @@ export default function EventsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="이벤트 제목"
                 />
               </div>
@@ -352,7 +352,7 @@ export default function EventsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   rows={4}
                   placeholder="이벤트 설명"
                 />
@@ -368,7 +368,7 @@ export default function EventsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, imageUrl: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="https://example.com/image.jpg"
                 />
               </div>
@@ -383,7 +383,7 @@ export default function EventsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, linkUrl: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="상세 페이지 URL (선택)"
                 />
               </div>
@@ -400,7 +400,7 @@ export default function EventsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, startDate: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
 
@@ -415,7 +415,7 @@ export default function EventsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, endDate: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
               </div>
@@ -431,7 +431,7 @@ export default function EventsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, status: e.target.value as EventStatus })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   >
                     {EVENT_STATUSES.map((status) => (
                       <option key={status.value} value={status.value}>
@@ -454,7 +454,7 @@ export default function EventsPage() {
                         maxParticipants: e.target.value ? parseInt(e.target.value) : undefined,
                       })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="제한 없음"
                   />
                 </div>
@@ -470,7 +470,7 @@ export default function EventsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
+                  className="flex-1 px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
                 >
                   {modalMode === 'create' ? '추가' : '저장'}
                 </button>

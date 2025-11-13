@@ -33,7 +33,7 @@ export function StatsCard({
       label: '주최 모임',
       value: hostedCount,
       icon: '🎪',
-      color: 'from-purple-500 to-pink-600',
+      color: 'from-moa-primary to-moa-accent',
       suffix: '개',
     },
     {

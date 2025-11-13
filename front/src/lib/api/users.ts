@@ -6,7 +6,7 @@ export interface User {
   email: string;
   name: string;
   nickname?: string;
-  role: 'USER' | 'BUSINESS_ADMIN' | 'SUPER_ADMIN';
+  role: string; // Flexible role from CommonCode
   phone?: string;
   location?: string;
   isVerified: boolean;

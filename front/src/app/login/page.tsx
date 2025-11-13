@@ -45,16 +45,19 @@ export default function LoginPage() {
       });
 
       // Redirect based on role
-      switch (response.user.role) {
-        case 'SUPER_ADMIN':
-          router.push('/admin');
-          break;
-        case 'BUSINESS_ADMIN':
-          router.push('/business');
-          break;
-        default:
-          router.push('/profile');
-          break;
+      const userRole = response.user.role;
+
+      // Admin roles (level >= 100)
+      if (['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'CONTENT_MANAGER', 'SUPPORT_MANAGER', 'SETTLEMENT_MANAGER'].includes(userRole)) {
+        router.push('/admin');
+      }
+      // Business roles
+      else if (['BUSINESS_USER', 'BUSINESS_MANAGER', 'BUSINESS_PENDING'].includes(userRole)) {
+        router.push('/business');
+      }
+      // Regular users
+      else {
+        router.push('/profile');
       }
     } catch (err: any) {
       console.error('Login error:', err);
@@ -64,29 +67,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-orange-50 flex items-center justify-center p-4">
       <div className="max-w-lg w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-black mb-3 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-black mb-3 text-moa-primary">
             모아
           </h1>
           <p className="text-xl text-gray-600">로그인</p>
         </div>
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-purple-100 p-8 mb-6">
+        <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-moa-primary/20 p-8 mb-6">
           {/* Email */}
           <div className="mb-4">
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              이메일 <span className="text-xs text-gray-500">(관리자는 아이디만 입력)</span>
+              이메일 <span className="text-xs text-gray-500">{ /*(관리자는 아이디만 입력)*/}</span>
             </label>
             <input
               type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com 또는 asdf"
-              className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
+              placeholder="user@example.com"
+              className="w-full px-4 py-3 rounded-xl border-2 border-moa-primary/30 focus:border-moa-primary focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
               required
             />
           </div>
@@ -101,7 +104,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
+              className="w-full px-4 py-3 rounded-xl border-2 border-moa-primary/30 focus:border-moa-primary focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
               required
             />
           </div>
@@ -117,7 +120,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-4 bg-moa-primary hover:bg-moa-primary-dark text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -134,7 +137,7 @@ export default function LoginPage() {
         <div className="text-center">
           <p className="text-gray-600">
             계정이 없으신가요?{' '}
-            <Link href="/signup" className="text-purple-600 font-bold hover:text-pink-600 transition-colors">
+            <Link href="/signup" className="text-moa-primary font-bold hover:text-moa-accent transition-colors">
               회원가입하기
             </Link>
           </p>

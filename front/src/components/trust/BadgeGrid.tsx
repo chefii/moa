@@ -10,9 +10,9 @@ interface BadgeGridProps {
 
 const BADGE_CATEGORY_COLORS = {
   BASIC: 'from-blue-500 to-cyan-500',
-  HOST: 'from-purple-500 to-pink-500',
+  HOST: 'from-moa-primary to-moa-accent',
   SPECIAL: 'from-orange-500 to-amber-500',
-  SEASONAL: 'from-rose-500 to-pink-500',
+  SEASONAL: 'from-rose-500 to-moa-accent',
 };
 
 export function BadgeGrid({ badges, totalBadges = 20 }: BadgeGridProps) {

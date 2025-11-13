@@ -25,6 +25,14 @@ export const commonCodesApi = {
     return response.data.data!;
   },
 
+  // Alias for getCodesByGroup
+  getCommonCodes: async (groupCode: string): Promise<CommonCode[]> => {
+    const response = await apiClient.get<ApiResponse<CommonCode[]>>(
+      `/api/common-codes/group/${groupCode}`
+    );
+    return response.data.data!;
+  },
+
   // Get all regions (metro)
   getRegions: async (): Promise<Region[]> => {
     const response = await apiClient.get<ApiResponse<Region[]>>('/api/common-codes/regions');

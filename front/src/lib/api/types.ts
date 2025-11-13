@@ -1,4 +1,4 @@
-import { UserRole } from '@/store/authStore';
+import { UserRole, UserRoleType } from '@/store/authStore';
 
 // API Response wrapper
 export interface ApiResponse<T = any> {
@@ -20,9 +20,11 @@ export interface RegisterRequest {
   name: string;
   nickname?: string;
   phone?: string;
+  gender?: string;
+  age?: number;
   location?: string;
   interests?: string[];
-  role?: UserRole;
+  role?: UserRoleType;
 }
 
 export interface AuthResponse {
@@ -31,7 +33,7 @@ export interface AuthResponse {
     email: string;
     name: string;
     nickname?: string;
-    role: UserRole;
+    role: UserRoleType;
     avatar?: string;
     location?: string;
   };
@@ -44,7 +46,7 @@ export interface UserProfile {
   id: string;
   email: string;
   name: string;
-  role: UserRole;
+  role: UserRoleType;
   profileImage?: string;
   bio?: string;
   phone?: string;

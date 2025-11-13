@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
 import { categoriesApi, Category } from '@/lib/api/categories';
-import { commonCodesApi, Region } from '@/lib/api/common-codes';
+import { commonCodesApi, Region, CommonCode } from '@/lib/api/common-codes';
 import { useAuthStore, UserRole } from '@/store/authStore';
 import {
   ArrowRight,
@@ -17,19 +17,26 @@ import {
   MapPin,
   Heart,
   Sparkles,
+  Users,
+  Calendar,
+  Loader2,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
   const { login } = useAuthStore();
   const [step, setStep] = useState(1);
-  const totalSteps = 6;
+  const totalSteps = 8;
 
   // Form data
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
+  const [gender, setGender] = useState('');
+  const [age, setAge] = useState('');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [selectedCity, setSelectedCity] = useState('');
   const [selectedCityCode, setSelectedCityCode] = useState('');
@@ -39,22 +46,30 @@ export default function SignUpPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [districts, setDistricts] = useState<Region[]>([]);
+  const [genders, setGenders] = useState<CommonCode[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Load categories and regions on mount
+  // Nickname validation
+  const [nicknameChecking, setNicknameChecking] = useState(false);
+  const [nicknameAvailable, setNicknameAvailable] = useState<boolean | null>(null);
+  const [nicknameMessage, setNicknameMessage] = useState('');
+
+  // Load categories, regions, and genders on mount
   useEffect(() => {
     const loadData = async () => {
       try {
         setDataLoading(true);
-        const [categoriesData, regionsData] = await Promise.all([
+        const [categoriesData, regionsData, genderData] = await Promise.all([
           categoriesApi.getCategories(),
           commonCodesApi.getRegions(),
+          commonCodesApi.getCommonCodes('GENDER'),
         ]);
         setCategories(categoriesData);
         setRegions(regionsData);
+        setGenders(genderData);
       } catch (error) {
         console.error('Failed to load data:', error);
         setError('데이터를 불러오는데 실패했습니다.');
@@ -65,6 +80,33 @@ export default function SignUpPage() {
 
     loadData();
   }, []);
+
+  // Check nickname availability
+  useEffect(() => {
+    const checkNickname = async () => {
+      if (nickname.length < 2) {
+        setNicknameAvailable(null);
+        setNicknameMessage('');
+        return;
+      }
+
+      setNicknameChecking(true);
+      try {
+        const response = await authApi.checkNickname(nickname);
+        setNicknameAvailable(response.available);
+        setNicknameMessage(response.message);
+      } catch (error) {
+        console.error('Failed to check nickname:', error);
+        setNicknameAvailable(null);
+        setNicknameMessage('');
+      } finally {
+        setNicknameChecking(false);
+      }
+    };
+
+    const timeout = setTimeout(checkNickname, 500);
+    return () => clearTimeout(timeout);
+  }, [nickname]);
 
   // Load districts when city is selected
   useEffect(() => {
@@ -103,15 +145,23 @@ export default function SignUpPage() {
       setError('이름을 입력해주세요');
       return;
     }
-    if (step === 4 && nickname.trim().length < 2) {
-      setError('닉네임은 최소 2자 이상이어야 합니다');
+    if (step === 4 && (nickname.trim().length < 2 || !nicknameAvailable)) {
+      setError(nicknameAvailable === false ? '다른 닉네임을 사용해주세요' : '닉네임은 최소 2자 이상이어야 합니다');
       return;
     }
-    if (step === 5 && selectedInterests.length < 1) {
+    if (step === 5 && !gender) {
+      setError('성별을 선택해주세요');
+      return;
+    }
+    if (step === 6 && !age) {
+      setError('나이를 입력해주세요');
+      return;
+    }
+    if (step === 7 && selectedInterests.length < 1) {
       setError('최소 1개 이상의 관심사를 선택해주세요');
       return;
     }
-    if (step === 6 && (!selectedCity || !selectedDistrict)) {
+    if (step === 8 && (!selectedCity || !selectedDistrict)) {
       setError('지역을 선택해주세요');
       return;
     }
@@ -149,6 +199,8 @@ export default function SignUpPage() {
         name,
         role: UserRole.USER,
         nickname,
+        gender,
+        age: age ? parseInt(age) : undefined,
         location: `${selectedCity} ${selectedDistrict}`,
         interests: selectedInterests,
       });
@@ -167,11 +219,11 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-orange-50 flex flex-col">
       {/* Progress Bar */}
       <div className="fixed top-0 left-0 w-full h-1 bg-gray-200 z-50">
         <div
-          className="h-full bg-gradient-to-r from-purple-600 to-pink-600 transition-all duration-300 ease-out"
+          className="h-full bg-moa-primary transition-all duration-300 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -193,7 +245,7 @@ export default function SignUpPage() {
           {step === 1 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl mb-4 shadow-lg">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-moa-primary to-moa-accent rounded-3xl mb-4 shadow-lg">
                   <Mail className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-3xl font-black text-gray-900 mb-2">이메일을 입력해주세요</h1>
@@ -205,7 +257,7 @@ export default function SignUpPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleNext()}
                 placeholder="hello@example.com"
-                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
+                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-moa-primary/30 focus:border-moa-primary focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
                 autoFocus
               />
             </div>
@@ -215,7 +267,7 @@ export default function SignUpPage() {
           {step === 2 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl mb-4 shadow-lg">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-moa-primary to-moa-accent rounded-3xl mb-4 shadow-lg">
                   <Lock className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-3xl font-black text-gray-900 mb-2">비밀번호를 만들어주세요</h1>
@@ -227,7 +279,7 @@ export default function SignUpPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleNext()}
                 placeholder="최소 6자 이상"
-                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
+                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-moa-primary/30 focus:border-moa-primary focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
                 autoFocus
               />
             </div>
@@ -237,7 +289,7 @@ export default function SignUpPage() {
           {step === 3 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl mb-4 shadow-lg">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-moa-primary to-moa-accent rounded-3xl mb-4 shadow-lg">
                   <User className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-3xl font-black text-gray-900 mb-2">이름을 알려주세요</h1>
@@ -249,7 +301,7 @@ export default function SignUpPage() {
                 onChange={(e) => setName(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleNext()}
                 placeholder="홍길동"
-                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
+                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-moa-primary/30 focus:border-moa-primary focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
                 autoFocus
               />
             </div>
@@ -259,29 +311,123 @@ export default function SignUpPage() {
           {step === 4 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl mb-4 shadow-lg">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-moa-primary to-moa-accent rounded-3xl mb-4 shadow-lg">
                   <AtSign className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-3xl font-black text-gray-900 mb-2">닉네임을 만들어주세요</h1>
                 <p className="text-gray-600">모아에서 사용할 별명이에요</p>
               </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && nicknameAvailable && handleNext()}
+                  placeholder="귀여운펭귄"
+                  className={`w-full px-6 py-4 text-lg rounded-2xl border-2 focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400 ${
+                    nicknameAvailable === null
+                      ? 'border-moa-primary/30 focus:border-moa-primary'
+                      : nicknameAvailable
+                      ? 'border-green-500 focus:border-green-500'
+                      : 'border-red-500 focus:border-red-500'
+                  }`}
+                  autoFocus
+                />
+                {nickname.length >= 2 && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                    {nicknameChecking ? (
+                      <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+                    ) : nicknameAvailable ? (
+                      <CheckCircle2 className="w-6 h-6 text-green-500" />
+                    ) : (
+                      <XCircle className="w-6 h-6 text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {nicknameMessage && (
+                <div
+                  className={`mt-3 text-sm text-center ${
+                    nicknameAvailable ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
+                  {nicknameMessage}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 5: Gender */}
+          {step === 5 && (
+            <div className="animate-fadeIn">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-moa-primary to-moa-accent rounded-3xl mb-4 shadow-lg">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                <h1 className="text-3xl font-black text-gray-900 mb-2">성별을 선택해주세요</h1>
+                <p className="text-gray-600">선택 안함도 가능해요</p>
+              </div>
+              {dataLoading ? (
+                <div className="flex justify-center items-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-moa-primary"></div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {genders.map((genderOption) => {
+                    const isSelected = gender === genderOption.code;
+                    return (
+                      <button
+                        key={genderOption.code}
+                        onClick={() => setGender(genderOption.code)}
+                        className={`p-6 rounded-2xl border-2 transition-all ${
+                          isSelected
+                            ? 'border-moa-primary bg-gradient-to-br from-moa-primary/10 to-moa-accent/10 shadow-lg'
+                            : 'border-gray-200 bg-white hover:border-moa-primary/40'
+                        }`}
+                      >
+                        <div className="font-bold text-lg text-gray-900">{genderOption.name}</div>
+                        {isSelected && (
+                          <div className="mt-2">
+                            <Check className="w-5 h-5 text-moa-primary mx-auto" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 6: Age */}
+          {step === 6 && (
+            <div className="animate-fadeIn">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-moa-primary to-moa-accent rounded-3xl mb-4 shadow-lg">
+                  <Calendar className="w-8 h-8 text-white" />
+                </div>
+                <h1 className="text-3xl font-black text-gray-900 mb-2">나이를 알려주세요</h1>
+                <p className="text-gray-600">연령대별 모임을 추천해드릴게요</p>
+              </div>
               <input
-                type="text"
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
+                type="number"
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleNext()}
-                placeholder="귀여운펭귄"
-                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-purple-200 focus:border-purple-500 focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
+                placeholder="25"
+                min="14"
+                max="120"
+                className="w-full px-6 py-4 text-lg rounded-2xl border-2 border-moa-primary/30 focus:border-moa-primary focus:outline-none transition-colors bg-white text-gray-900 placeholder:text-gray-400"
                 autoFocus
               />
             </div>
           )}
 
-          {/* Step 5: Interests */}
-          {step === 5 && (
+          {/* Step 7: Interests */}
+          {step === 7 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl mb-4 shadow-lg">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-moa-primary to-moa-accent rounded-3xl mb-4 shadow-lg">
                   <Heart className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-3xl font-black text-gray-900 mb-2">관심사를 선택해주세요</h1>
@@ -289,7 +435,7 @@ export default function SignUpPage() {
               </div>
               {dataLoading ? (
                 <div className="flex justify-center items-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-moa-primary"></div>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto">
@@ -301,15 +447,15 @@ export default function SignUpPage() {
                         onClick={() => toggleInterest(category.id)}
                         className={`p-4 rounded-2xl border-2 transition-all ${
                           isSelected
-                            ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg scale-95'
-                            : 'border-gray-200 bg-white hover:border-purple-300'
+                            ? 'border-moa-primary bg-gradient-to-br from-moa-primary/10 to-moa-accent/10 shadow-lg scale-95'
+                            : 'border-gray-200 bg-white hover:border-moa-primary/40'
                         }`}
                       >
                         <div className="text-4xl mb-2">{category.icon}</div>
                         <div className="font-semibold text-sm text-gray-900">{category.name}</div>
                         {isSelected && (
                           <div className="mt-2">
-                            <Check className="w-5 h-5 text-purple-600 mx-auto" />
+                            <Check className="w-5 h-5 text-moa-primary mx-auto" />
                           </div>
                         )}
                       </button>
@@ -318,18 +464,18 @@ export default function SignUpPage() {
                 </div>
               )}
               {selectedInterests.length > 0 && (
-                <div className="mt-4 text-center text-sm text-purple-600 font-semibold">
+                <div className="mt-4 text-center text-sm text-moa-primary font-semibold">
                   {selectedInterests.length}개 선택됨
                 </div>
               )}
             </div>
           )}
 
-          {/* Step 6: Location */}
-          {step === 6 && (
+          {/* Step 8: Location */}
+          {step === 8 && (
             <div className="animate-fadeIn">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-3xl mb-4 shadow-lg">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-moa-primary to-moa-accent rounded-3xl mb-4 shadow-lg">
                   <MapPin className="w-8 h-8 text-white" />
                 </div>
                 <h1 className="text-3xl font-black text-gray-900 mb-2">어디에 계신가요?</h1>
@@ -338,7 +484,7 @@ export default function SignUpPage() {
 
               {dataLoading ? (
                 <div className="flex justify-center items-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-moa-primary"></div>
                 </div>
               ) : (
                 <>
@@ -352,7 +498,7 @@ export default function SignUpPage() {
                             setSelectedCity(region.name);
                             setSelectedCityCode(region.code);
                           }}
-                          className="p-4 rounded-2xl border-2 border-gray-200 bg-white hover:border-purple-500 hover:bg-purple-50 transition-all"
+                          className="p-4 rounded-2xl border-2 border-gray-200 bg-white hover:border-moa-primary hover:bg-moa-primary/10 transition-all"
                         >
                           <div className="font-bold text-gray-900">{region.name}</div>
                         </button>
@@ -368,14 +514,14 @@ export default function SignUpPage() {
                             setSelectedCityCode('');
                             setSelectedDistrict('');
                           }}
-                          className="text-sm text-purple-600 font-semibold"
+                          className="text-sm text-moa-primary font-semibold"
                         >
                           변경
                         </button>
                       </div>
                       {districts.length === 0 ? (
                         <div className="flex justify-center items-center py-10">
-                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-moa-primary"></div>
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto">
@@ -387,14 +533,14 @@ export default function SignUpPage() {
                                 onClick={() => setSelectedDistrict(district.name)}
                                 className={`p-4 rounded-2xl border-2 transition-all ${
                                   isSelected
-                                    ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg'
-                                    : 'border-gray-200 bg-white hover:border-purple-300'
+                                    ? 'border-moa-primary bg-gradient-to-br from-moa-primary/10 to-moa-accent/10 shadow-lg'
+                                    : 'border-gray-200 bg-white hover:border-moa-primary/40'
                                 }`}
                               >
                                 <div className="font-semibold text-gray-900">{district.name}</div>
                                 {isSelected && (
                                   <div className="mt-2">
-                                    <Check className="w-5 h-5 text-purple-600 mx-auto" />
+                                    <Check className="w-5 h-5 text-moa-primary mx-auto" />
                                   </div>
                                 )}
                               </button>
@@ -420,7 +566,7 @@ export default function SignUpPage() {
           <button
             onClick={handleNext}
             disabled={loading}
-            className="w-full mt-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full mt-8 py-4 bg-moa-primary text-white font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
@@ -448,9 +594,9 @@ export default function SignUpPage() {
                 key={index}
                 className={`h-2 rounded-full transition-all ${
                   index + 1 === step
-                    ? 'w-8 bg-gradient-to-r from-purple-600 to-pink-600'
+                    ? 'w-8 bg-moa-primary'
                     : index + 1 < step
-                    ? 'w-2 bg-purple-400'
+                    ? 'w-2 bg-moa-primary-light'
                     : 'w-2 bg-gray-300'
                 }`}
               />

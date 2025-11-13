@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search,
   Filter,
@@ -18,20 +19,16 @@ import {
   Star,
   Shield,
   Loader2,
-  Check,
-  AlertTriangle,
 } from 'lucide-react';
 import { usersApi, User, UserDetail } from '@/lib/api/users';
 import { usersVerificationApi } from '@/lib/api/admin/users-verification';
-
-// Toast 알림 타입
-interface Toast {
-  id: number;
-  type: 'success' | 'error';
-  message: string;
-}
+import { useToast } from '@/contexts/ToastContext';
+import { useConfirm } from '@/contexts/ConfirmContext';
 
 export default function UsersManagementPage() {
+  const { showSuccess, showError } = useToast();
+  const { confirm } = useConfirm();
+  const [mounted, setMounted] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,7 +42,10 @@ export default function UsersManagementPage() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [loadingUserDetail, setLoadingUserDetail] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     fetchUsers(currentPage);
@@ -62,17 +62,6 @@ export default function UsersManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Toast 알림 표시 함수
-  const showToast = (type: 'success' | 'error', message: string) => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, type, message }]);
-
-    // 3초 후 자동 제거
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((toast) => toast.id !== id));
-    }, 3000);
   };
 
   const handleViewUserDetail = async (userId: string) => {
@@ -94,6 +83,15 @@ export default function UsersManagementPage() {
     setSelectedUser(null);
   };
 
+  // 사용자 목록에서 특정 사용자 업데이트
+  const updateUserInList = (userId: string, updates: Partial<User>) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user.id === userId ? { ...user, ...updates } : user
+      )
+    );
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -102,7 +100,7 @@ export default function UsersManagementPage() {
           <h1 className="text-3xl font-black text-gray-900 mb-2">사용자 관리</h1>
           <p className="text-gray-600">총 {pagination.total}명의 사용자</p>
         </div>
-        <button className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2">
+        <button className="px-4 py-2 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2">
           <Download className="w-4 h-4" />
           내보내기
         </button>
@@ -118,7 +116,7 @@ export default function UsersManagementPage() {
               placeholder="이름, 이메일로 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
             />
           </div>
           <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
@@ -132,7 +130,7 @@ export default function UsersManagementPage() {
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-moa-primary" />
             <span className="ml-3 text-gray-600">사용자 목록을 불러오는 중...</span>
           </div>
         ) : users.length === 0 ? (
@@ -161,7 +159,7 @@ export default function UsersManagementPage() {
                     <tr key={userData.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                          <div className="w-10 h-10 bg-gradient-to-br from-moa-primary to-moa-accent rounded-full flex items-center justify-center">
                             <span className="text-white font-bold text-sm">
                               {userData.name.charAt(0)}
                             </span>
@@ -179,8 +177,8 @@ export default function UsersManagementPage() {
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                           userData.role === 'SUPER_ADMIN'
                             ? 'bg-red-100 text-red-700'
-                            : userData.role === 'BUSINESS_ADMIN'
-                            ? 'bg-purple-100 text-purple-700'
+                            : userData.role === 'BUSINESS_USER'
+                            ? 'bg-moa-primary/10 text-moa-primary'
                             : 'bg-blue-100 text-blue-700'
                         }`}>
                           {userData.role}
@@ -212,7 +210,7 @@ export default function UsersManagementPage() {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handleViewUserDetail(userData.id)}
-                          className="text-purple-600 hover:text-purple-700 text-sm font-semibold transition-colors"
+                          className="text-moa-primary hover:text-moa-primary-dark text-sm font-semibold transition-colors"
                         >
                           상세보기
                         </button>
@@ -251,12 +249,12 @@ export default function UsersManagementPage() {
         )}
       </div>
 
-      {/* User Detail Modal */}
-      {showUserModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      {/* User Detail Modal - Rendered via Portal */}
+      {mounted && showUserModal && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 1000 }}>
           <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-t-3xl flex items-center justify-between">
+            <div className="sticky top-0 bg-moa-primary text-white p-6 rounded-t-3xl flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <UserIcon className="w-6 h-6" />
                 <h2 className="text-2xl font-black">사용자 상세 정보</h2>
@@ -272,15 +270,15 @@ export default function UsersManagementPage() {
             {/* Modal Content */}
             {loadingUserDetail ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-moa-primary" />
                 <span className="ml-3 text-gray-600">사용자 정보를 불러오는 중...</span>
               </div>
             ) : selectedUser ? (
               <div className="p-6 space-y-6">
                 {/* Basic Info */}
-                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
+                <div className="bg-gradient-to-br from-moa-primary/10 to-moa-accent/10 rounded-2xl p-6 border border-moa-primary/20">
                   <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <Shield className="w-5 h-5 text-purple-600" />
+                    <Shield className="w-5 h-5 text-moa-primary" />
                     기본 정보
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -297,8 +295,8 @@ export default function UsersManagementPage() {
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
                         selectedUser.role === 'SUPER_ADMIN'
                           ? 'bg-red-100 text-red-700'
-                          : selectedUser.role === 'BUSINESS_ADMIN'
-                          ? 'bg-purple-100 text-purple-700'
+                          : selectedUser.role === 'BUSINESS_USER'
+                          ? 'bg-moa-primary/10 text-moa-primary'
                           : 'bg-blue-100 text-blue-700'
                       }`}>
                         {selectedUser.role}
@@ -355,12 +353,12 @@ export default function UsersManagementPage() {
                             onClick={async () => {
                               try {
                                 await usersVerificationApi.resendVerificationEmail(selectedUser.id);
-                                showToast('success', '인증 이메일을 재발송했습니다.');
+                                showSuccess('인증 이메일을 재발송했습니다.');
                               } catch (error) {
-                                showToast('error', '인증 이메일 재발송에 실패했습니다.');
+                                showError('인증 이메일 재발송에 실패했습니다.');
                               }
                             }}
-                            className="text-xs text-purple-600 hover:underline"
+                            className="text-xs text-moa-primary hover:underline"
                           >
                             재발송
                           </button>
@@ -418,7 +416,7 @@ export default function UsersManagementPage() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 mb-1">성장 포인트</p>
-                          <p className="text-xl font-bold text-purple-600">
+                          <p className="text-xl font-bold text-moa-primary">
                             {selectedUser.userLevel.growthPoints.toLocaleString()}
                           </p>
                         </div>
@@ -459,7 +457,7 @@ export default function UsersManagementPage() {
                 {selectedUser.interests && selectedUser.interests.length > 0 && (
                   <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
                     <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <Star className="w-5 h-5 text-purple-600" />
+                      <Star className="w-5 h-5 text-moa-primary" />
                       관심사
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -467,7 +465,7 @@ export default function UsersManagementPage() {
                         <div
                           key={index}
                           className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-gradient-to-r ${
-                            interest.category.color || 'from-purple-500 to-pink-500'
+                            interest.category.color || 'from-moa-primary to-moa-accent'
                           } text-white`}
                         >
                           {interest.category.icon && (
@@ -486,15 +484,27 @@ export default function UsersManagementPage() {
                     {!selectedUser.isVerified && (
                       <button
                         onClick={async () => {
-                          if (confirm('이메일 인증을 승인하시겠습니까?')) {
+                          const confirmed = await confirm({
+                            message: '이메일 인증을 승인하시겠습니까?',
+                            type: 'info'
+                          });
+                          if (confirmed) {
                             try {
                               await usersVerificationApi.updateVerificationStatus(selectedUser.id, {
                                 isVerified: true,
                               });
-                              showToast('success', '이메일 인증이 승인되었습니다.');
+                              showSuccess('이메일 인증이 승인되었습니다.');
+
+                              // 사용자 목록 업데이트
+                              updateUserInList(selectedUser.id, {
+                                isVerified: true,
+                                emailVerifiedAt: new Date().toISOString(),
+                              });
+
+                              // 상세 정보 새로고침
                               handleViewUserDetail(selectedUser.id);
                             } catch (error) {
-                              showToast('error', '인증 승인에 실패했습니다.');
+                              showError('인증 승인에 실패했습니다.');
                             }
                           }
                         }}
@@ -506,15 +516,27 @@ export default function UsersManagementPage() {
                     {!selectedUser.isPhoneVerified && (
                       <button
                         onClick={async () => {
-                          if (confirm('전화번호 인증을 승인하시겠습니까?')) {
+                          const confirmed = await confirm({
+                            message: '전화번호 인증을 승인하시겠습니까?',
+                            type: 'info'
+                          });
+                          if (confirmed) {
                             try {
                               await usersVerificationApi.updateVerificationStatus(selectedUser.id, {
                                 isPhoneVerified: true,
                               });
-                              showToast('success', '전화번호 인증이 승인되었습니다.');
+                              showSuccess('전화번호 인증이 승인되었습니다.');
+
+                              // 사용자 목록 업데이트
+                              updateUserInList(selectedUser.id, {
+                                isPhoneVerified: true,
+                                phoneVerifiedAt: new Date().toISOString(),
+                              });
+
+                              // 상세 정보 새로고침
                               handleViewUserDetail(selectedUser.id);
                             } catch (error) {
-                              showToast('error', '인증 승인에 실패했습니다.');
+                              showError('인증 승인에 실패했습니다.');
                             }
                           }
                         }}
@@ -538,60 +560,9 @@ export default function UsersManagementPage() {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-
-      {/* Toast Notifications */}
-      <div className="fixed top-4 right-4 z-[60] space-y-2">
-        {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={`flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-lg animate-in slide-in-from-right duration-300 ${
-              toast.type === 'success'
-                ? 'bg-green-50/95 border-green-200 text-green-800'
-                : 'bg-red-50/95 border-red-200 text-red-800'
-            }`}
-            style={{
-              animation: 'slideInRight 0.3s ease-out',
-            }}
-          >
-            {toast.type === 'success' ? (
-              <div className="flex-shrink-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <Check className="w-5 h-5 text-white" />
-              </div>
-            ) : (
-              <div className="flex-shrink-0 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-white" />
-              </div>
-            )}
-            <p className="font-semibold text-sm">{toast.message}</p>
-            <button
-              onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
-              className={`ml-4 p-1 rounded-full transition-colors ${
-                toast.type === 'success'
-                  ? 'hover:bg-green-200'
-                  : 'hover:bg-red-200'
-              }`}
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Keyframes for animation */}
-      <style jsx>{`
-        @keyframes slideInRight {
-          from {
-            transform: translateX(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateX(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 }

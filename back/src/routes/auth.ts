@@ -9,7 +9,7 @@ const router = Router();
 // Register
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { email, password, name, phone, role, nickname, location, interests } = req.body;
+    const { email, password, name, phone, role, nickname, location, interests, gender, age } = req.body;
 
     // Validation
     if (!email || !password || !name) {
@@ -60,6 +60,8 @@ router.post('/register', async (req: Request, res: Response) => {
         nickname,
         phone,
         location,
+        gender,
+        age: age ? parseInt(age) : null,
         role: role || 'USER',
       },
       select: {
@@ -70,6 +72,8 @@ router.post('/register', async (req: Request, res: Response) => {
         role: true,
         profileImage: true,
         location: true,
+        gender: true,
+        age: true,
       },
     });
 
@@ -322,6 +326,45 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
     success: true,
     message: 'Logged out successfully',
   });
+});
+
+// Check nickname availability
+router.post('/check-nickname', async (req: Request, res: Response) => {
+  try {
+    const { nickname } = req.body;
+
+    if (!nickname) {
+      res.status(400).json({
+        success: false,
+        message: '닉네임을 입력해주세요.',
+      });
+      return;
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { nickname },
+    });
+
+    if (existingUser) {
+      res.json({
+        success: false,
+        available: false,
+        message: '이미 사용중인 닉네임입니다.',
+      });
+    } else {
+      res.json({
+        success: true,
+        available: true,
+        message: '사용 가능한 닉네임입니다.',
+      });
+    }
+  } catch (error) {
+    console.error('Nickname check error:', error);
+    res.status(500).json({
+      success: false,
+      message: '닉네임 확인 중 오류가 발생했습니다.',
+    });
+  }
 });
 
 export default router;

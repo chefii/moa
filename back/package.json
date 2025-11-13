@@ -16,6 +16,8 @@
     "prisma:seed-settings": "ts-node prisma/seed-settings.ts",
     "prisma:seed-common-codes": "ts-node prisma/seed-common-codes.ts",
     "prisma:seed-categories": "ts-node prisma/seed-categories.ts",
+    "prisma:seed-roles": "ts-node prisma/seed-roles.ts",
+    "prisma:seed-gender": "ts-node prisma/seed-gender.ts",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },

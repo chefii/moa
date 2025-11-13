@@ -68,29 +68,34 @@ export default function BusinessDashboard() {
   ];
 
   return (
-    <RoleGuard allowedRoles={[UserRole.BUSINESS_ADMIN, UserRole.SUPER_ADMIN]}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
+    <RoleGuard allowedRoles={[
+      UserRole.BUSINESS_USER,
+      UserRole.BUSINESS_MANAGER,
+      UserRole.SUPER_ADMIN,
+      UserRole.ADMIN,
+    ]}>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-orange-50">
         {/* Header */}
-        <div className="bg-white/80 backdrop-blur-lg border-b border-purple-100 shadow-sm sticky top-0 z-10">
+        <div className="bg-white/80 backdrop-blur-lg border-b border-moa-primary/20 shadow-sm sticky top-0 z-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Building2 className="w-8 h-8 text-purple-600" />
+                <Building2 className="w-8 h-8 text-moa-primary" />
                 <div>
-                  <h1 className="text-2xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-black bg-moa-primary bg-clip-text text-transparent">
                     비즈니스 대시보드
                   </h1>
                   <p className="text-sm text-gray-600">내 클래스 & 공간 관리</p>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                <button className="flex items-center gap-2 px-6 py-3 bg-moa-primary text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-shadow">
                   <Plus className="w-5 h-5" />
                   새 모임 만들기
                 </button>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-purple-600">{user?.role}</p>
+                  <p className="text-xs text-moa-primary">{user?.role}</p>
                 </div>
               </div>
             </div>
@@ -104,7 +109,7 @@ export default function BusinessDashboard() {
               onClick={() => setActiveTab('overview')}
               className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all ${
                 activeTab === 'overview'
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                  ? 'bg-moa-primary text-white shadow-lg'
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -114,7 +119,7 @@ export default function BusinessDashboard() {
               onClick={() => setActiveTab('gatherings')}
               className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all ${
                 activeTab === 'gatherings'
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                  ? 'bg-moa-primary text-white shadow-lg'
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -124,7 +129,7 @@ export default function BusinessDashboard() {
               onClick={() => setActiveTab('reviews')}
               className={`flex-1 px-6 py-3 rounded-xl font-semibold transition-all ${
                 activeTab === 'reviews'
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                  ? 'bg-moa-primary text-white shadow-lg'
                   : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -136,61 +141,61 @@ export default function BusinessDashboard() {
             <div className="space-y-6">
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-purple-100">
+                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-moa-primary/20">
                   <Calendar className="w-8 h-8 text-blue-500 mb-4" />
                   <p className="text-sm text-gray-600 mb-1">총 모임</p>
                   <p className="text-3xl font-black text-gray-900">{stats.totalGatherings}</p>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-purple-100">
-                  <Users className="w-8 h-8 text-purple-500 mb-4" />
+                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-moa-primary/20">
+                  <Users className="w-8 h-8 text-moa-primary mb-4" />
                   <p className="text-sm text-gray-600 mb-1">총 참여자</p>
                   <p className="text-3xl font-black text-gray-900">{stats.totalParticipants}</p>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-purple-100">
+                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-moa-primary/20">
                   <DollarSign className="w-8 h-8 text-green-500 mb-4" />
                   <p className="text-sm text-gray-600 mb-1">월 수익</p>
                   <p className="text-2xl font-black text-gray-900">₩{(stats.monthlyRevenue / 10000).toLocaleString()}만</p>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-purple-100">
+                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-moa-primary/20">
                   <Star className="w-8 h-8 text-yellow-500 mb-4" />
                   <p className="text-sm text-gray-600 mb-1">평균 평점</p>
                   <p className="text-3xl font-black text-gray-900">{stats.avgRating}</p>
                 </div>
 
-                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-purple-100">
-                  <Clock className="w-8 h-8 text-pink-500 mb-4" />
+                <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-moa-primary/20">
+                  <Clock className="w-8 h-8 text-moa-accent mb-4" />
                   <p className="text-sm text-gray-600 mb-1">예정 모임</p>
                   <p className="text-3xl font-black text-gray-900">{stats.upcomingGatherings}</p>
                 </div>
               </div>
 
               {/* Performance Chart */}
-              <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-purple-100">
+              <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-moa-primary/20">
                 <div className="flex items-center gap-3 mb-6">
-                  <TrendingUp className="w-6 h-6 text-purple-600" />
+                  <TrendingUp className="w-6 h-6 text-moa-primary" />
                   <h3 className="text-xl font-bold text-gray-900">이번 달 성과</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <p className="text-sm text-gray-600 mb-2">신규 예약</p>
-                    <p className="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-1">
+                    <p className="text-4xl font-black bg-moa-primary bg-clip-text text-transparent mb-1">
                       +45
                     </p>
                     <p className="text-sm text-green-600 font-semibold">▲ 전월 대비 +28%</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-2">재방문율</p>
-                    <p className="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-1">
+                    <p className="text-4xl font-black bg-moa-primary bg-clip-text text-transparent mb-1">
                       68%
                     </p>
                     <p className="text-sm text-green-600 font-semibold">▲ 전월 대비 +5%</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600 mb-2">리뷰 점수</p>
-                    <p className="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-1">
+                    <p className="text-4xl font-black bg-moa-primary bg-clip-text text-transparent mb-1">
                       4.8
                     </p>
                     <p className="text-sm text-blue-600 font-semibold">← 지난달 동일</p>
@@ -205,7 +210,7 @@ export default function BusinessDashboard() {
               {myGatherings.map((gathering) => (
                 <div
                   key={gathering.id}
-                  className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-purple-100 hover:shadow-xl transition-shadow"
+                  className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-moa-primary/20 hover:shadow-xl transition-shadow"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -241,11 +246,11 @@ export default function BusinessDashboard() {
                       </div>
                     </div>
                     <div className="flex flex-col gap-2">
-                      <button className="px-6 py-2 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition-colors">
+                      <button className="px-6 py-2 bg-moa-primary text-white font-semibold rounded-xl hover:bg-moa-primary-dark transition-colors">
                         관리
                       </button>
                       {gathering.status === 'upcoming' && (
-                        <button className="px-6 py-2 bg-white border-2 border-purple-600 text-purple-600 font-semibold rounded-xl hover:bg-purple-50 transition-colors">
+                        <button className="px-6 py-2 bg-white border-2 border-moa-primary text-moa-primary font-semibold rounded-xl hover:bg-moa-primary/10 transition-colors">
                           수정
                         </button>
                       )}
@@ -261,7 +266,7 @@ export default function BusinessDashboard() {
                     </div>
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-purple-600 to-pink-600 rounded-full transition-all"
+                        className="h-full bg-moa-primary rounded-full transition-all"
                         style={{ width: `${(gathering.participants / gathering.maxParticipants) * 100}%` }}
                       />
                     </div>
@@ -276,11 +281,11 @@ export default function BusinessDashboard() {
               {recentReviews.map((review) => (
                 <div
                   key={review.id}
-                  className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-purple-100"
+                  className="bg-white/80 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-moa-primary/20"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white font-bold">
+                      <div className="w-12 h-12 bg-gradient-to-br from-moa-primary-light to-moa-accent-light rounded-full flex items-center justify-center text-white font-bold">
                         {review.userName[0]}
                       </div>
                       <div>

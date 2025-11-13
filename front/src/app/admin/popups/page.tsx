@@ -165,7 +165,7 @@ export default function PopupsPage() {
               placeholder="팝업 제목으로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             />
           </div>
 
@@ -176,7 +176,7 @@ export default function PopupsPage() {
                 setSelectedType(e.target.value as PopupType | '');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체 타입</option>
               {POPUP_TYPES.map((type) => (
@@ -192,7 +192,7 @@ export default function PopupsPage() {
                 setFilterActive(e.target.value === '' ? '' : e.target.value === 'true');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체 상태</option>
               <option value="true">활성</option>
@@ -201,7 +201,7 @@ export default function PopupsPage() {
 
             <button
               onClick={handleCreate}
-              className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
+              className="px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
               팝업 추가
@@ -257,7 +257,7 @@ export default function PopupsPage() {
                   <tr key={popup.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-10 h-10 bg-gradient-to-br from-moa-primary to-moa-accent rounded-lg flex items-center justify-center flex-shrink-0">
                           <MessageSquare className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -269,7 +269,7 @@ export default function PopupsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-block px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                      <span className="inline-block px-2.5 py-1 bg-moa-primary/10 text-moa-primary text-xs font-semibold rounded-full">
                         {POPUP_TYPES.find((t) => t.value === popup.type)?.label}
                       </span>
                     </td>
@@ -386,7 +386,7 @@ export default function PopupsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, type: e.target.value as PopupType })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                 >
                   {POPUP_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -407,7 +407,7 @@ export default function PopupsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="팝업 제목"
                 />
               </div>
@@ -422,7 +422,7 @@ export default function PopupsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, content: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   rows={4}
                   placeholder="팝업 내용"
                 />
@@ -438,7 +438,7 @@ export default function PopupsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, imageUrl: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="https://example.com/image.jpg (선택)"
                 />
               </div>
@@ -454,7 +454,7 @@ export default function PopupsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, linkUrl: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="선택"
                   />
                 </div>
@@ -469,7 +469,7 @@ export default function PopupsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, buttonText: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="확인"
                   />
                 </div>
@@ -487,7 +487,7 @@ export default function PopupsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, startDate: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
 
@@ -502,7 +502,7 @@ export default function PopupsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, endDate: e.target.value })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
               </div>
@@ -517,7 +517,7 @@ export default function PopupsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, priority: parseInt(e.target.value) })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="숫자가 높을수록 우선 표시"
                 />
               </div>
@@ -530,7 +530,7 @@ export default function PopupsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, showOnce: e.target.checked })
                     }
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                   />
                   <span className="text-sm font-semibold text-gray-700">
                     1회만 표시 (사용자당 한 번만 보여주기)
@@ -544,7 +544,7 @@ export default function PopupsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, isActive: e.target.checked })
                     }
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                   />
                   <span className="text-sm font-semibold text-gray-700">활성화</span>
                 </label>
@@ -560,7 +560,7 @@ export default function PopupsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
+                  className="flex-1 px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
                 >
                   {modalMode === 'create' ? '추가' : '저장'}
                 </button>

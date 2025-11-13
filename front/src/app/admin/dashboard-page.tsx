@@ -29,7 +29,9 @@ export default function AdminDashboard() {
       const userStats = await usersApi.getUserStats();
       setStats({
         totalUsers: userStats.totalUsers,
-        businessAccounts: userStats.roleStats.BUSINESS_ADMIN || 0,
+        businessAccounts: (userStats.roleStats.BUSINESS_USER || 0) +
+                         (userStats.roleStats.BUSINESS_MANAGER || 0) +
+                         (userStats.roleStats.BUSINESS_PENDING || 0),
         activeGatherings: 0,
         pendingReports: 5,
       });
@@ -55,7 +57,7 @@ export default function AdminDashboard() {
       change: '+8%',
       trend: 'up',
       icon: Calendar,
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-moa-primary to-moa-accent',
     },
     {
       title: '비즈니스 계정',
@@ -121,7 +123,7 @@ export default function AdminDashboard() {
         <div className="bg-white rounded-2xl p-6 border border-gray-200">
           <h2 className="text-lg font-bold text-gray-900 mb-4">빠른 액션</h2>
           <div className="space-y-2">
-            <button className="w-full px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow">
+            <button className="w-full px-4 py-3 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow">
               새 배너 등록
             </button>
             <button className="w-full px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors">

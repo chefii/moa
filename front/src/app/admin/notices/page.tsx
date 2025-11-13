@@ -23,7 +23,7 @@ const NOTICE_TYPES: { value: NoticeType; label: string; color: string }[] = [
   { value: 'GENERAL', label: '일반', color: 'bg-gray-100 text-gray-700' },
   { value: 'IMPORTANT', label: '중요', color: 'bg-red-100 text-red-700' },
   { value: 'MAINTENANCE', label: '점검', color: 'bg-orange-100 text-orange-700' },
-  { value: 'EVENT', label: '이벤트', color: 'bg-purple-100 text-purple-700' },
+  { value: 'EVENT', label: '이벤트', color: 'bg-moa-primary/10 text-moa-primary' },
 ];
 
 export default function NoticesPage() {
@@ -153,7 +153,7 @@ export default function NoticesPage() {
               placeholder="공지사항 제목으로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             />
           </div>
 
@@ -164,7 +164,7 @@ export default function NoticesPage() {
                 setSelectedType(e.target.value as NoticeType | '');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체 타입</option>
               {NOTICE_TYPES.map((type) => (
@@ -180,7 +180,7 @@ export default function NoticesPage() {
                 setFilterPinned(e.target.value === '' ? '' : e.target.value === 'true');
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
             >
               <option value="">전체</option>
               <option value="true">고정됨</option>
@@ -189,7 +189,7 @@ export default function NoticesPage() {
 
             <button
               onClick={handleCreate}
-              className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
+              className="px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
             >
               <Plus className="w-5 h-5" />
               공지사항 추가
@@ -218,7 +218,7 @@ export default function NoticesPage() {
               >
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-to-br from-moa-primary to-moa-accent rounded-xl flex items-center justify-center flex-shrink-0">
                     <Bell className="w-6 h-6 text-white" />
                   </div>
 
@@ -334,7 +334,7 @@ export default function NoticesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, type: e.target.value as NoticeType })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                 >
                   {NOTICE_TYPES.map((type) => (
                     <option key={type.value} value={type.value}>
@@ -355,7 +355,7 @@ export default function NoticesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="공지사항 제목"
                 />
               </div>
@@ -370,7 +370,7 @@ export default function NoticesPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, content: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   rows={10}
                   placeholder="공지사항 내용"
                 />
@@ -384,7 +384,7 @@ export default function NoticesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, isPinned: e.target.checked })
                     }
-                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                   />
                   <span className="text-sm font-semibold text-gray-700">
                     상단 고정 (중요 공지사항)
@@ -402,7 +402,7 @@ export default function NoticesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
+                  className="flex-1 px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
                 >
                   {modalMode === 'create' ? '추가' : '저장'}
                 </button>

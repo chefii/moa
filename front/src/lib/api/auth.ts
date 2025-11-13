@@ -32,4 +32,10 @@ export const authApi = {
     });
     return response.data.data!;
   },
+
+  // Check nickname availability
+  checkNickname: async (nickname: string): Promise<{ success: boolean; available: boolean; message: string }> => {
+    const response = await apiClient.post('/api/auth/check-nickname', { nickname });
+    return response.data;
+  },
 };

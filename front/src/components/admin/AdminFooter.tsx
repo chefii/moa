@@ -123,7 +123,7 @@ export default function AdminFooter() {
                 <>
                   {companyInfo.contact_email && (
                     <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-purple-400" />
+                      <Mail className="w-4 h-4 text-moa-primary-light" />
                       <a
                         href={`mailto:${companyInfo.contact_email}`}
                         className="hover:text-white transition-colors"
@@ -134,7 +134,7 @@ export default function AdminFooter() {
                   )}
                   {companyInfo.contact_phone && (
                     <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-purple-400" />
+                      <Phone className="w-4 h-4 text-moa-primary-light" />
                       <a
                         href={`tel:${companyInfo.contact_phone}`}
                         className="hover:text-white transition-colors"
@@ -145,7 +145,7 @@ export default function AdminFooter() {
                   )}
                   {companyInfo.contact_working_hours && (
                     <div className="flex items-start gap-2">
-                      <Clock className="w-4 h-4 text-purple-400 mt-0.5" />
+                      <Clock className="w-4 h-4 text-moa-primary-light mt-0.5" />
                       <p className="text-gray-400">{companyInfo.contact_working_hours}</p>
                     </div>
                   )}
@@ -190,7 +190,7 @@ export default function AdminFooter() {
                   href={companyInfo.social_facebook}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
+                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-moa-primary transition-colors"
                   aria-label="Facebook"
                 >
                   <Facebook className="w-5 h-5" />
@@ -201,7 +201,7 @@ export default function AdminFooter() {
                   href={companyInfo.social_instagram}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
+                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-moa-primary transition-colors"
                   aria-label="Instagram"
                 >
                   <Instagram className="w-5 h-5" />
@@ -212,7 +212,7 @@ export default function AdminFooter() {
                   href={companyInfo.social_twitter}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
+                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-moa-primary transition-colors"
                   aria-label="Twitter"
                 >
                   <Twitter className="w-5 h-5" />
@@ -223,7 +223,7 @@ export default function AdminFooter() {
                   href={companyInfo.social_youtube}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors"
+                  className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-moa-primary transition-colors"
                   aria-label="Youtube"
                 >
                   <Youtube className="w-5 h-5" />

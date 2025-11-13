@@ -14,11 +14,12 @@ datasource db {
 // ENUMS
 // ============================================
 
-enum Role {
-  SUPER_ADMIN
-  BUSINESS_ADMIN
-  USER
-}
+// Role moved to CommonCode for flexible management
+// enum Role {
+//   SUPER_ADMIN
+//   BUSINESS_ADMIN
+//   USER
+// }
 
 enum GatheringType {
   FREE
@@ -108,7 +109,9 @@ model User {
   bio               String?
   phone             String?
   location          String?
-  role              Role      @default(USER)
+  gender            String?   // 성별 (CommonCode에서 관리)
+  age               Int?      // 나이
+  role              String    @default("USER")
   isVerified        Boolean   @default(false) @map("is_verified")
   isPhoneVerified   Boolean   @default(false) @map("is_phone_verified")
   emailVerifiedAt   DateTime? @map("email_verified_at")
@@ -117,22 +120,24 @@ model User {
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  businessProfile   BusinessProfile?
-  userLevel         UserLevel?
-  userStreak        UserStreak?
-  hostedGatherings  Gathering[]             @relation("HostedGatherings")
-  participations    GatheringParticipant[]
-  interests         UserInterest[]
-  bookmarks         Bookmark[]
-  sentReviews       Review[]                @relation("SentReviews")
-  receivedReviews   Review[]                @relation("ReceivedReviews")
-  chatMessages      ChatMessage[]
-  sentReports       Report[]                @relation("SentReports")
-  receivedReports   Report[]                @relation("ReceivedReports")
-  userBadges        UserBadge[]
-  pointTransactions UserPoint[]
-  momentCollections MomentCollection[]
-  interestForest    InterestForest[]
+  businessProfile    BusinessProfile?
+  userLevel          UserLevel?
+  userStreak         UserStreak?
+  hostedGatherings   Gathering[]             @relation("HostedGatherings")
+  participations     GatheringParticipant[]
+  interests          UserInterest[]
+  bookmarks          Bookmark[]
+  sentReviews        Review[]                @relation("SentReviews")
+  receivedReviews    Review[]                @relation("ReceivedReviews")
+  chatMessages       ChatMessage[]
+  sentReports        Report[]                @relation("SentReports")
+  receivedReports    Report[]                @relation("ReceivedReports")
+  userBadges         UserBadge[]
+  pointTransactions  UserPoint[]
+  momentCollections  MomentCollection[]
+  interestForest     InterestForest[]
+  notifications      Notification[]          @relation("UserNotifications")
+  notificationReads  NotificationRead[]
 
   @@map("users")
 }
@@ -652,4 +657,37 @@ model FooterLink {
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("footer_links")
+}
+
+// ============================================
+// NOTIFICATION SYSTEM MODELS
+// ============================================
+
+model Notification {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id") // null이면 전체 알림
+  type        String   // SYSTEM, GATHERING, REPORT, etc.
+  title       String
+  content     String   @db.Text
+  link        String?  // 클릭시 이동할 링크
+  priority    Int      @default(0) // 0: 일반, 1: 중요, 2: 긴급
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user  User?              @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  reads NotificationRead[]
+
+  @@map("notifications")
+}
+
+model NotificationRead {
+  id             String       @id @default(uuid())
+  notificationId String       @map("notification_id")
+  userId         String       @map("user_id")
+  readAt         DateTime     @default(now()) @map("read_at")
+
+  notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, userId])
+  @@map("notification_reads")
 }

@@ -245,12 +245,12 @@ export default function CommonCodesPage() {
               placeholder="그룹명 또는 코드명으로 검색..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
             />
           </div>
           <button
             onClick={() => handleCreate()}
-            className="px-5 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg hover:shadow-lg transition-shadow flex items-center gap-2 whitespace-nowrap"
+            className="px-5 py-2 bg-moa-primary text-white font-semibold rounded-lg hover:shadow-lg transition-shadow flex items-center gap-2 whitespace-nowrap"
           >
             <Plus className="w-5 h-5" />
             코드 추가
@@ -263,7 +263,7 @@ export default function CommonCodesPage() {
         <div className="h-full bg-white rounded-xl border border-gray-200 flex overflow-hidden">
           {loading ? (
             <div className="flex-1 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-moa-primary"></div>
             </div>
           ) : (
             <>
@@ -271,7 +271,7 @@ export default function CommonCodesPage() {
               <div className="w-80 border-r border-gray-200 flex flex-col">
                 <div className="p-4 border-b border-gray-200 bg-gray-50">
                   <h2 className="font-bold text-gray-900 flex items-center gap-2">
-                    <Folder className="w-5 h-5 text-purple-600" />
+                    <Folder className="w-5 h-5 text-moa-primary" />
                     코드 그룹
                   </h2>
                 </div>
@@ -315,19 +315,19 @@ export default function CommonCodesPage() {
                                   onClick={() => setSelectedGroup(groupCode)}
                                   className={`pl-11 pr-4 py-2.5 cursor-pointer flex items-center gap-2 transition-colors ${
                                     isSelected
-                                      ? 'bg-purple-50 border-l-4 border-purple-600'
+                                      ? 'bg-moa-primary/10 border-l-4 border-moa-primary'
                                       : 'hover:bg-gray-100 border-l-4 border-transparent'
                                   }`}
                                 >
                                   <FileCode
                                     className={`w-4 h-4 ${
-                                      isSelected ? 'text-purple-600' : 'text-gray-400'
+                                      isSelected ? 'text-moa-primary' : 'text-gray-400'
                                     }`}
                                   />
                                   <div className="flex-1 min-w-0">
                                     <div
                                       className={`text-sm font-semibold truncate ${
-                                        isSelected ? 'text-purple-900' : 'text-gray-700'
+                                        isSelected ? 'text-moa-primary-dark' : 'text-gray-700'
                                       }`}
                                     >
                                       {getGroupDisplayName(groupCode)}
@@ -352,10 +352,10 @@ export default function CommonCodesPage() {
                 {selectedGroup ? (
                   <>
                     {/* Detail Header */}
-                    <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+                    <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-moa-primary/10 to-moa-accent/10">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="text-sm text-purple-600 font-semibold mb-1">
+                          <div className="text-sm text-moa-primary font-semibold mb-1">
                             {selectedGroup.split('_')[0]}
                           </div>
                           <h2 className="text-2xl font-black text-gray-900">
@@ -367,7 +367,7 @@ export default function CommonCodesPage() {
                         </div>
                         <button
                           onClick={() => handleCreate(selectedGroup)}
-                          className="px-4 py-2 bg-white border-2 border-purple-600 text-purple-600 font-semibold rounded-lg hover:bg-purple-600 hover:text-white transition-colors flex items-center gap-2"
+                          className="px-4 py-2 bg-white border-2 border-moa-primary text-moa-primary font-semibold rounded-lg hover:bg-moa-primary hover:text-white transition-colors flex items-center gap-2"
                         >
                           <Plus className="w-4 h-4" />
                           코드 추가
@@ -383,7 +383,7 @@ export default function CommonCodesPage() {
                           <p className="text-gray-500 mb-4">등록된 코드가 없습니다</p>
                           <button
                             onClick={() => handleCreate(selectedGroup)}
-                            className="px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700"
+                            className="px-4 py-2 bg-moa-primary text-white font-semibold rounded-lg hover:bg-moa-primary-dark"
                           >
                             첫 번째 코드 추가
                           </button>
@@ -404,7 +404,7 @@ export default function CommonCodesPage() {
 
                               {/* Code */}
                               <div className="w-48 flex-shrink-0">
-                                <span className="font-mono text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-lg inline-block max-w-full truncate">
+                                <span className="font-mono text-xs font-bold text-moa-primary bg-moa-primary/10 px-3 py-1.5 rounded-lg inline-block max-w-full truncate">
                                   {code.code}
                                 </span>
                               </div>
@@ -509,7 +509,7 @@ export default function CommonCodesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, groupCode: e.target.value.toUpperCase() })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="예: REGION_SEOUL"
                   />
                   <p className="text-xs text-gray-500 mt-1">
@@ -528,7 +528,7 @@ export default function CommonCodesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, code: e.target.value.toUpperCase() })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="예: GANGNAM"
                   />
                 </div>
@@ -543,7 +543,7 @@ export default function CommonCodesPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   placeholder="예: 강남구"
                 />
               </div>
@@ -553,7 +553,7 @@ export default function CommonCodesPage() {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   rows={3}
                   placeholder="코드에 대한 상세 설명"
                 />
@@ -566,7 +566,7 @@ export default function CommonCodesPage() {
                     type="text"
                     value={formData.value}
                     onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                     placeholder="추가 값"
                   />
                 </div>
@@ -580,7 +580,7 @@ export default function CommonCodesPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, order: parseInt(e.target.value) || 0 })
                     }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
                   />
                 </div>
               </div>
@@ -591,7 +591,7 @@ export default function CommonCodesPage() {
                     type="checkbox"
                     checked={formData.isActive}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                    className="w-5 h-5 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
                   />
                   <div>
                     <span className="text-sm font-semibold text-gray-900">활성화</span>
@@ -612,7 +612,7 @@ export default function CommonCodesPage() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
+                  className="flex-1 px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow"
                 >
                   {modalMode === 'create' ? '추가' : '저장'}
                 </button>
