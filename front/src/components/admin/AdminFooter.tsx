@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Mail, Phone, Clock, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
 import { settingsApi, FooterLink as APIFooterLink } from '@/lib/api/settings';
+import { commonCodesApi } from '@/lib/api/common-codes';
 
 interface CompanyInfo {
   company_name: string;
@@ -37,16 +38,21 @@ export default function AdminFooter() {
       const links = await settingsApi.getFooterLinks('terms', false);
       setFooterLinks(links);
 
-      // Load company info
-      const companySettings = await settingsApi.getSettingsByCategory('company');
-      const contactSettings = await settingsApi.getSettingsByCategory('contact');
-      const socialSettings = await settingsApi.getSettingsByCategory('social');
+      // Load company info from common codes
+      const companyCodes = await commonCodesApi.getCodesByGroup('COMPANY_INFO');
 
-      setCompanyInfo({
-        ...companySettings,
-        ...contactSettings,
-        ...socialSettings,
+      // Transform common codes to CompanyInfo format
+      const companyData: Partial<CompanyInfo> = {};
+      companyCodes.forEach((code) => {
+        // Extract the actual key from the code (e.g., COMPANY_INFO_COMPANY_NAME -> company_name)
+        const keyMatch = code.code.match(/COMPANY_INFO_(.+)/);
+        if (keyMatch) {
+          const key = keyMatch[1].toLowerCase();
+          companyData[key as keyof CompanyInfo] = code.value || '';
+        }
       });
+
+      setCompanyInfo(companyData);
     } catch (error) {
       console.error('Failed to load footer data:', error);
 

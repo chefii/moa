@@ -753,6 +753,41 @@ async function main() {
   }
   console.log('✅ Terms types seeded');
 
+  // ============================================
+  // 15. COMPANY INFO (회사 정보)
+  // ============================================
+
+  const companyInfoData = [
+    { code: 'COMPANY_NAME', name: '회사명', value: '(주)모아', description: '회사 정식 명칭', order: 1 },
+    { code: 'COMPANY_CEO', name: '대표자명', value: '홍길동', description: '회사 대표이사 이름', order: 2 },
+    { code: 'COMPANY_BUSINESS_NUMBER', name: '사업자등록번호', value: '123-45-67890', description: '사업자등록번호', order: 3 },
+    { code: 'COMPANY_ECOMMERCE_NUMBER', name: '통신판매업신고번호', value: '2024-서울강남-12345', description: '통신판매업 신고번호', order: 4 },
+    { code: 'COMPANY_ADDRESS', name: '주소', value: '서울특별시 강남구 테헤란로 123 모아빌딩 5층', description: '회사 주소', order: 5 },
+    { code: 'CONTACT_EMAIL', name: '고객센터 이메일', value: 'support@moa.co.kr', description: '고객 문의 이메일', order: 6 },
+    { code: 'CONTACT_PHONE', name: '고객센터 전화번호', value: '02-1234-5678', description: '고객센터 대표 전화번호', order: 7 },
+    { code: 'CONTACT_WORKING_HOURS', name: '운영시간', value: '평일 10:00 - 18:00 (주말 및 공휴일 휴무)', description: '고객센터 운영 시간', order: 8 },
+    { code: 'SOCIAL_FACEBOOK', name: 'Facebook', value: 'https://facebook.com/moa', description: '페이스북 페이지 URL', order: 9 },
+    { code: 'SOCIAL_INSTAGRAM', name: 'Instagram', value: 'https://instagram.com/moa.official', description: '인스타그램 계정 URL', order: 10 },
+    { code: 'SOCIAL_TWITTER', name: 'Twitter', value: 'https://twitter.com/moa_official', description: '트위터 계정 URL', order: 11 },
+    { code: 'SOCIAL_YOUTUBE', name: 'Youtube', value: 'https://youtube.com/@moa', description: '유튜브 채널 URL', order: 12 },
+  ];
+
+  for (const info of companyInfoData) {
+    await prisma.commonCode.upsert({
+      where: { code: `COMPANY_INFO_${info.code}` },
+      update: {},
+      create: {
+        groupCode: 'COMPANY_INFO',
+        code: `COMPANY_INFO_${info.code}`,
+        name: info.name,
+        value: info.value,
+        description: info.description,
+        order: info.order,
+      },
+    });
+  }
+  console.log('✅ Company info seeded');
+
   console.log('✅ All common codes seeded successfully!');
 }
 

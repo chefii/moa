@@ -10,6 +10,8 @@ import {
   Check,
   X,
   Star,
+  Eye,
+  ExternalLink,
 } from 'lucide-react';
 import {
   popupsApi,
@@ -41,6 +43,8 @@ export default function PopupsPage() {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedPopup, setSelectedPopup] = useState<Popup | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewPopup, setPreviewPopup] = useState<Popup | null>(null);
   const [formData, setFormData] = useState<CreatePopupDto>({
     type: 'MODAL',
     title: '',
@@ -112,6 +116,11 @@ export default function PopupsPage() {
       isActive: popup.isActive,
     });
     setShowModal(true);
+  };
+
+  const handlePreview = (popup: Popup) => {
+    setPreviewPopup(popup);
+    setShowPreview(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -314,14 +323,23 @@ export default function PopupsPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <button
+                          onClick={() => handlePreview(popup)}
+                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                          title="미리보기"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
                           onClick={() => handleEdit(popup)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="수정"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(popup.id)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="삭제"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -566,6 +584,135 @@ export default function PopupsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal - Hybrid App Style */}
+      {showPreview && previewPopup && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          {/* Phone Frame */}
+          <div className="relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowPreview(false)}
+              className="absolute -top-12 right-0 px-4 py-2 bg-white text-gray-700 font-semibold rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              닫기
+            </button>
+
+            {/* Mobile Phone Frame */}
+            <div className="w-[375px] h-[667px] bg-gray-900 rounded-[3rem] p-3 shadow-2xl border-8 border-gray-900">
+              <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden relative">
+                {/* Status Bar */}
+                <div className="absolute top-0 left-0 right-0 h-10 bg-gradient-to-b from-black/5 to-transparent z-10 flex items-center justify-between px-6">
+                  <div className="text-xs font-semibold text-gray-700">9:41</div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-4 h-3 border border-gray-700 rounded-sm"></div>
+                    <div className="w-3 h-3 border-t-2 border-r-2 border-gray-700 rounded-tr"></div>
+                  </div>
+                </div>
+
+                {/* App Content - Simulated */}
+                <div className="h-full bg-gradient-to-br from-pink-50 via-white to-purple-50 pt-10">
+                  {/* Dummy App Header */}
+                  <div className="px-6 py-4 bg-white border-b border-gray-100">
+                    <h1 className="text-2xl font-black text-gray-900">모아</h1>
+                    <p className="text-sm text-gray-600">관심사로 모이는 사람들</p>
+                  </div>
+
+                  {/* Popup Overlay */}
+                  {previewPopup.type === 'MODAL' && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-6 pt-10">
+                      <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl transform transition-all overflow-hidden">
+                        {previewPopup.imageUrl && (
+                          <img
+                            src={previewPopup.imageUrl}
+                            alt={previewPopup.title}
+                            className="w-full h-48 object-cover"
+                          />
+                        )}
+                        <div className="p-6 space-y-4">
+                          <h3 className="text-xl font-black text-gray-900">{previewPopup.title}</h3>
+                          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{previewPopup.content}</p>
+                          <div className="flex gap-3 pt-2">
+                            {previewPopup.linkUrl && (
+                              <button className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                                <ExternalLink className="w-4 h-4" />
+                                링크 이동
+                              </button>
+                            )}
+                            <button className="flex-1 px-4 py-3 bg-gradient-to-r from-moa-primary to-moa-accent text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all">
+                              {previewPopup.buttonText || '확인'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {previewPopup.type === 'BOTTOM_SHEET' && (
+                    <div className="absolute inset-0 bg-black/30 flex items-end pt-10">
+                      <div className="bg-white rounded-t-3xl w-full shadow-2xl transform transition-all animate-slide-up">
+                        <div className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mt-3 mb-2"></div>
+                        {previewPopup.imageUrl && (
+                          <img
+                            src={previewPopup.imageUrl}
+                            alt={previewPopup.title}
+                            className="w-full h-40 object-cover"
+                          />
+                        )}
+                        <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
+                          <h3 className="text-xl font-black text-gray-900">{previewPopup.title}</h3>
+                          <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{previewPopup.content}</p>
+                          <div className="flex gap-3 pt-2">
+                            {previewPopup.linkUrl && (
+                              <button className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                                <ExternalLink className="w-4 h-4" />
+                                링크 이동
+                              </button>
+                            )}
+                            <button className="flex-1 px-4 py-3 bg-gradient-to-r from-moa-primary to-moa-accent text-white font-bold rounded-xl shadow-lg">
+                              {previewPopup.buttonText || '확인'}
+                            </button>
+                          </div>
+                        </div>
+                        <div className="h-8 bg-white"></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {previewPopup.type === 'TOAST' && (
+                    <div className="absolute top-20 left-4 right-4">
+                      <div className="bg-gray-900 text-white rounded-2xl shadow-2xl transform transition-all animate-bounce-in p-4 flex items-start gap-3">
+                        {previewPopup.imageUrl && (
+                          <img
+                            src={previewPopup.imageUrl}
+                            alt={previewPopup.title}
+                            className="w-12 h-12 object-cover rounded-lg flex-shrink-0"
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm mb-1">{previewPopup.title}</h4>
+                          <p className="text-sm text-gray-300 line-clamp-2">{previewPopup.content}</p>
+                        </div>
+                        <button className="flex-shrink-0 text-white/70 hover:text-white">
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Type Label */}
+            <div className="absolute -bottom-10 left-0 right-0 text-center">
+              <span className="inline-block px-4 py-2 bg-white text-gray-700 font-semibold rounded-lg shadow-lg">
+                {POPUP_TYPES.find((t) => t.value === previewPopup.type)?.label} 미리보기
+              </span>
+            </div>
           </div>
         </div>
       )}

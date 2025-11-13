@@ -62,14 +62,12 @@ router.post('/register', async (req: Request, res: Response) => {
         location,
         gender,
         age: age ? parseInt(age) : null,
-        role: role || 'USER',
       },
       select: {
         id: true,
         email: true,
         name: true,
         nickname: true,
-        role: true,
         profileImage: true,
         location: true,
         gender: true,
@@ -96,6 +94,18 @@ router.post('/register', async (req: Request, res: Response) => {
       },
     });
 
+    // Determine initial role
+    const initialRole = role || 'USER';
+
+    // Create initial user role (다중 역할 지원)
+    await prisma.userRole.create({
+      data: {
+        userId: user.id,
+        roleCode: initialRole,
+        isPrimary: true, // 첫 번째 역할은 주요 역할로 설정
+      },
+    });
+
     // TODO: Handle interests when Category data is seeded
     // if (interests && Array.isArray(interests) && interests.length > 0) {
     //   await prisma.userInterest.createMany({
@@ -106,17 +116,19 @@ router.post('/register', async (req: Request, res: Response) => {
     //   });
     // }
 
-    // Generate tokens
+    // Generate tokens with roles array
     const token = generateToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: initialRole, // primary role for backward compatibility
+      roles: [initialRole], // 다중 역할 배열
     });
 
     const refreshToken = generateRefreshToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: initialRole,
+      roles: [initialRole],
     });
 
     res.status(201).json({
@@ -127,7 +139,8 @@ router.post('/register', async (req: Request, res: Response) => {
           email: user.email,
           name: user.name,
           nickname: user.nickname,
-          role: user.role,
+          role: initialRole, // primary role
+          roles: [initialRole], // 다중 역할 배열
           avatar: user.profileImage,
           location: user.location,
         },
@@ -145,10 +158,45 @@ router.post('/register', async (req: Request, res: Response) => {
   }
 });
 
+// Helper function to parse user agent
+const parseUserAgent = (userAgent: string) => {
+  const ua = userAgent || '';
+
+  // Detect device
+  let device = 'desktop';
+  if (/mobile/i.test(ua)) device = 'mobile';
+  else if (/tablet/i.test(ua)) device = 'tablet';
+
+  // Detect browser
+  let browser = 'Unknown';
+  if (/Chrome/i.test(ua)) browser = 'Chrome';
+  else if (/Safari/i.test(ua)) browser = 'Safari';
+  else if (/Firefox/i.test(ua)) browser = 'Firefox';
+  else if (/Edge/i.test(ua)) browser = 'Edge';
+  else if (/MSIE|Trident/i.test(ua)) browser = 'Internet Explorer';
+
+  // Detect OS
+  let os = 'Unknown';
+  if (/Windows/i.test(ua)) os = 'Windows';
+  else if (/Mac OS X/i.test(ua)) os = 'macOS';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+  else if (/Android/i.test(ua)) os = 'Android';
+  else if (/iOS|iPhone|iPad/i.test(ua)) os = 'iOS';
+
+  return { device, browser, os };
+};
+
 // Login
 router.post('/login', async (req: Request, res: Response) => {
   try {
     let { email, password } = req.body;
+
+    // Extract request metadata
+    const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+                      req.socket.remoteAddress ||
+                      'unknown';
+    const userAgent = req.headers['user-agent'] || '';
+    const { device, browser, os } = parseUserAgent(userAgent);
 
     // Validation
     if (!email || !password) {
@@ -164,7 +212,7 @@ router.post('/login', async (req: Request, res: Response) => {
       email = 'asdf@asdf.com';
     }
 
-    // Find user
+    // Find user with roles
     const user = await prisma.user.findUnique({
       where: { email },
       select: {
@@ -173,13 +221,35 @@ router.post('/login', async (req: Request, res: Response) => {
         password: true,
         name: true,
         nickname: true,
-        role: true,
         profileImage: true,
         location: true,
+        userRoles: {
+          select: {
+            roleCode: true,
+            isPrimary: true,
+          },
+          orderBy: {
+            isPrimary: 'desc', // Primary role first
+          },
+        },
       },
     });
 
     if (!user) {
+      // Record failed login attempt - user not found
+      await prisma.loginHistory.create({
+        data: {
+          email,
+          ipAddress,
+          userAgent,
+          device,
+          browser,
+          os,
+          status: 'FAILURE',
+          failureReason: 'User not found',
+        },
+      });
+
       res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -191,6 +261,21 @@ router.post('/login', async (req: Request, res: Response) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      // Record failed login attempt - invalid password
+      await prisma.loginHistory.create({
+        data: {
+          userId: user.id,
+          email,
+          ipAddress,
+          userAgent,
+          device,
+          browser,
+          os,
+          status: 'FAILURE',
+          failureReason: 'Invalid password',
+        },
+      });
+
       res.status(401).json({
         success: false,
         message: 'Invalid email or password',
@@ -198,17 +283,45 @@ router.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
-    // Generate tokens
+    // Record successful login
+    await prisma.loginHistory.create({
+      data: {
+        userId: user.id,
+        email,
+        ipAddress,
+        userAgent,
+        device,
+        browser,
+        os,
+        status: 'SUCCESS',
+      },
+    });
+
+    // Extract roles from userRoles (필수)
+    if (user.userRoles.length === 0) {
+      res.status(500).json({
+        success: false,
+        message: 'User has no roles assigned',
+      });
+      return;
+    }
+
+    const roles = user.userRoles.map(ur => ur.roleCode);
+    const primaryRole = user.userRoles.find(ur => ur.isPrimary)?.roleCode || roles[0];
+
+    // Generate tokens with roles array
     const token = generateToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: primaryRole, // primary role for backward compatibility
+      roles: roles, // 다중 역할 배열
     });
 
     const refreshToken = generateRefreshToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: primaryRole,
+      roles: roles,
     });
 
     res.json({
@@ -219,7 +332,8 @@ router.post('/login', async (req: Request, res: Response) => {
           email: user.email,
           name: user.name,
           nickname: user.nickname,
-          role: user.role,
+          role: primaryRole, // primary role
+          roles: roles, // 다중 역할 배열
           avatar: user.profileImage,
           location: user.location,
         },
@@ -246,11 +360,19 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
         id: true,
         email: true,
         name: true,
-        role: true,
         profileImage: true,
         bio: true,
         phone: true,
         createdAt: true,
+        userRoles: {
+          select: {
+            roleCode: true,
+            isPrimary: true,
+          },
+          orderBy: {
+            isPrimary: 'desc',
+          },
+        },
       },
     });
 
@@ -262,9 +384,17 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
       return;
     }
 
+    // Extract roles
+    const roles = user.userRoles.map(ur => ur.roleCode);
+    const primaryRole = user.userRoles.find(ur => ur.isPrimary)?.roleCode || roles[0];
+
     res.json({
       success: true,
-      data: user,
+      data: {
+        ...user,
+        role: primaryRole, // primary role for backward compatibility
+        roles, // 다중 역할 배열
+      },
     });
   } catch (error) {
     console.error('Get me error:', error);
@@ -292,17 +422,47 @@ router.post('/refresh', async (req: Request, res: Response) => {
     // Verify refresh token
     const decoded = verifyRefreshToken(refreshToken);
 
-    // Generate new tokens
+    // Fetch current user roles (roles might have changed since token was issued)
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: {
+        userRoles: {
+          select: {
+            roleCode: true,
+            isPrimary: true,
+          },
+          orderBy: {
+            isPrimary: 'desc',
+          },
+        },
+      },
+    });
+
+    if (!user || user.userRoles.length === 0) {
+      res.status(401).json({
+        success: false,
+        message: 'User not found or has no roles',
+      });
+      return;
+    }
+
+    // Extract current roles
+    const roles = user.userRoles.map(ur => ur.roleCode);
+    const primaryRole = user.userRoles.find(ur => ur.isPrimary)?.roleCode || roles[0];
+
+    // Generate new tokens with current roles
     const newToken = generateToken({
       userId: decoded.userId,
       email: decoded.email,
-      role: decoded.role,
+      role: primaryRole,
+      roles: roles,
     });
 
     const newRefreshToken = generateRefreshToken({
       userId: decoded.userId,
       email: decoded.email,
-      role: decoded.role,
+      role: primaryRole,
+      roles: roles,
     });
 
     res.json({

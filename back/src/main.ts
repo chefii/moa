@@ -30,6 +30,7 @@ import adminReportsRoutes from './routes/admin/reports';
 import adminMenuCategoriesRoutes from './routes/admin/menu-categories';
 import adminMenuItemsRoutes from './routes/admin/menu-items';
 import adminUsersVerificationRoutes from './routes/admin/users-verification';
+import adminUsersRoutes from './routes/admin/users';
 
 // Load environment variables
 dotenv.config();
@@ -144,6 +145,7 @@ app.use('/api/admin/reports', adminReportsRoutes);
 app.use('/api/admin/menu-categories', adminMenuCategoriesRoutes);
 app.use('/api/admin/menu-items', adminMenuItemsRoutes);
 app.use('/api/admin/users-verification', adminUsersVerificationRoutes);
+app.use('/api/admin/users', adminUsersRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {

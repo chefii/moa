@@ -102,7 +102,6 @@ export default function MenuManagementPage() {
   };
 
   const handleEditCategory = (category: MenuCategory) => {
-    console.log('Editing category:', category);
     setCategoryModalMode('edit');
     setSelectedCategory(category);
     setCategoryFormData({
@@ -170,7 +169,6 @@ export default function MenuManagementPage() {
   };
 
   const handleEditItem = (item: MenuItem) => {
-    console.log('Editing item:', item);
     setItemModalMode('edit');
     setSelectedItem(item);
     setItemFormData({

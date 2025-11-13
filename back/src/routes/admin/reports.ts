@@ -4,6 +4,65 @@ import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
 
+// Get pending reports count (for badge) - MUST be before /:id route
+router.get('/badge', authenticate, authorize('SUPER_ADMIN', 'ADMIN', 'MODERATOR'), async (req: Request, res: Response) => {
+  try {
+    const pendingCount = await prisma.report.count({
+      where: {
+        OR: [
+          { status: 'PENDING' },
+          { status: 'REVIEWING' },
+        ],
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        count: pendingCount,
+      },
+    });
+  } catch (error) {
+    console.error('Get report badge count error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch report badge count',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+// Get report statistics - MUST be before /:id route
+router.get('/stats/overview', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const [totalReports, pendingReports, reviewingReports, resolvedReports, rejectedReports] = await Promise.all([
+      prisma.report.count(),
+      prisma.report.count({ where: { status: 'PENDING' } }),
+      prisma.report.count({ where: { status: 'REVIEWING' } }),
+      prisma.report.count({ where: { status: 'RESOLVED' } }),
+      prisma.report.count({ where: { status: 'REJECTED' } }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        totalReports,
+        pendingReports,
+        reviewingReports,
+        resolvedReports,
+        rejectedReports,
+      },
+    });
+  } catch (error) {
+    console.error('Get report statistics error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch report statistics',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
 // Get all reports
 router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -138,37 +197,6 @@ router.put('/:id/status', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN
     res.status(500).json({
       success: false,
       message: 'Failed to update report status',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-// Get report statistics
-router.get('/stats/overview', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
-  try {
-    const [totalReports, pendingReports, reviewingReports, resolvedReports, rejectedReports] = await Promise.all([
-      prisma.report.count(),
-      prisma.report.count({ where: { status: 'PENDING' } }),
-      prisma.report.count({ where: { status: 'REVIEWING' } }),
-      prisma.report.count({ where: { status: 'RESOLVED' } }),
-      prisma.report.count({ where: { status: 'REJECTED' } }),
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        totalReports,
-        pendingReports,
-        reviewingReports,
-        resolvedReports,
-        rejectedReports,
-      },
-    });
-  } catch (error) {
-    console.error('Get report statistics error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch report statistics',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }

@@ -33,6 +33,7 @@ import {
 import { menuCategoriesApi, MenuCategory as DBMenuCategory } from '@/lib/api/admin/menu';
 import * as LucideIcons from 'lucide-react';
 import { useMenuStore } from '@/store/menuStore';
+import { useBadgeStore } from '@/store/badgeStore';
 import AdminFooter from './AdminFooter';
 import { notificationsApi } from '@/lib/api/notifications';
 
@@ -66,12 +67,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
   const { user, logout } = useAuthStore();
   const { refreshTrigger } = useMenuStore();
+  const { reportBadgeCount, refreshReportBadge } = useBadgeStore();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['회원 관리', '콘텐츠 관리']);
   const [menuCategories, setMenuCategories] = useState<MenuCategoryType[]>([]);
   const [menuLoading, setMenuLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // Check if user has required role
   const hasRequiredRole = (requiredRoles: string[]): boolean => {
@@ -132,6 +136,54 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     const interval = setInterval(loadUnreadCount, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Load notifications when dropdown opens
+  const loadNotifications = async () => {
+    try {
+      const response = await notificationsApi.getNotifications(1, 10);
+      setNotifications(response.data);
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    }
+  };
+
+  // Toggle notifications dropdown
+  const toggleNotifications = async () => {
+    if (!showNotifications) {
+      await loadNotifications();
+    }
+    setShowNotifications(!showNotifications);
+  };
+
+  // Mark notification as read
+  const markAsRead = async (notificationId: string) => {
+    try {
+      await notificationsApi.markAsRead(notificationId);
+      // Refresh notifications and unread count
+      await loadNotifications();
+      const count = await notificationsApi.getUnreadCount();
+      setUnreadCount(count);
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
+  };
+
+  // Mark all as read
+  const markAllAsRead = async () => {
+    try {
+      await notificationsApi.markAllAsRead();
+      // Refresh notifications and unread count
+      await loadNotifications();
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
+    }
+  };
+
+  // Load report badge count
+  useEffect(() => {
+    refreshReportBadge();
+  }, [pathname, refreshReportBadge]);
 
   const toggleCategory = (categoryName: string) => {
     setExpandedCategories((prev) =>
@@ -194,14 +246,137 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </button>
 
           {/* Notifications */}
-          <button className="p-2 hover:bg-gray-100 rounded-lg relative transition-colors" title="알림">
-            <Bell className="w-5 h-5 text-gray-600" />
-            {unreadCount > 0 && (
-              <span className="absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
-                {unreadCount > 99 ? '99+' : unreadCount}
-              </span>
+          <div className="relative">
+            <button
+              onClick={toggleNotifications}
+              className="p-2 hover:bg-gray-100 rounded-lg relative transition-colors"
+              title="알림"
+            >
+              <Bell className="w-5 h-5 text-gray-600" />
+              {unreadCount > 0 && (
+                <span className="absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center px-1">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notifications Dropdown */}
+            {showNotifications && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowNotifications(false)}
+                />
+
+                {/* Dropdown */}
+                <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-lg border border-gray-200 z-50 max-h-[500px] flex flex-col">
+                  {/* Header */}
+                  <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-gray-900">알림</h3>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-sm text-moa-primary hover:text-moa-primary-dark font-semibold"
+                      >
+                        모두 읽음
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Notifications List */}
+                  <div className="flex-1 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-gray-500">
+                        <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-sm">알림이 없습니다</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-100">
+                        {notifications.map((notification) => (
+                          <button
+                            key={notification.id}
+                            onClick={() => {
+                              if (!notification.isRead) {
+                                markAsRead(notification.id);
+                              }
+                              if (notification.link) {
+                                window.location.href = notification.link;
+                              }
+                            }}
+                            className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
+                              !notification.isRead ? 'bg-blue-50' : ''
+                            }`}
+                          >
+                            <div className="flex gap-3">
+                              <div className="flex-shrink-0 mt-1">
+                                {notification.type === 'SYSTEM' && (
+                                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <Bell className="w-4 h-4 text-blue-600" />
+                                  </div>
+                                )}
+                                {notification.type === 'REPORT' && (
+                                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                                    <AlertCircle className="w-4 h-4 text-red-600" />
+                                  </div>
+                                )}
+                                {notification.type === 'GATHERING' && (
+                                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                    <Calendar className="w-4 h-4 text-green-600" />
+                                  </div>
+                                )}
+                                {!['SYSTEM', 'REPORT', 'GATHERING'].includes(notification.type) && (
+                                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <Bell className="w-4 h-4 text-gray-600" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2">
+                                  <p className="text-sm font-semibold text-gray-900 truncate">
+                                    {notification.title}
+                                  </p>
+                                  {!notification.isRead && (
+                                    <div className="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full mt-1" />
+                                  )}
+                                </div>
+                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                  {notification.content}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {new Date(notification.createdAt).toLocaleString('ko-KR', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  {notifications.length > 0 && (
+                    <div className="p-3 border-t border-gray-100">
+                      <button
+                        onClick={() => {
+                          setShowNotifications(false);
+                          window.location.href = '/admin/notifications';
+                        }}
+                        className="w-full text-center text-sm text-moa-primary hover:text-moa-primary-dark font-semibold py-2"
+                      >
+                        모든 알림 보기
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
-          </button>
+          </div>
 
           {/* Divider */}
           <div className="w-px h-6 bg-gray-300"></div>
@@ -361,6 +536,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                         const Icon = item.icon;
                         const active = isActive(item.path);
 
+                        // Use dynamic badge count for reports
+                        const badgeCount = item.path === '/admin/reports'
+                          ? reportBadgeCount
+                          : item.badge;
+
                         return (
                           <li key={item.path}>
                             <Link
@@ -379,9 +559,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                               {!sidebarCollapsed && (
                                 <>
                                   <span className="flex-1 text-sm font-medium">{item.name}</span>
-                                  {item.badge && (
+                                  {badgeCount > 0 && (
                                     <span className="px-2 py-0.5 text-xs font-bold bg-red-500 text-white rounded-full">
-                                      {item.badge}
+                                      {badgeCount}
                                     </span>
                                   )}
                                 </>

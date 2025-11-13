@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, ReactNode } from 'react';
+import { useEffect, ReactNode, useState } from 'react';
 import { useAuthStore, UserRole } from '@/store/authStore';
 
 interface RoleGuardProps {
@@ -17,8 +17,19 @@ export default function RoleGuard({
 }: RoleGuardProps) {
   const router = useRouter();
   const { user, isAuthenticated, hasAnyRole } = useAuthStore();
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // Wait for Zustand persist to hydrate from localStorage
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
+    // Don't redirect until hydrated
+    if (!isHydrated) {
+      return;
+    }
+
     if (!isAuthenticated || !user) {
       router.push(redirectTo);
       return;
@@ -28,9 +39,10 @@ export default function RoleGuard({
       router.push('/');
       return;
     }
-  }, [isAuthenticated, user, allowedRoles, hasAnyRole, router, redirectTo]);
+  }, [isHydrated, isAuthenticated, user, allowedRoles, hasAnyRole, router, redirectTo]);
 
-  if (!isAuthenticated || !user || !hasAnyRole(allowedRoles)) {
+  // Show loading until hydrated
+  if (!isHydrated || !isAuthenticated || !user || !hasAnyRole(allowedRoles)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-orange-50">
         <div className="text-center">

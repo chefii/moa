@@ -15,6 +15,8 @@ export default function AdminLayoutWrapper({
       UserRole.CONTENT_MANAGER,
       UserRole.SUPPORT_MANAGER,
       UserRole.SETTLEMENT_MANAGER,
+      UserRole.BUSINESS_USER,
+      UserRole.BUSINESS_MANAGER,
     ]}>
       <AdminLayout>{children}</AdminLayout>
     </RoleGuard>

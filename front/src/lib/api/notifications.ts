@@ -34,7 +34,7 @@ export interface UnreadCountResponse {
 export const notificationsApi = {
   // Get notifications for current user
   async getNotifications(page = 1, limit = 20): Promise<NotificationsResponse> {
-    const response = await apiClient.get('/notifications', {
+    const response = await apiClient.get('/api/notifications', {
       params: { page, limit },
     });
     return response.data;
@@ -42,17 +42,17 @@ export const notificationsApi = {
 
   // Get unread count
   async getUnreadCount(): Promise<number> {
-    const response = await apiClient.get<UnreadCountResponse>('/notifications/unread-count');
+    const response = await apiClient.get<UnreadCountResponse>('/api/notifications/unread-count');
     return response.data.data.unreadCount;
   },
 
   // Mark notification as read
   async markAsRead(notificationId: string): Promise<void> {
-    await apiClient.post(`/notifications/${notificationId}/read`);
+    await apiClient.post(`/api/notifications/${notificationId}/read`);
   },
 
   // Mark all notifications as read
   async markAllAsRead(): Promise<void> {
-    await apiClient.post('/notifications/read-all');
+    await apiClient.post('/api/notifications/read-all');
   },
 };

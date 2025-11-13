@@ -2,15 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
-}
+@layer base {
+  :root {
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 255, 255, 255;
+    --background-end-rgb: 255, 255, 255;
+  }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-start-rgb));
+  body {
+    color: rgb(var(--foreground-rgb));
+    background: rgb(var(--background-start-rgb));
+  }
+
+  /* Ensure all text is visible */
+  * {
+    color: inherit;
+  }
+
+  input,
+  textarea,
+  select {
+    color: #111827;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+  }
+
+  /* Remove default arrow in IE */
+  select::-ms-expand {
+    display: none;
+  }
+
+  /* Custom scrollbar for select dropdown (webkit browsers) */
+  select option {
+    padding: 0.5rem;
+  }
 }
 
 @layer utilities {
@@ -19,18 +47,39 @@ body {
   }
 }
 
-/* Ensure all text is visible */
-* {
-  color: inherit;
+/* Custom Select Styling - MOA Brand Colors */
+select,
+select[class] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-color: white !important;
+  /* MOA Primary 컬러 화살표 (#4F46E5) */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234F46E5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 0.5rem center !important;
+  background-size: 1.5em 1.5em !important;
+  padding-right: 2.5rem !important;
 }
 
-input,
-textarea,
-select {
-  color: #111827;
+select:focus,
+select[class]:focus {
+  outline: none !important;
+  /* MOA Primary 컬러 (#4F46E5) */
+  border-color: #4F46E5 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
 }
 
-input::placeholder,
-textarea::placeholder {
-  color: #9ca3af;
+select:hover:not(:disabled),
+select[class]:hover:not(:disabled) {
+  /* 호버 시 MOA Primary Light 테두리 */
+  border-color: #818CF8 !important;
+}
+
+select:disabled,
+select[class]:disabled {
+  background-color: #f3f4f6 !important;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d1d5db' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
 }

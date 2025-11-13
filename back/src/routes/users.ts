@@ -18,7 +18,6 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
           email: true,
           name: true,
           nickname: true,
-          role: true,
           phone: true,
           location: true,
           isVerified: true,
@@ -26,6 +25,15 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
           emailVerifiedAt: true,
           phoneVerifiedAt: true,
           createdAt: true,
+          userRoles: {
+            select: {
+              roleCode: true,
+              isPrimary: true,
+            },
+            orderBy: {
+              isPrimary: 'desc',
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -68,7 +76,6 @@ router.get('/:userId', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'),
         email: true,
         name: true,
         nickname: true,
-        role: true,
         phone: true,
         location: true,
         bio: true,
@@ -79,6 +86,15 @@ router.get('/:userId', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'),
         phoneVerifiedAt: true,
         createdAt: true,
         updatedAt: true,
+        userRoles: {
+          select: {
+            roleCode: true,
+            isPrimary: true,
+          },
+          orderBy: {
+            isPrimary: 'desc',
+          },
+        },
         userLevel: {
           select: {
             level: true,
@@ -136,9 +152,9 @@ router.get('/stats/overview', authenticate, authorize('SUPER_ADMIN'), async (req
       // Total users
       prisma.user.count(),
 
-      // Users by role
-      prisma.user.groupBy({
-        by: ['role'],
+      // Users by role - now using userRoles table
+      prisma.userRole.groupBy({
+        by: ['roleCode'],
         _count: true,
       }),
 
@@ -153,7 +169,7 @@ router.get('/stats/overview', authenticate, authorize('SUPER_ADMIN'), async (req
     ]);
 
     const roleStats = usersByRole.reduce((acc, item) => {
-      acc[item.role] = item._count;
+      acc[item.roleCode] = item._count;
       return acc;
     }, {} as Record<string, number>);
 

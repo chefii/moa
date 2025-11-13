@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
   content: [
@@ -45,6 +46,24 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(function({ addBase }) {
+      addBase({
+        'select': {
+          'appearance': 'none',
+          '-webkit-appearance': 'none',
+          '-moz-appearance': 'none',
+          'background-image': `url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e")`,
+          'background-repeat': 'no-repeat',
+          'background-position': 'right 0.5rem center',
+          'background-size': '1.5em 1.5em',
+          'padding-right': '2.5rem',
+        },
+        'select::-ms-expand': {
+          'display': 'none',
+        },
+      });
+    }),
+  ],
 };
 export default config;

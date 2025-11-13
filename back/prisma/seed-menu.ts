@@ -390,7 +390,7 @@ async function seedMenu() {
           categoryId: systemManagementCategory.id,
           name: '관리자 권한',
           nameEn: 'Admin Roles',
-          path: '/admin/admin-roles',
+          path: '/admin/roles',
           icon: 'Shield',
           order: 2,
           isActive: true,

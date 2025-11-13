@@ -58,7 +58,11 @@ export const authorize = (...roles: string[]) => {
       return;
     }
 
-    if (!roles.includes(req.user.role)) {
+    // 다중 역할 지원: 사용자의 역할 중 하나라도 허용된 역할에 포함되면 통과
+    const userRoles = req.user.roles || [req.user.role]; // 하위 호환성
+    const hasPermission = userRoles.some(userRole => roles.includes(userRole));
+
+    if (!hasPermission) {
       res.status(403).json({
         success: false,
         message: 'Forbidden: Insufficient permissions',

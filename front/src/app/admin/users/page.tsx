@@ -6,7 +6,6 @@ import {
   Search,
   Filter,
   Download,
-  MoreVertical,
   CheckCircle,
   AlertCircle,
   User as UserIcon,
@@ -19,17 +18,24 @@ import {
   Star,
   Shield,
   Loader2,
+  Plus,
+  MapPin,
+  Users as UsersIcon,
+  Lock,
 } from 'lucide-react';
-import { usersApi, User, UserDetail } from '@/lib/api/users';
+import { usersApi as adminUsersApi, AdminUser, AdminUserDetail, GetUsersParams } from '@/lib/api/admin/users';
 import { usersVerificationApi } from '@/lib/api/admin/users-verification';
 import { useToast } from '@/contexts/ToastContext';
 import { useConfirm } from '@/contexts/ConfirmContext';
+import { authApi } from '@/lib/api/auth';
+import { commonCodesApi, CommonCode, Region } from '@/lib/api/common-codes';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 export default function UsersManagementPage() {
   const { showSuccess, showError } = useToast();
   const { confirm } = useConfirm();
   const [mounted, setMounted] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
@@ -38,10 +44,34 @@ export default function UsersManagementPage() {
     limit: 10,
     totalPages: 0,
   });
-  const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null);
+  const [selectedUser, setSelectedUser] = useState<AdminUserDetail | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [loadingUserDetail, setLoadingUserDetail] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('ALL');
+
+  // Add User Modal
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [addUserLoading, setAddUserLoading] = useState(false);
+  const [roles, setRoles] = useState<CommonCode[]>([]);
+  const [genders, setGenders] = useState<CommonCode[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [districts, setDistricts] = useState<Region[]>([]);
+
+  // Add User Form
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    nickname: '',
+    phone: '',
+    gender: '',
+    age: '',
+    role: 'USER',
+    city: '',
+    cityCode: '',
+    district: '',
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -51,10 +81,60 @@ export default function UsersManagementPage() {
     fetchUsers(currentPage);
   }, [currentPage]);
 
+  // Load CommonCodes for add user form
+  useEffect(() => {
+    const loadCommonCodes = async () => {
+      try {
+        const [rolesData, gendersData, regionsData] = await Promise.all([
+          commonCodesApi.getCommonCodes('ROLE'),
+          commonCodesApi.getCommonCodes('GENDER'),
+          commonCodesApi.getRegions(),
+        ]);
+
+        // Filter out admin roles (MODERATOR, CONTENT_MANAGER, SUPPORT_MANAGER, SETTLEMENT_MANAGER, ADMIN, SUPER_ADMIN)
+        const adminRoleCodes = ['MODERATOR', 'CONTENT_MANAGER', 'SUPPORT_MANAGER', 'SETTLEMENT_MANAGER', 'ADMIN', 'SUPER_ADMIN'];
+        const filteredRoles = rolesData.filter(role => !adminRoleCodes.includes(role.code));
+
+        setRoles(filteredRoles);
+        setGenders(gendersData);
+        setRegions(regionsData);
+      } catch (error) {
+        console.error('Failed to load common codes:', error);
+      }
+    };
+
+    loadCommonCodes();
+  }, []);
+
+  // Load districts when city changes
+  useEffect(() => {
+    const loadDistricts = async () => {
+      if (!formData.cityCode) {
+        setDistricts([]);
+        return;
+      }
+
+      try {
+        const districtsData = await commonCodesApi.getDistricts(formData.cityCode);
+        setDistricts(districtsData);
+      } catch (error) {
+        console.error('Failed to load districts:', error);
+      }
+    };
+
+    loadDistricts();
+  }, [formData.cityCode]);
+
   const fetchUsers = async (page: number) => {
     setLoading(true);
     try {
-      const response = await usersApi.getUsers(page, 10);
+      const params: GetUsersParams = {
+        page,
+        limit: 10,
+        search: searchQuery || undefined,
+        role: roleFilter && roleFilter !== 'ALL' ? roleFilter : undefined,
+      };
+      const response = await adminUsersApi.getUsers(params);
       setUsers(response.data);
       setPagination(response.pagination);
     } catch (error) {
@@ -68,8 +148,8 @@ export default function UsersManagementPage() {
     setLoadingUserDetail(true);
     setShowUserModal(true);
     try {
-      const userDetail = await usersApi.getUserById(userId);
-      setSelectedUser(userDetail);
+      const response = await adminUsersApi.getUserById(userId);
+      setSelectedUser(response.data);
     } catch (error) {
       console.error('Failed to fetch user detail:', error);
       setShowUserModal(false);
@@ -84,12 +164,61 @@ export default function UsersManagementPage() {
   };
 
   // 사용자 목록에서 특정 사용자 업데이트
-  const updateUserInList = (userId: string, updates: Partial<User>) => {
+  const updateUserInList = (userId: string, updates: Partial<AdminUser>) => {
     setUsers((prevUsers) =>
       prevUsers.map((user) =>
         user.id === userId ? { ...user, ...updates } : user
       )
     );
+  };
+
+  // Handle add user
+  const handleAddUser = async () => {
+    // Validation
+    if (!formData.email || !formData.password || !formData.name) {
+      showError('이메일, 비밀번호, 이름은 필수 입력 항목입니다.');
+      return;
+    }
+
+    setAddUserLoading(true);
+    try {
+      await authApi.register({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        nickname: formData.nickname || undefined,
+        phone: formData.phone || undefined,
+        gender: formData.gender || undefined,
+        age: formData.age ? parseInt(formData.age) : undefined,
+        location: formData.city && formData.district ? `${formData.city} ${formData.district}` : undefined,
+        role: formData.role as any,
+      });
+
+      showSuccess('사용자가 성공적으로 추가되었습니다.');
+      setShowAddUserModal(false);
+
+      // Reset form
+      setFormData({
+        email: '',
+        password: '',
+        name: '',
+        nickname: '',
+        phone: '',
+        gender: '',
+        age: '',
+        role: 'USER',
+        city: '',
+        cityCode: '',
+        district: '',
+      });
+
+      // Refresh user list
+      fetchUsers(currentPage);
+    } catch (error: any) {
+      showError(error.response?.data?.message || '사용자 추가에 실패했습니다.');
+    } finally {
+      setAddUserLoading(false);
+    }
   };
 
   return (
@@ -100,10 +229,19 @@ export default function UsersManagementPage() {
           <h1 className="text-3xl font-black text-gray-900 mb-2">사용자 관리</h1>
           <p className="text-gray-600">총 {pagination.total}명의 사용자</p>
         </div>
-        <button className="px-4 py-2 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2">
-          <Download className="w-4 h-4" />
-          내보내기
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowAddUserModal(true)}
+            className="px-4 py-2 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            사용자 추가
+          </button>
+          <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            내보내기
+          </button>
+        </div>
       </div>
 
       {/* Search and Filter */}
@@ -146,8 +284,6 @@ export default function UsersManagementPage() {
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">사용자</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">닉네임</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">이메일</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">위치</th>
-                    <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">역할</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">이메일 인증</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">전화번호 인증</th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-gray-900">가입일</th>
@@ -155,35 +291,45 @@ export default function UsersManagementPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {users.map((userData) => (
+                  {users.map((userData) => {
+                    // Generate consistent color based on user ID
+                    const colors = [
+                      'from-blue-500 to-blue-600',
+                      'from-purple-500 to-purple-600',
+                      'from-pink-500 to-pink-600',
+                      'from-green-500 to-green-600',
+                      'from-orange-500 to-orange-600',
+                      'from-teal-500 to-teal-600',
+                      'from-indigo-500 to-indigo-600',
+                      'from-red-500 to-red-600',
+                    ];
+                    const colorIndex = parseInt(userData.id.slice(-2), 16) % colors.length;
+                    const gradientClass = colors[colorIndex];
+
+                    return (
                     <tr key={userData.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-gradient-to-br from-moa-primary to-moa-accent rounded-full flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">
-                              {userData.name.charAt(0)}
-                            </span>
-                          </div>
+                          {userData.profileImage ? (
+                            <img
+                              src={userData.profileImage}
+                              alt={userData.name}
+                              className="w-10 h-10 rounded-full object-cover ring-2 ring-gray-100"
+                            />
+                          ) : (
+                            <div className={`w-10 h-10 bg-gradient-to-br ${gradientClass} rounded-full flex items-center justify-center shadow-md`}>
+                              <span className="text-white font-bold text-sm">
+                                {userData.name.charAt(0)}
+                              </span>
+                            </div>
+                          )}
                           <div>
                             <p className="font-semibold text-gray-900">{userData.name}</p>
-                            <p className="text-sm text-gray-500">{userData.phone || '-'}</p>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">{userData.nickname || '-'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{userData.email}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{userData.location || '-'}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
-                          userData.role === 'SUPER_ADMIN'
-                            ? 'bg-red-100 text-red-700'
-                            : userData.role === 'BUSINESS_USER'
-                            ? 'bg-moa-primary/10 text-moa-primary'
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {userData.role}
-                        </span>
-                      </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
                           userData.isVerified
@@ -196,12 +342,12 @@ export default function UsersManagementPage() {
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                          userData.isPhoneVerified
+                          'isPhoneVerified' in userData && userData.isPhoneVerified
                             ? 'bg-blue-100 text-blue-700'
                             : 'bg-gray-100 text-gray-600'
                         }`}>
-                          {userData.isPhoneVerified ? <CheckCircle className="w-3 h-3" /> : <X className="w-3 h-3" />}
-                          {userData.isPhoneVerified ? '인증됨' : '미인증'}
+                          {'isPhoneVerified' in userData && userData.isPhoneVerified ? <CheckCircle className="w-3 h-3" /> : <X className="w-3 h-3" />}
+                          {'isPhoneVerified' in userData && userData.isPhoneVerified ? '인증됨' : '미인증'}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
@@ -216,7 +362,8 @@ export default function UsersManagementPage() {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -290,17 +437,29 @@ export default function UsersManagementPage() {
                       <p className="text-sm text-gray-600 mb-1">닉네임</p>
                       <p className="text-lg font-bold text-gray-900">{selectedUser.nickname || '-'}</p>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">역할</p>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${
-                        selectedUser.role === 'SUPER_ADMIN'
-                          ? 'bg-red-100 text-red-700'
-                          : selectedUser.role === 'BUSINESS_USER'
-                          ? 'bg-moa-primary/10 text-moa-primary'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {selectedUser.role}
-                      </span>
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-600 mb-2">역할</p>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedUser.userRoles.map((userRole, index) => (
+                          <span
+                            key={index}
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
+                              userRole.roleCode.includes('ADMIN')
+                                ? 'bg-red-100 text-red-700'
+                                : userRole.roleCode.includes('BUSINESS')
+                                ? 'bg-moa-primary/10 text-moa-primary'
+                                : userRole.roleCode.includes('HOST')
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}
+                          >
+                            {userRole.roleCode}
+                            {userRole.isPrimary && (
+                              <Star className="w-3 h-3 fill-current" />
+                            )}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
@@ -559,6 +718,225 @@ export default function UsersManagementPage() {
                 사용자 정보를 불러올 수 없습니다.
               </div>
             )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Add User Modal */}
+      {mounted && showAddUserModal && createPortal(
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: 1000 }}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-moa-primary text-white p-6 rounded-t-3xl flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                <UsersIcon className="w-6 h-6" />
+                <h2 className="text-2xl font-black">사용자 추가</h2>
+              </div>
+              <button
+                onClick={() => setShowAddUserModal(false)}
+                className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* Required Fields */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-red-500" />
+                  필수 정보
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <Mail className="w-4 h-4 inline mr-1" />
+                      이메일 *
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                      placeholder="user@example.com"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <Lock className="w-4 h-4 inline mr-1" />
+                      비밀번호 *
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                      placeholder="••••••••"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <UserIcon className="w-4 h-4 inline mr-1" />
+                      이름 *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                      placeholder="홍길동"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <Shield className="w-4 h-4 inline mr-1" />
+                      역할 *
+                    </label>
+                    <CustomSelect
+                      value={formData.role}
+                      onChange={(value) => setFormData({ ...formData, role: value })}
+                      options={roles.map((role) => ({ value: role.code, label: role.name }))}
+                      placeholder="역할 선택"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Optional Fields */}
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900">추가 정보 (선택)</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">닉네임</label>
+                    <input
+                      type="text"
+                      value={formData.nickname}
+                      onChange={(e) => setFormData({ ...formData, nickname: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                      placeholder="귀여운펭귄"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <Phone className="w-4 h-4 inline mr-1" />
+                      전화번호
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                      placeholder="010-1234-5678"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">성별</label>
+                    <CustomSelect
+                      value={formData.gender}
+                      onChange={(value) => setFormData({ ...formData, gender: value })}
+                      options={[
+                        { value: '', label: '선택 안함' },
+                        ...genders.map((gender) => ({ value: gender.code, label: gender.name })),
+                      ]}
+                      placeholder="성별 선택"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <Calendar className="w-4 h-4 inline mr-1" />
+                      나이
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.age}
+                      onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                      placeholder="25"
+                      min="14"
+                      max="120"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      <MapPin className="w-4 h-4 inline mr-1" />
+                      시/도
+                    </label>
+                    <CustomSelect
+                      value={formData.cityCode}
+                      onChange={(value) => {
+                        const selectedRegion = regions.find((r) => r.code === value);
+                        setFormData({
+                          ...formData,
+                          cityCode: value,
+                          city: selectedRegion?.name || '',
+                          district: '',
+                        });
+                      }}
+                      options={[
+                        { value: '', label: '선택 안함' },
+                        ...regions.map((region) => ({ value: region.code, label: region.name })),
+                      ]}
+                      placeholder="시/도 선택"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">구/군</label>
+                    <CustomSelect
+                      value={formData.district}
+                      onChange={(value) => setFormData({ ...formData, district: value })}
+                      options={[
+                        { value: '', label: '선택 안함' },
+                        ...districts.map((district) => ({ value: district.name, label: district.name })),
+                      ]}
+                      placeholder="구/군 선택"
+                      disabled={!formData.cityCode}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setShowAddUserModal(false)}
+                  className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleAddUser}
+                  disabled={addUserLoading}
+                  className="flex-1 px-6 py-3 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {addUserLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      추가 중...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-5 h-5" />
+                      사용자 추가
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>,
         document.body

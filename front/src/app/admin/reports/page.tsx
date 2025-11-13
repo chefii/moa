@@ -18,6 +18,7 @@ import {
   ReportType,
   UpdateReportStatusDto,
 } from '@/lib/api/admin/reports';
+import { useBadgeStore } from '@/store/badgeStore';
 
 const REPORT_STATUSES: { value: ReportStatus; label: string; color: string }[] = [
   { value: 'PENDING', label: '대기', color: 'bg-yellow-100 text-yellow-700' },
@@ -34,6 +35,7 @@ const REPORT_TYPES: { value: ReportType; label: string }[] = [
 ];
 
 export default function ReportsPage() {
+  const { refreshReportBadge } = useBadgeStore();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,6 +91,8 @@ export default function ReportsPage() {
       await reportsApi.updateReportStatus(selectedReport.id, data);
       setShowDetailModal(false);
       fetchReports();
+      // Refresh badge count in sidebar
+      refreshReportBadge();
     } catch (error) {
       console.error('Failed to update report status:', error);
       alert('상태 업데이트에 실패했습니다.');

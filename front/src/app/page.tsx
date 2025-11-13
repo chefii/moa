@@ -81,8 +81,8 @@ export default function Home() {
                 </Link>
               )}
 
-              {/* Admin Dashboard (only for SUPER_ADMIN) */}
-              {user.role === UserRole.SUPER_ADMIN && (
+              {/* Admin Dashboard (for all admin roles) */}
+              {isAdmin() && (
                 <Link href="/admin" className="group">
                   <div className="bg-white/80 backdrop-blur-lg rounded-2xl p-8 shadow-lg border border-moa-primary/20 hover:shadow-2xl hover:scale-105 transition-all">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">

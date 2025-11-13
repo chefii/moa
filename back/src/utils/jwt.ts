@@ -8,7 +8,8 @@ const REFRESH_TOKEN_EXPIRES_IN = process.env.REFRESH_TOKEN_EXPIRES_IN || '30d';
 export interface JwtPayload {
   userId: string;
   email: string;
-  role: string;
+  role: string; // 하위 호환성을 위해 유지 (primary role)
+  roles: string[]; // 다중 역할 지원
 }
 
 export const generateToken = (payload: JwtPayload): string => {
