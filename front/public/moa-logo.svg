@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <style>
+    .ink { stroke:#111827; stroke-width:36; stroke-linecap:round; stroke-linejoin:round; }
+    .dot { fill:#111827; }
+  </style>
+
+  <rect width="1024" height="1024" fill="white"/>
+  <path class="ink" d="M512 140
+    C374 140 268 246 268 384
+    C268 580 512 900 512 900
+    C512 900 756 580 756 384
+    C756 246 650 140 512 140 Z" fill="none"/>
+  <path class="ink" d="M356 600 V360 L468 272 L512 320 L556 272 L668 360 V600"/>
+  <circle class="dot" cx="468" cy="460" r="14"/>
+  <circle class="dot" cx="556" cy="460" r="14"/>
+  <path class="ink" d="M512 480 v16"/>
+  <path class="ink" d="M420 510 H360"/>
+  <path class="ink" d="M604 510 H664"/>
+</svg>

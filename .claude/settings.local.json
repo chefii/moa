@@ -3,7 +3,8 @@
     "allow": [
       "WebSearch",
       "WebFetch(domain:www.somoim.co.kr)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm run prisma:seed-menu:*)"
     ],
     "deny": [],
     "ask": []

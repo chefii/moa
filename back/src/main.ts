@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
 import { PrismaClient } from '@prisma/client';
 import Redis from 'ioredis';
 
@@ -11,6 +12,23 @@ import Redis from 'ioredis';
 import authRoutes from './routes/auth';
 import trustRoutes from './routes/trust';
 import usersRoutes from './routes/users';
+import settingsRoutes from './routes/settings';
+import categoriesRoutes from './routes/categories';
+import commonCodesRoutes from './routes/common-codes';
+import verificationRoutes from './routes/verification';
+import uploadRoutes from './routes/upload';
+
+// Admin routes
+import adminCommonCodesRoutes from './routes/admin/common-codes';
+import adminBannersRoutes from './routes/admin/banners';
+import adminPopupsRoutes from './routes/admin/popups';
+import adminEventsRoutes from './routes/admin/events';
+import adminNoticesRoutes from './routes/admin/notices';
+import adminCategoriesRoutes from './routes/admin/categories';
+import adminReportsRoutes from './routes/admin/reports';
+import adminMenuCategoriesRoutes from './routes/admin/menu-categories';
+import adminMenuItemsRoutes from './routes/admin/menu-items';
+import adminUsersVerificationRoutes from './routes/admin/users-verification';
 
 // Load environment variables
 dotenv.config();
@@ -103,6 +121,27 @@ app.get('/api', (req: Request, res: Response) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/trust', trustRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/categories', categoriesRoutes);
+app.use('/api/common-codes', commonCodesRoutes);
+app.use('/api/verification', verificationRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Static file serving for uploaded files
+const uploadDir = process.env.UPLOAD_DIR || '/Users/philip/project/moa_file';
+app.use('/uploads', express.static(uploadDir));
+
+// Admin routes
+app.use('/api/admin/common-codes', adminCommonCodesRoutes);
+app.use('/api/admin/banners', adminBannersRoutes);
+app.use('/api/admin/popups', adminPopupsRoutes);
+app.use('/api/admin/events', adminEventsRoutes);
+app.use('/api/admin/notices', adminNoticesRoutes);
+app.use('/api/admin/categories', adminCategoriesRoutes);
+app.use('/api/admin/reports', adminReportsRoutes);
+app.use('/api/admin/menu-categories', adminMenuCategoriesRoutes);
+app.use('/api/admin/menu-items', adminMenuItemsRoutes);
+app.use('/api/admin/users-verification', adminUsersVerificationRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {
@@ -141,17 +180,17 @@ process.on('SIGINT', async () => {
 // Start Server
 app.listen(PORT, () => {
   console.log(`
-  ╔═══════════════════════════════════════╗
-  ║                                       ║
-  ║   🎉 모아 API Server Running 🎉      ║
-  ║                                       ║
-  ║   Port: ${PORT}                       ${PORT.toString().length === 4 ? ' ' : ''}║
-  ║   Environment: ${process.env.NODE_ENV || 'development'}           ${(process.env.NODE_ENV || 'development').length === 10 ? '' : ' '}║
-  ║                                       ║
-  ║   Health Check: http://localhost:${PORT}/health
-  ║   API Docs: http://localhost:${PORT}/api    ║
-  ║                                       ║
-  ╚═══════════════════════════════════════╝
+  ╔═══════════════════════════════════════════════╗
+  ║                                               ║
+  ║          🎉 모아 API Server Running 🎉        ║
+  ║                                               ║
+  ║   Port: ${PORT}                              ${PORT.toString().length === 4 ? ' ' : ''}   ║
+  ║   Environment: ${process.env.NODE_ENV || 'development'} ${(process.env.NODE_ENV || 'development').length === 10 ? '' : ' '}                  ║
+  ║                                               ║
+  ║   Health Check: http://localhost:${PORT}/health  ║
+  ║   API Docs: http://localhost:${PORT}/api         ║
+  ║                                               ║
+  ╚═══════════════════════════════════════════════╝
   `);
 });
 

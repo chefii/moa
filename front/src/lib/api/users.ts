@@ -5,10 +5,23 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  nickname?: string;
   role: 'USER' | 'BUSINESS_ADMIN' | 'SUPER_ADMIN';
   phone?: string;
+  location?: string;
   isVerified: boolean;
+  isPhoneVerified?: boolean;
+  emailVerifiedAt?: string;
+  phoneVerifiedAt?: string;
   createdAt: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  color?: string;
 }
 
 export interface UserDetail extends User {
@@ -23,6 +36,9 @@ export interface UserDetail extends User {
     currentStreak: number;
     longestStreak: number;
   };
+  interests?: {
+    category: Category;
+  }[];
 }
 
 export interface UserListResponse {

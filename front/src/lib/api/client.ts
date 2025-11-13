@@ -17,25 +17,18 @@ apiClient.interceptors.request.use(
     // Get token from localStorage
     if (typeof window !== 'undefined') {
       const authStore = localStorage.getItem('moa-auth-storage');
-      console.log('Auth storage:', authStore);
       if (authStore) {
         try {
           const { state } = JSON.parse(authStore);
           const token = state?.user?.token;
-          console.log('Token found:', token ? 'YES' : 'NO');
-          console.log('User role:', state?.user?.role);
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
           }
         } catch (error) {
           console.error('Failed to parse auth storage:', error);
         }
-      } else {
-        console.log('No auth storage found');
       }
     }
-    console.log('Request URL:', config.url);
-    console.log('Authorization header:', config.headers.Authorization);
     return config;
   },
   (error) => {

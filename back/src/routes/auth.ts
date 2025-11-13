@@ -9,7 +9,7 @@ const router = Router();
 // Register
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { email, password, name, phone, role } = req.body;
+    const { email, password, name, phone, role, nickname, location, interests } = req.body;
 
     // Validation
     if (!email || !password || !name) {
@@ -33,6 +33,21 @@ router.post('/register', async (req: Request, res: Response) => {
       return;
     }
 
+    // Check if nickname already exists
+    if (nickname) {
+      const existingNickname = await prisma.user.findUnique({
+        where: { nickname },
+      });
+
+      if (existingNickname) {
+        res.status(409).json({
+          success: false,
+          message: 'Nickname already taken',
+        });
+        return;
+      }
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -42,15 +57,19 @@ router.post('/register', async (req: Request, res: Response) => {
         email,
         password: hashedPassword,
         name,
+        nickname,
         phone,
+        location,
         role: role || 'USER',
       },
       select: {
         id: true,
         email: true,
         name: true,
+        nickname: true,
         role: true,
         profileImage: true,
+        location: true,
       },
     });
 
@@ -73,6 +92,16 @@ router.post('/register', async (req: Request, res: Response) => {
       },
     });
 
+    // TODO: Handle interests when Category data is seeded
+    // if (interests && Array.isArray(interests) && interests.length > 0) {
+    //   await prisma.userInterest.createMany({
+    //     data: interests.map((categoryId: string) => ({
+    //       userId: user.id,
+    //       categoryId,
+    //     })),
+    //   });
+    // }
+
     // Generate tokens
     const token = generateToken({
       userId: user.id,
@@ -93,8 +122,10 @@ router.post('/register', async (req: Request, res: Response) => {
           id: user.id,
           email: user.email,
           name: user.name,
+          nickname: user.nickname,
           role: user.role,
           avatar: user.profileImage,
+          location: user.location,
         },
         token,
         refreshToken,
@@ -113,7 +144,7 @@ router.post('/register', async (req: Request, res: Response) => {
 // Login
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
 
     // Validation
     if (!email || !password) {
@@ -124,6 +155,11 @@ router.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
+    // 관리자 단축 로그인: "asdf" 입력 시에만 "asdf@asdf.com"으로 변환
+    if (email === 'asdf') {
+      email = 'asdf@asdf.com';
+    }
+
     // Find user
     const user = await prisma.user.findUnique({
       where: { email },
@@ -132,8 +168,10 @@ router.post('/login', async (req: Request, res: Response) => {
         email: true,
         password: true,
         name: true,
+        nickname: true,
         role: true,
         profileImage: true,
+        location: true,
       },
     });
 
@@ -176,8 +214,10 @@ router.post('/login', async (req: Request, res: Response) => {
           id: user.id,
           email: user.email,
           name: user.name,
+          nickname: user.nickname,
           role: user.role,
           avatar: user.profileImage,
+          location: user.location,
         },
         token,
         refreshToken,

@@ -18,7 +18,11 @@ export interface RegisterRequest {
   email: string;
   password: string;
   name: string;
+  nickname?: string;
   phone?: string;
+  location?: string;
+  interests?: string[];
+  role?: UserRole;
 }
 
 export interface AuthResponse {
@@ -26,8 +30,10 @@ export interface AuthResponse {
     id: string;
     email: string;
     name: string;
+    nickname?: string;
     role: UserRole;
     avatar?: string;
+    location?: string;
   };
   token: string;
   refreshToken?: string;
