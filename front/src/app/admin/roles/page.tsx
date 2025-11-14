@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Search, Shield, Users, Crown, Briefcase, Star, Loader2 } from 'lucide-react';
 import { usersApi, AdminUser } from '@/lib/api/admin/users';
 import { UserRole } from '@/store/authStore';
-import CustomSelect from '@/components/ui/CustomSelect';
 import { useToast } from '@/contexts/ToastContext';
 import { commonCodesApi, CommonCode } from '@/lib/api/common-codes';
 
@@ -37,7 +36,10 @@ export default function RolesPage() {
   // Modal state
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const [newRole, setNewRole] = useState<string>('');
+  const [editingRoles, setEditingRoles] = useState<string[]>([]);
+  const [editingPrimaryRole, setEditingPrimaryRole] = useState<string>('');
+  const [roleChangeReason, setRoleChangeReason] = useState('');
+  const [savingRoles, setSavingRoles] = useState(false);
 
   // Get icon for role
   const getRoleIcon = (code: string) => {
@@ -148,16 +150,43 @@ export default function RolesPage() {
   // Handle edit role
   const handleEditRole = (user: AdminUser) => {
     setSelectedUser(user);
-    setNewRole(user.role);
+    const roleCodes = user.userRoles.map(ur => ur.roleCode);
+    const primaryRole = user.userRoles.find(ur => ur.isPrimary)?.roleCode || roleCodes[0];
+    setEditingRoles(roleCodes);
+    setEditingPrimaryRole(primaryRole);
+    setRoleChangeReason('');
     setShowEditModal(true);
+  };
+
+  // Handle toggle role
+  const handleToggleRole = (roleCode: string) => {
+    setEditingRoles(prev => {
+      if (prev.includes(roleCode)) {
+        const newRoles = prev.filter(r => r !== roleCode);
+        if (roleCode === editingPrimaryRole && newRoles.length > 0) {
+          setEditingPrimaryRole(newRoles[0]);
+        }
+        return newRoles;
+      } else {
+        return [...prev, roleCode];
+      }
+    });
   };
 
   // Handle update role
   const handleUpdateRole = async () => {
-    if (!selectedUser || !newRole) return;
+    if (!selectedUser || editingRoles.length === 0) {
+      showError('최소 하나의 역할을 선택해야 합니다.');
+      return;
+    }
 
+    setSavingRoles(true);
     try {
-      await usersApi.updateUserRole(selectedUser.id, { role: newRole });
+      await usersApi.updateUserRoles(selectedUser.id, {
+        roles: editingRoles,
+        primaryRole: editingPrimaryRole,
+        reason: roleChangeReason || undefined,
+      });
       showSuccess('역할이 성공적으로 변경되었습니다.');
       setShowEditModal(false);
       fetchUsers();
@@ -165,6 +194,8 @@ export default function RolesPage() {
     } catch (error) {
       console.error('Failed to update user role:', error);
       showError('역할 변경에 실패했습니다.');
+    } finally {
+      setSavingRoles(false);
     }
   };
 
@@ -437,33 +468,95 @@ export default function RolesPage() {
 
               <div className="mb-4">
                 <div className="text-sm text-gray-600 mb-2">
-                  현재 역할: <span className="font-semibold text-gray-900">{getRoleInfo(selectedUser.role)?.label}</span>
+                  현재 역할:{' '}
+                  <span className="font-semibold text-gray-900">
+                    {selectedUser.userRoles.map(ur => getRoleInfo(ur.roleCode)?.label).join(', ')}
+                  </span>
                 </div>
 
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  새로운 역할
+                  역할 선택
                 </label>
-                <CustomSelect
-                  value={newRole}
-                  onChange={(value) => setNewRole(value)}
-                  options={roleDefinitions.map((opt) => ({ value: opt.value, label: opt.label }))}
-                  placeholder="새로운 역할 선택"
-                />
+                <div className="grid grid-cols-1 gap-3 p-4 bg-gray-50 rounded-xl max-h-64 overflow-y-auto">
+                  {roleDefinitions.map((role) => {
+                    const Icon = role.icon;
+                    return (
+                      <label key={role.value} className="flex items-start gap-2 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editingRoles.includes(role.value)}
+                          onChange={() => handleToggleRole(role.value)}
+                          className="mt-0.5 w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4 text-moa-primary" />
+                            <span className="text-sm font-semibold text-gray-900">{role.label}</span>
+                            {editingRoles.includes(role.value) && editingPrimaryRole === role.value && (
+                              <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                            )}
+                          </div>
+                          {role.description && (
+                            <p className="text-xs text-gray-500 mt-0.5">{role.description}</p>
+                          )}
+                        </div>
+                        {editingRoles.includes(role.value) && editingRoles.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setEditingPrimaryRole(role.value);
+                            }}
+                            className={`text-xs px-2 py-1 rounded ${
+                              editingPrimaryRole === role.value
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            }`}
+                          >
+                            주역할
+                          </button>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    변경 사유 (선택)
+                  </label>
+                  <textarea
+                    value={roleChangeReason}
+                    onChange={(e) => setRoleChangeReason(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                    rows={2}
+                    placeholder="역할 변경 사유를 입력하세요..."
+                  />
+                </div>
               </div>
             </div>
 
             <div className="p-6 border-t border-gray-200 flex gap-3">
               <button
                 onClick={() => setShowEditModal(false)}
-                className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 font-semibold transition-colors"
+                disabled={savingRoles}
+                className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 취소
               </button>
               <button
                 onClick={handleUpdateRole}
-                className="flex-1 px-4 py-3 text-white bg-gradient-to-r from-moa-primary to-moa-accent rounded-xl hover:shadow-lg font-semibold transition-all"
+                disabled={savingRoles || editingRoles.length === 0}
+                className="flex-1 px-4 py-3 text-white bg-gradient-to-r from-moa-primary to-moa-accent rounded-xl hover:shadow-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                변경
+                {savingRoles ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    저장 중...
+                  </>
+                ) : (
+                  '변경'
+                )}
               </button>
             </div>
           </div>

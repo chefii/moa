@@ -18,6 +18,7 @@ import commonCodesRoutes from './routes/common-codes';
 import verificationRoutes from './routes/verification';
 import uploadRoutes from './routes/upload';
 import notificationsRoutes from './routes/notifications';
+import popupsRoutes from './routes/popups';
 
 // Admin routes
 import adminCommonCodesRoutes from './routes/admin/common-codes';
@@ -129,6 +130,7 @@ app.use('/api/common-codes', commonCodesRoutes);
 app.use('/api/verification', verificationRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/popups', popupsRoutes);
 
 // Static file serving for uploaded files
 const uploadDir = process.env.UPLOAD_DIR || '/Users/philip/project/moa_file';

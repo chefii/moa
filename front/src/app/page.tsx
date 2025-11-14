@@ -1,19 +1,65 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from "next/link";
 import { useAuthStore, UserRole } from '@/store/authStore';
 import { User, Building2, Shield, LogOut, LogIn } from 'lucide-react';
+import { publicPopupsApi, PublicPopup } from '@/lib/api/popups';
+import PopupDisplay from '@/components/PopupDisplay';
 
 export default function Home() {
   const { user, isAuthenticated, logout, isAdmin, isBusinessUser } = useAuthStore();
+  const [popups, setPopups] = useState<PublicPopup[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch active popups
+    const fetchPopups = async () => {
+      try {
+        const activePopups = await publicPopupsApi.getActivePopups();
+
+        // Filter out dismissed popups (localStorage fallback for non-authenticated users)
+        const filteredPopups = activePopups.filter(popup => {
+          if (popup.showOnce && !user) {
+            // Only use localStorage for non-authenticated users
+            const dismissed = localStorage.getItem(`popup_dismissed_${popup.id}`);
+            return !dismissed;
+          }
+          return true;
+        });
+
+        setPopups(filteredPopups);
+      } catch (error) {
+        console.error('Failed to fetch popups:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPopups();
+  }, [user]);
+
+  const handleClosePopup = (popupId: string) => {
+    setPopups(prev => prev.filter(p => p.id !== popupId));
+  };
 
   const handleLogout = () => {
     logout();
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-orange-50">
-      <div className="text-center max-w-4xl w-full">
+    <>
+      {/* Display popups */}
+      {popups.map(popup => (
+        <PopupDisplay
+          key={popup.id}
+          popup={popup}
+          onClose={() => handleClosePopup(popup.id)}
+        />
+      ))}
+
+      <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-orange-50">
+        <div className="text-center max-w-4xl w-full">
         <h1 className="text-6xl font-black mb-4 bg-moa-primary bg-clip-text text-transparent">
           모아
         </h1>
@@ -119,7 +165,8 @@ export default function Home() {
             </div>
           </>
         )}
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }

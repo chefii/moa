@@ -138,6 +138,7 @@ model User {
   interestForest     InterestForest[]
   notifications      Notification[]          @relation("UserNotifications")
   notificationReads  NotificationRead[]
+  popupViews         PopupView[]
 
   // History Relations
   loginHistory              LoginHistory[]
@@ -153,15 +154,25 @@ model User {
   @@map("users")
 }
 
+/// 사용자 역할 매핑 테이블 - 한 사용자가 여러 역할을 가질 수 있도록 지원
 model UserRole {
+  /// 역할 매핑 고유 ID
   id        String   @id @default(uuid())
+  /// 사용자 ID (users 테이블 참조)
   userId    String   @map("user_id")
-  roleCode  String   @map("role_code") // CommonCode ROLE 그룹의 code 값
-  isPrimary Boolean  @default(false) @map("is_primary") // 주요 역할 (UI 표시용)
-  grantedBy String?  @map("granted_by") // 역할을 부여한 관리자 ID
+  /// 역할 코드 (CommonCode ROLE 그룹의 code 값)
+  roleCode  String   @map("role_code")
+  /// 주요 역할 여부 (UI에서 대표로 표시할 역할)
+  isPrimary Boolean  @default(false) @map("is_primary")
+  /// 역할을 부여한 관리자 ID (추적용)
+  grantedBy String?  @map("granted_by")
+  /// 역할 부여 일시
   grantedAt DateTime @default(now()) @map("granted_at")
-  expiresAt DateTime? @map("expires_at") // 역할 만료일 (선택적, 임시 역할용)
+  /// 역할 만료일 (임시 역할용, null이면 영구)
+  expiresAt DateTime? @map("expires_at")
+  /// 생성 일시
   createdAt DateTime @default(now()) @map("created_at")
+  /// 수정 일시
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -538,25 +549,64 @@ model Banner {
   @@map("banners")
 }
 
+/// 팝업 테이블 - 공지사항 팝업, 이벤트 팝업 등
 model Popup {
+  /// 팝업 고유 ID
   id          String    @id @default(uuid())
+  /// 팝업 타입 (MODAL, BOTTOM_SHEET, TOAST)
   type        PopupType
+  /// 팝업 제목
   title       String
+  /// 팝업 내용 (HTML 지원)
   content     String    @db.Text
+  /// 이미지 URL
   imageUrl    String?   @map("image_url")
+  /// 링크 URL (클릭 시 이동)
   linkUrl     String?   @map("link_url")
+  /// 버튼 텍스트
   buttonText  String?   @map("button_text")
+  /// 노출 시작일
   startDate   DateTime  @map("start_date")
+  /// 노출 종료일
   endDate     DateTime  @map("end_date")
+  /// 활성화 여부
   isActive    Boolean   @default(true) @map("is_active")
+  /// 1회만 표시 여부
   showOnce    Boolean   @default(false) @map("show_once")
+  /// 우선순위 (높을수록 먼저 표시)
   priority    Int       @default(0)
+  /// 총 조회수
   viewCount   Int       @default(0) @map("view_count")
+  /// 생성자 ID
   createdBy   String    @map("created_by")
+  /// 생성 일시
   createdAt   DateTime  @default(now()) @map("created_at")
+  /// 수정 일시
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
+  popupViews  PopupView[]
+
   @@map("popups")
+}
+
+/// 팝업 조회 기록 테이블 - 사용자별 팝업 조회 이력 추적 (1회만 표시 기능 지원)
+model PopupView {
+  /// 조회 기록 고유 ID
+  id        String   @id @default(uuid())
+  /// 팝업 ID
+  popupId   String   @map("popup_id")
+  /// 사용자 ID (비회원은 null)
+  userId    String?  @map("user_id")
+  /// 조회 일시
+  viewedAt  DateTime @default(now()) @map("viewed_at")
+
+  popup     Popup    @relation(fields: [popupId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([popupId, userId])
+  @@index([userId])
+  @@index([popupId])
+  @@map("popup_views")
 }
 
 model Event {

@@ -22,6 +22,7 @@ import {
   MapPin,
   Users as UsersIcon,
   Lock,
+  Edit2,
 } from 'lucide-react';
 import { usersApi as adminUsersApi, AdminUser, AdminUserDetail, GetUsersParams } from '@/lib/api/admin/users';
 import { usersVerificationApi } from '@/lib/api/admin/users-verification';
@@ -50,10 +51,18 @@ export default function UsersManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
 
+  // Role editing state
+  const [isEditingRoles, setIsEditingRoles] = useState(false);
+  const [editingRoles, setEditingRoles] = useState<string[]>([]);
+  const [editingPrimaryRole, setEditingPrimaryRole] = useState<string>('');
+  const [roleChangeReason, setRoleChangeReason] = useState('');
+  const [savingRoles, setSavingRoles] = useState(false);
+
   // Add User Modal
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [addUserLoading, setAddUserLoading] = useState(false);
-  const [roles, setRoles] = useState<CommonCode[]>([]);
+  const [roles, setRoles] = useState<CommonCode[]>([]); // 필터링되지 않은 역할 목록 (편집용)
+  const [filteredRoles, setFilteredRoles] = useState<CommonCode[]>([]); // 필터링된 역할 목록 (추가용)
   const [genders, setGenders] = useState<CommonCode[]>([]);
   const [regions, setRegions] = useState<Region[]>([]);
   const [districts, setDistricts] = useState<Region[]>([]);
@@ -91,11 +100,14 @@ export default function UsersManagementPage() {
           commonCodesApi.getRegions(),
         ]);
 
-        // Filter out admin roles (MODERATOR, CONTENT_MANAGER, SUPPORT_MANAGER, SETTLEMENT_MANAGER, ADMIN, SUPER_ADMIN)
-        const adminRoleCodes = ['MODERATOR', 'CONTENT_MANAGER', 'SUPPORT_MANAGER', 'SETTLEMENT_MANAGER', 'ADMIN', 'SUPER_ADMIN'];
-        const filteredRoles = rolesData.filter(role => !adminRoleCodes.includes(role.code));
+        // 모든 역할 저장 (편집 시 사용)
+        setRoles(rolesData);
 
-        setRoles(filteredRoles);
+        // Filter out admin roles for add user form
+        const adminRoleCodes = ['MODERATOR', 'CONTENT_MANAGER', 'SUPPORT_MANAGER', 'SETTLEMENT_MANAGER', 'ADMIN', 'SUPER_ADMIN'];
+        const nonAdminRoles = rolesData.filter(role => !adminRoleCodes.includes(role.code));
+        setFilteredRoles(nonAdminRoles);
+
         setGenders(gendersData);
         setRegions(regionsData);
       } catch (error) {
@@ -147,6 +159,7 @@ export default function UsersManagementPage() {
   const handleViewUserDetail = async (userId: string) => {
     setLoadingUserDetail(true);
     setShowUserModal(true);
+    setIsEditingRoles(false); // Reset editing state
     try {
       const response = await adminUsersApi.getUserById(userId);
       setSelectedUser(response.data);
@@ -155,6 +168,67 @@ export default function UsersManagementPage() {
       setShowUserModal(false);
     } finally {
       setLoadingUserDetail(false);
+    }
+  };
+
+  const handleStartEditRoles = () => {
+    if (!selectedUser) return;
+    const roleCodes = selectedUser.userRoles.map(ur => ur.roleCode);
+    const primaryRole = selectedUser.userRoles.find(ur => ur.isPrimary)?.roleCode || roleCodes[0];
+    setEditingRoles(roleCodes);
+    setEditingPrimaryRole(primaryRole);
+    setRoleChangeReason('');
+    setIsEditingRoles(true);
+  };
+
+  const handleCancelEditRoles = () => {
+    setIsEditingRoles(false);
+    setEditingRoles([]);
+    setEditingPrimaryRole('');
+    setRoleChangeReason('');
+  };
+
+  const handleToggleRole = (roleCode: string) => {
+    setEditingRoles(prev => {
+      if (prev.includes(roleCode)) {
+        const newRoles = prev.filter(r => r !== roleCode);
+        // If removing primary role, set new primary
+        if (roleCode === editingPrimaryRole && newRoles.length > 0) {
+          setEditingPrimaryRole(newRoles[0]);
+        }
+        return newRoles;
+      } else {
+        return [...prev, roleCode];
+      }
+    });
+  };
+
+  const handleSaveRoles = async () => {
+    if (!selectedUser || editingRoles.length === 0) {
+      showError('최소 하나의 역할을 선택해야 합니다.');
+      return;
+    }
+
+    setSavingRoles(true);
+    try {
+      await adminUsersApi.updateUserRoles(selectedUser.id, {
+        roles: editingRoles,
+        primaryRole: editingPrimaryRole,
+        reason: roleChangeReason || undefined,
+      });
+
+      showSuccess('사용자 역할이 변경되었습니다.');
+      setIsEditingRoles(false);
+
+      // Refresh user detail
+      await handleViewUserDetail(selectedUser.id);
+
+      // Refresh user list
+      fetchUsers(currentPage);
+    } catch (error: any) {
+      showError(error.response?.data?.message || '역할 변경에 실패했습니다.');
+    } finally {
+      setSavingRoles(false);
     }
   };
 
@@ -438,28 +512,126 @@ export default function UsersManagementPage() {
                       <p className="text-lg font-bold text-gray-900">{selectedUser.nickname || '-'}</p>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 mb-2">역할</p>
-                      <div className="flex flex-wrap gap-2">
-                        {selectedUser.userRoles.map((userRole, index) => (
-                          <span
-                            key={index}
-                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
-                              userRole.roleCode.includes('ADMIN')
-                                ? 'bg-red-100 text-red-700'
-                                : userRole.roleCode.includes('BUSINESS')
-                                ? 'bg-moa-primary/10 text-moa-primary'
-                                : userRole.roleCode.includes('HOST')
-                                ? 'bg-purple-100 text-purple-700'
-                                : 'bg-blue-100 text-blue-700'
-                            }`}
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm text-gray-600">역할</p>
+                        {!isEditingRoles && (
+                          <button
+                            onClick={handleStartEditRoles}
+                            className="text-xs text-moa-primary hover:text-moa-primary-dark font-semibold flex items-center gap-1"
                           >
-                            {userRole.roleCode}
-                            {userRole.isPrimary && (
-                              <Star className="w-3 h-3 fill-current" />
-                            )}
-                          </span>
-                        ))}
+                            <Edit2 className="w-3 h-3" />
+                            역할 변경
+                          </button>
+                        )}
                       </div>
+
+                      {!isEditingRoles ? (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedUser.userRoles.map((userRole, index) => {
+                            const roleName = roles.find(r => r.code === userRole.roleCode)?.name || userRole.roleCode;
+                            return (
+                              <span
+                                key={index}
+                                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold ${
+                                  userRole.roleCode.includes('ADMIN')
+                                    ? 'bg-red-100 text-red-700'
+                                    : userRole.roleCode.includes('BUSINESS')
+                                    ? 'bg-moa-primary/10 text-moa-primary'
+                                    : userRole.roleCode.includes('HOST')
+                                    ? 'bg-purple-100 text-purple-700'
+                                    : 'bg-blue-100 text-blue-700'
+                                }`}
+                              >
+                                {roleName}
+                                {userRole.isPrimary && (
+                                  <Star className="w-3 h-3 fill-current" />
+                                )}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50 rounded-xl max-h-64 overflow-y-auto">
+                            {roles.map((role) => (
+                              <label
+                                key={role.code}
+                                className="flex items-start gap-2 p-2 hover:bg-white rounded-lg transition-colors cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={editingRoles.includes(role.code)}
+                                  onChange={() => handleToggleRole(role.code)}
+                                  className="mt-0.5 w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold text-gray-900">{role.name}</span>
+                                    {editingRoles.includes(role.code) && editingPrimaryRole === role.code && (
+                                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                    )}
+                                  </div>
+                                  {role.description && (
+                                    <p className="text-xs text-gray-500 mt-0.5">{role.description}</p>
+                                  )}
+                                </div>
+                                {editingRoles.includes(role.code) && editingRoles.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setEditingPrimaryRole(role.code);
+                                    }}
+                                    className={`text-xs px-2 py-1 rounded ${
+                                      editingPrimaryRole === role.code
+                                        ? 'bg-yellow-100 text-yellow-700'
+                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    주역할
+                                  </button>
+                                )}
+                              </label>
+                            ))}
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                              변경 사유 (선택)
+                            </label>
+                            <textarea
+                              value={roleChangeReason}
+                              onChange={(e) => setRoleChangeReason(e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                              rows={2}
+                              placeholder="역할 변경 사유를 입력하세요..."
+                            />
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button
+                              onClick={handleCancelEditRoles}
+                              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                            >
+                              취소
+                            </button>
+                            <button
+                              onClick={handleSaveRoles}
+                              disabled={savingRoles || editingRoles.length === 0}
+                              className="flex-1 px-4 py-2 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                              {savingRoles ? (
+                                <>
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                  저장 중...
+                                </>
+                              ) : (
+                                '저장'
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
@@ -804,7 +976,7 @@ export default function UsersManagementPage() {
                     <CustomSelect
                       value={formData.role}
                       onChange={(value) => setFormData({ ...formData, role: value })}
-                      options={roles.map((role) => ({ value: role.code, label: role.name }))}
+                      options={filteredRoles.map((role) => ({ value: role.code, label: role.name }))}
                       placeholder="역할 선택"
                     />
                   </div>
