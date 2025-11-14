@@ -1,9 +1,72 @@
 import { Router, Request, Response } from 'express';
+import bcrypt from 'bcrypt';
 import { prisma } from '../../main';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/admin/users:
+ *   get:
+ *     summary: 사용자 목록 조회 (역할 필터링)
+ *     tags: [Admin - Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: role
+ *         schema:
+ *           type: string
+ *         description: 역할 필터 (예 USER, ADMIN, BUSINESS_USER 등)
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: 검색어 (이름, 이메일, 닉네임)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 페이지당 항목 수
+ *     responses:
+ *       200:
+ *         description: 사용자 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ */
 // Get all users with role filtering
 router.get('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -84,6 +147,41 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Req
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/users/{id}:
+ *   get:
+ *     summary: 사용자 상세 조회
+ *     tags: [Admin - Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 사용자 ID
+ *     responses:
+ *       200:
+ *         description: 사용자 정보 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ */
 // Get user by ID
 router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -157,6 +255,69 @@ router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: 
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/users/{id}/roles:
+ *   put:
+ *     summary: 사용자 역할 업데이트 (다중 역할 지원)
+ *     tags: [Admin - Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 사용자 ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - roles
+ *             properties:
+ *               roles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["VERIFIED_USER", "HOST"]
+ *                 description: 부여할 역할 코드 배열
+ *               primaryRole:
+ *                 type: string
+ *                 example: "HOST"
+ *                 description: 주 역할 (roles 배열 중 하나여야 함)
+ *               reason:
+ *                 type: string
+ *                 example: "호스트 권한 부여"
+ *                 description: 역할 변경 사유
+ *     responses:
+ *       200:
+ *         description: 사용자 역할 업데이트 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                 message:
+ *                   type: string
+ *                   example: User roles updated successfully
+ *       400:
+ *         description: 유효하지 않은 역할 또는 필수 필드 누락
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ */
 // Update user roles (다중 역할 지원)
 router.put('/:id/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -309,6 +470,45 @@ router.put('/:id/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async 
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/users/stats/roles:
+ *   get:
+ *     summary: 역할별 통계 조회
+ *     tags: [Admin - Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 역할별 통계 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalUsers:
+ *                       type: integer
+ *                       example: 1000
+ *                     roles:
+ *                       type: object
+ *                       additionalProperties:
+ *                         type: integer
+ *                       example:
+ *                         USER: 800
+ *                         VERIFIED_USER: 500
+ *                         HOST: 150
+ *                         BUSINESS_USER: 50
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ */
 // Get role statistics (다중 역할 지원)
 router.get('/stats/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -360,6 +560,105 @@ router.get('/stats/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), asyn
     res.status(500).json({
       success: false,
       message: 'Failed to fetch role statistics',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/admin/users/{id}/reset-password:
+ *   post:
+ *     summary: 사용자 비밀번호 초기화 (1234로 재설정)
+ *     tags: [Admin - Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 사용자 ID
+ *     responses:
+ *       200:
+ *         description: 비밀번호 초기화 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 사용자의 비밀번호를 임시비밀번호로 변경 했습니다.
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     userId:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ */
+// Reset user password to 1234
+router.post('/:id/reset-password', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+      return;
+    }
+
+    //임시비밀번호 (1234)
+    const newPassword = '1234';
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await prisma.user.update({
+      where: { id },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    res.json({
+      success: true,
+      message: `사용자의 비밀번호를 임시비밀번호로 변경 했습니다.`,
+      data: {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+      },
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reset password',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }

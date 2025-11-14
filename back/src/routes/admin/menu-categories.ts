@@ -5,6 +5,40 @@ import { authenticate, authorize } from '../../middlewares/auth';
 const router = Router();
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * /api/admin/menu-categories:
+ *   get:
+ *     summary: 메뉴 카테고리 목록 조회 (하위 메뉴 포함)
+ *     tags: [Admin - Menu Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: includeInactive
+ *         schema:
+ *           type: boolean
+ *         description: 비활성 카테고리 포함 여부
+ *     responses:
+ *       200:
+ *         description: 메뉴 카테고리 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ */
 // Get all menu categories with menu items
 router.get(
   '/',
@@ -40,6 +74,41 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/admin/menu-categories/{id}:
+ *   get:
+ *     summary: 메뉴 카테고리 상세 조회
+ *     tags: [Admin - Menu Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 메뉴 카테고리 ID
+ *     responses:
+ *       200:
+ *         description: 메뉴 카테고리 상세 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 메뉴 카테고리를 찾을 수 없음
+ */
 // Get single menu category
 router.get(
   '/:id',
@@ -79,6 +148,62 @@ router.get(
   }
 );
 
+/**
+ * @swagger
+ * /api/admin/menu-categories:
+ *   post:
+ *     summary: 메뉴 카테고리 생성
+ *     tags: [Admin - Menu Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: 시스템 관리
+ *               nameEn:
+ *                 type: string
+ *                 example: System
+ *               icon:
+ *                 type: string
+ *                 example: settings_icon
+ *               order:
+ *                 type: integer
+ *                 example: 1
+ *               isActive:
+ *                 type: boolean
+ *                 example: true
+ *               description:
+ *                 type: string
+ *                 example: 시스템 관리 메뉴
+ *               requiredRoles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["SUPER_ADMIN"]
+ *     responses:
+ *       201:
+ *         description: 메뉴 카테고리 생성 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ */
 // Create menu category
 router.post(
   '/',
@@ -114,6 +239,63 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/admin/menu-categories/{id}:
+ *   put:
+ *     summary: 메뉴 카테고리 수정
+ *     tags: [Admin - Menu Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 메뉴 카테고리 ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               nameEn:
+ *                 type: string
+ *               icon:
+ *                 type: string
+ *               order:
+ *                 type: integer
+ *               isActive:
+ *                 type: boolean
+ *               description:
+ *                 type: string
+ *               requiredRoles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *     responses:
+ *       200:
+ *         description: 메뉴 카테고리 수정 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 메뉴 카테고리를 찾을 수 없음
+ */
 // Update menu category
 router.put(
   '/:id',
@@ -151,6 +333,42 @@ router.put(
   }
 );
 
+/**
+ * @swagger
+ * /api/admin/menu-categories/{id}:
+ *   delete:
+ *     summary: 메뉴 카테고리 삭제
+ *     tags: [Admin - Menu Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 메뉴 카테고리 ID
+ *     responses:
+ *       200:
+ *         description: 메뉴 카테고리 삭제 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Menu category deleted successfully
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 메뉴 카테고리를 찾을 수 없음
+ */
 // Delete menu category
 router.delete(
   '/:id',

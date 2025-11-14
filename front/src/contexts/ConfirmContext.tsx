@@ -116,9 +116,9 @@ export const ConfirmProvider: React.FC<ConfirmProviderProps> = ({ children }) =>
           />
 
           {/* Dialog */}
-          <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 duration-200" style={{ zIndex: 1 }}>
+          <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-visible" style={{ zIndex: 1 }}>
             {/* Header */}
-            <div className={`px-6 py-4 ${colors.bg} ${colors.border} border-b`}>
+            <div className={`px-6 py-4 ${colors.bg} ${colors.border} border-b rounded-t-3xl`}>
               <div className="flex items-center gap-3">
                 <div className={`w-10 h-10 rounded-full ${colors.icon} flex items-center justify-center`}>
                   {confirmState.type === 'danger' || confirmState.type === 'warning' ? (
@@ -139,10 +139,10 @@ export const ConfirmProvider: React.FC<ConfirmProviderProps> = ({ children }) =>
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-3">
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-3 rounded-b-3xl">
               <button
                 onClick={confirmState.onCancel}
-                className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors"
+                className="flex-1 px-4 py-3 border-2 border-gray-300 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors"
               >
                 {confirmState.cancelText}
               </button>

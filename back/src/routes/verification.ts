@@ -12,6 +12,37 @@ import {
 const router = Router();
 
 /**
+ * @swagger
+ * /api/verification/email/send:
+ *   post:
+ *     summary: 이메일 인증 메일 발송
+ *     tags: [Verification]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 인증 메일 발송 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Verification email sent successfully
+ *       400:
+ *         description: 이미 인증된 이메일
+ *       401:
+ *         description: 인증 필요
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ *       500:
+ *         description: 이메일 발송 실패
+ */
+/**
  * 이메일 인증 메일 발송 (재발송 포함)
  */
 router.post('/email/send', authenticate, async (req: Request, res: Response) => {
@@ -91,6 +122,42 @@ router.post('/email/send', authenticate, async (req: Request, res: Response) => 
   }
 });
 
+/**
+ * @swagger
+ * /api/verification/email/verify:
+ *   post:
+ *     summary: 이메일 인증 확인
+ *     tags: [Verification]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 example: abc123def456...
+ *                 description: 이메일로 전송된 인증 토큰
+ *     responses:
+ *       200:
+ *         description: 이메일 인증 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Email verified successfully
+ *       400:
+ *         description: 유효하지 않거나 만료된 토큰
+ */
 /**
  * 이메일 인증 확인
  */
@@ -174,6 +241,57 @@ router.post('/email/verify', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/verification/phone/send:
+ *   post:
+ *     summary: 전화번호 인증 코드 발송
+ *     tags: [Verification]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - phoneNumber
+ *             properties:
+ *               phoneNumber:
+ *                 type: string
+ *                 example: "01012345678"
+ *                 description: 인증할 전화번호 (하이픈 없이)
+ *     responses:
+ *       200:
+ *         description: 인증 코드 발송 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Verification code sent successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     expiresIn:
+ *                       type: integer
+ *                       example: 300
+ *                       description: 인증 코드 유효 시간 (초)
+ *       400:
+ *         description: 필수 필드 누락 또는 이미 인증된 전화번호
+ *       401:
+ *         description: 인증 필요
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ *       500:
+ *         description: SMS 발송 실패
+ */
 /**
  * 전화번호 인증 코드 발송
  */
@@ -284,6 +402,46 @@ router.post('/phone/send', authenticate, async (req: Request, res: Response) => 
 });
 
 /**
+ * @swagger
+ * /api/verification/phone/verify:
+ *   post:
+ *     summary: 전화번호 인증 코드 확인
+ *     tags: [Verification]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 example: "123456"
+ *                 description: SMS로 전송된 6자리 인증 코드
+ *     responses:
+ *       200:
+ *         description: 전화번호 인증 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Phone number verified successfully
+ *       400:
+ *         description: 유효하지 않거나 만료된 인증 코드
+ *       401:
+ *         description: 인증 필요
+ */
+/**
  * 전화번호 인증 코드 확인
  */
 router.post('/phone/verify', authenticate, async (req: Request, res: Response) => {
@@ -371,6 +529,55 @@ router.post('/phone/verify', authenticate, async (req: Request, res: Response) =
   }
 });
 
+/**
+ * @swagger
+ * /api/verification/status:
+ *   get:
+ *     summary: 인증 상태 조회
+ *     tags: [Verification]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 인증 상태 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     email:
+ *                       type: object
+ *                       properties:
+ *                         verified:
+ *                           type: boolean
+ *                           example: true
+ *                         verifiedAt:
+ *                           type: string
+ *                           format: date-time
+ *                           nullable: true
+ *                           example: "2025-01-14T10:30:00Z"
+ *                     phone:
+ *                       type: object
+ *                       properties:
+ *                         verified:
+ *                           type: boolean
+ *                           example: false
+ *                         verifiedAt:
+ *                           type: string
+ *                           format: date-time
+ *                           nullable: true
+ *                           example: null
+ *       401:
+ *         description: 인증 필요
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ */
 /**
  * 인증 상태 조회
  */

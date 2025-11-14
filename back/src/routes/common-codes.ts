@@ -4,6 +4,49 @@ import { PrismaClient } from '@prisma/client';
 const router = Router();
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * /api/common-codes/group/{groupCode}:
+ *   get:
+ *     summary: 그룹별 공통 코드 조회
+ *     tags: [CommonCodes]
+ *     parameters:
+ *       - in: path
+ *         name: groupCode
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 코드 그룹
+ *         example: REGION_METRO
+ *     responses:
+ *       200:
+ *         description: 공통 코드 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       code:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       description:
+ *                         type: string
+ *                       value:
+ *                         type: string
+ *                       order:
+ *                         type: number
+ */
 // Get common codes by group
 router.get('/group/:groupCode', async (req: Request, res: Response) => {
   try {
@@ -38,6 +81,37 @@ router.get('/group/:groupCode', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/common-codes/regions:
+ *   get:
+ *     summary: 전체 지역 목록 조회 (광역시/도)
+ *     tags: [CommonCodes]
+ *     responses:
+ *       200:
+ *         description: 지역 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       code:
+ *                         type: string
+ *                         example: REGION_METRO_SEOUL
+ *                       name:
+ *                         type: string
+ *                         example: 서울특별시
+ *                       order:
+ *                         type: number
+ */
 // Get all region groups (for location selection)
 router.get('/regions', async (req: Request, res: Response) => {
   try {
@@ -68,6 +142,45 @@ router.get('/regions', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/common-codes/regions/{regionCode}/districts:
+ *   get:
+ *     summary: 지역별 구/군 목록 조회
+ *     tags: [CommonCodes]
+ *     parameters:
+ *       - in: path
+ *         name: regionCode
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 지역 코드
+ *         example: REGION_METRO_SEOUL
+ *     responses:
+ *       200:
+ *         description: 구/군 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       code:
+ *                         type: string
+ *                         example: REGION_SEOUL_GANGNAM
+ *                       name:
+ *                         type: string
+ *                         example: 강남구
+ *                       order:
+ *                         type: number
+ */
 // Get districts by region code
 router.get('/regions/:regionCode/districts', async (req: Request, res: Response) => {
   try {

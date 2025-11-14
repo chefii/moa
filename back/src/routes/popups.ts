@@ -4,6 +4,54 @@ import { authenticate } from '../middlewares/auth';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/popups/active:
+ *   get:
+ *     summary: 활성 팝업 목록 조회
+ *     tags: [Popups]
+ *     description: 현재 활성화된 팝업 목록을 조회합니다. 인증된 사용자의 경우 이미 본 팝업은 제외됩니다.
+ *     responses:
+ *       200:
+ *         description: 활성 팝업 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       type:
+ *                         type: string
+ *                         enum: [MODAL, BANNER, TOAST]
+ *                       title:
+ *                         type: string
+ *                       content:
+ *                         type: string
+ *                       imageUrl:
+ *                         type: string
+ *                         nullable: true
+ *                       linkUrl:
+ *                         type: string
+ *                         nullable: true
+ *                       buttonText:
+ *                         type: string
+ *                         nullable: true
+ *                       showOnce:
+ *                         type: boolean
+ *                       priority:
+ *                         type: integer
+ *       500:
+ *         description: 팝업 조회 실패
+ */
 // Get active popups for public display
 // Optional authentication - if authenticated, filter out viewed popups
 router.get('/active', async (req: Request, res: Response) => {
@@ -85,6 +133,37 @@ router.get('/active', async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/popups/view/{popupId}:
+ *   post:
+ *     summary: 팝업 조회 기록
+ *     tags: [Popups]
+ *     description: 팝업 조회를 기록합니다. 인증된 사용자의 경우 DB에 저장되며, 비인증 사용자도 조회수는 증가합니다.
+ *     parameters:
+ *       - in: path
+ *         name: popupId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 팝업 ID
+ *     responses:
+ *       200:
+ *         description: 팝업 조회 기록 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Popup view recorded
+ *       500:
+ *         description: 팝업 조회 기록 실패
+ */
 // Record popup view
 // Optional authentication - if authenticated, save to database
 router.post('/view/:popupId', async (req: Request, res: Response) => {

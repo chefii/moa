@@ -88,7 +88,13 @@ export default function UsersManagementPage() {
 
   useEffect(() => {
     fetchUsers(currentPage);
-  }, [currentPage]);
+  }, [currentPage, roleFilter]);
+
+  // Handle search on Enter key or button click
+  const handleSearch = () => {
+    setCurrentPage(1); // Reset to first page
+    fetchUsers(1);
+  };
 
   // Load CommonCodes for add user form
   useEffect(() => {
@@ -103,10 +109,8 @@ export default function UsersManagementPage() {
         // 모든 역할 저장 (편집 시 사용)
         setRoles(rolesData);
 
-        // Filter out admin roles for add user form
-        const adminRoleCodes = ['MODERATOR', 'CONTENT_MANAGER', 'SUPPORT_MANAGER', 'SETTLEMENT_MANAGER', 'ADMIN', 'SUPER_ADMIN'];
-        const nonAdminRoles = rolesData.filter(role => !adminRoleCodes.includes(role.code));
-        setFilteredRoles(nonAdminRoles);
+        // 사용자 추가 폼에도 모든 역할 표시 (관리자 역할 포함)
+        setFilteredRoles(rolesData);
 
         setGenders(gendersData);
         setRegions(regionsData);
@@ -328,12 +332,20 @@ export default function UsersManagementPage() {
               placeholder="이름, 이메일로 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-moa-primary"
             />
           </div>
-          <button className="px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
-            <Filter className="w-4 h-4" />
-            필터
+          <button
+            onClick={handleSearch}
+            className="px-4 py-2 bg-moa-primary text-white font-semibold rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
+          >
+            <Search className="w-4 h-4" />
+            검색
           </button>
         </div>
       </div>
@@ -480,12 +492,45 @@ export default function UsersManagementPage() {
                 <UserIcon className="w-6 h-6" />
                 <h2 className="text-2xl font-black">사용자 상세 정보</h2>
               </div>
-              <button
-                onClick={handleCloseModal}
-                className="p-2 hover:bg-white/20 rounded-full transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                {selectedUser && (
+                  <button
+                    type="button"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+
+                      const confirmed = await confirm({
+                        title: '비밀번호 재설정',
+                        message: `${selectedUser.name}님의 비밀번호를 1234 로 재설정하시겠습니까?`,
+                        confirmText: '확인',
+                        cancelText: '취소',
+                        type: 'warning',
+                      });
+
+                      if (confirmed) {
+                        try {
+                          const response = await adminUsersApi.resetPassword(selectedUser.id);
+                          showSuccess(response.message || '비밀번호가 "1234"로 재설정되었습니다.');
+                        } catch (error: any) {
+                          showError(error.response?.data?.message || '비밀번호 재설정에 실패했습니다.');
+                        }
+                      }
+                    }}
+                    className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 text-sm"
+                  >
+                    <Lock className="w-4 h-4" />
+                    비밀번호 재설정
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Content */}

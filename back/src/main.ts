@@ -7,6 +7,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { PrismaClient } from '@prisma/client';
 import Redis from 'ioredis';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -38,8 +40,33 @@ dotenv.config();
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  log: process.env.NODE_ENV === 'development'
+    ? [
+        {
+          emit: 'event',
+          level: 'query',
+        },
+        {
+          emit: 'stdout',
+          level: 'error',
+        },
+        {
+          emit: 'stdout',
+          level: 'warn',
+        },
+      ]
+    : ['error'],
 });
+
+// Log queries with parameters in development
+if (process.env.NODE_ENV === 'development') {
+  prisma.$on('query' as never, (e: any) => {
+    console.log('Query: ' + e.query);
+    console.log('Params: ' + e.params);
+    console.log('Duration: ' + e.duration + 'ms');
+    console.log('---');
+  });
+}
 
 // Initialize Redis Client
 export const redis = new Redis({
@@ -65,6 +92,18 @@ app.use(compression()); // Compress responses
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 app.use(morgan('dev')); // Logging
+
+// Swagger API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'MOA API Documentation',
+}));
+
+// Swagger JSON
+app.get('/api-docs.json', (req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 
 // Health Check
 app.get('/health', async (req: Request, res: Response) => {
@@ -193,8 +232,9 @@ app.listen(PORT, () => {
   ║   Port: ${PORT}                              ${PORT.toString().length === 4 ? ' ' : ''}   ║
   ║   Environment: ${process.env.NODE_ENV || 'development'} ${(process.env.NODE_ENV || 'development').length === 10 ? '' : ' '}                  ║
   ║                                               ║
-  ║   Health Check: http://localhost:${PORT}/health  ║
-  ║   API Docs: http://localhost:${PORT}/api         ║
+  ║  Health Check: http://localhost:${PORT}/health   ║
+  ║  API Docs: http://localhost:${PORT}/api          ║
+  ║  Swagger UI: http://localhost:${PORT}/api-docs   ║
   ║                                               ║
   ╚═══════════════════════════════════════════════╝
   `);

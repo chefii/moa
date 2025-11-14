@@ -4,6 +4,56 @@ import { authenticate } from '../middlewares/auth';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/notifications:
+ *   get:
+ *     summary: 알림 목록 조회
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 페이지당 항목 수
+ *     responses:
+ *       200:
+ *         description: 알림 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: 인증 필요
+ */
 // Get notifications for current user
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
@@ -77,6 +127,34 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/notifications/unread-count:
+ *   get:
+ *     summary: 미읽음 알림 개수 조회
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 미읽음 알림 개수
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     unreadCount:
+ *                       type: integer
+ *                       example: 5
+ *       401:
+ *         description: 인증 필요
+ */
 // Get unread count
 router.get('/unread-count', authenticate, async (req: Request, res: Response) => {
   try {
@@ -122,6 +200,40 @@ router.get('/unread-count', authenticate, async (req: Request, res: Response) =>
   }
 });
 
+/**
+ * @swagger
+ * /api/notifications/{id}/read:
+ *   post:
+ *     summary: 알림 읽음 처리
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 알림 ID
+ *     responses:
+ *       200:
+ *         description: 알림 읽음 처리 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 알림을 읽음 처리했습니다.
+ *       401:
+ *         description: 인증 필요
+ *       404:
+ *         description: 알림을 찾을 수 없음
+ */
 // Mark notification as read
 router.post('/:id/read', authenticate, async (req: Request, res: Response) => {
   try {
@@ -171,6 +283,31 @@ router.post('/:id/read', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/notifications/read-all:
+ *   post:
+ *     summary: 모든 알림 읽음 처리
+ *     tags: [Notifications]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 모든 알림 읽음 처리 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 모든 알림을 읽음 처리했습니다.
+ *       401:
+ *         description: 인증 필요
+ */
 // Mark all notifications as read
 router.post('/read-all', authenticate, async (req: Request, res: Response) => {
   try {

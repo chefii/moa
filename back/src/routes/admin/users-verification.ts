@@ -7,7 +7,54 @@ import { sendVerificationEmail } from '../../utils/email';
 const router = Router();
 
 /**
- * 사용자 인증 상태 수동 변경 (관리자 전용)
+ * @swagger
+ * /api/admin/users-verification/{userId}/verification:
+ *   patch:
+ *     summary: 사용자 인증 상태 수동 변경
+ *     tags: [Admin - Users Verification]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 사용자 ID
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               isVerified:
+ *                 type: boolean
+ *                 example: true
+ *               isPhoneVerified:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: 인증 상태 변경 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: User verification status updated successfully
+ *                 data:
+ *                   type: object
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 사용자를 찾을 수 없음
  */
 router.patch(
   '/:userId/verification',
@@ -65,7 +112,50 @@ router.patch(
 );
 
 /**
- * 사용자에게 인증 이메일 재발송 (관리자 전용)
+ * @swagger
+ * /api/admin/users-verification/{userId}/resend-email:
+ *   post:
+ *     summary: 사용자에게 인증 이메일 재발송
+ *     tags: [Admin - Users Verification]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 사용자 ID
+ *     responses:
+ *       200:
+ *         description: 인증 이메일 재발송 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Verification email sent successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     email:
+ *                       type: string
+ *                     sentAt:
+ *                       type: string
+ *                       format: date-time
+ *       400:
+ *         description: 이미 인증된 이메일
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 사용자를 찾을 수 없음
  */
 router.post(
   '/:userId/resend-email',
@@ -154,7 +244,41 @@ router.post(
 );
 
 /**
- * 인증 통계 조회 (관리자 전용)
+ * @swagger
+ * /api/admin/users-verification/stats:
+ *   get:
+ *     summary: 인증 통계 조회
+ *     tags: [Admin - Users Verification]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 인증 통계 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     emailVerified:
+ *                       type: object
+ *                     phoneVerified:
+ *                       type: object
+ *                     bothVerified:
+ *                       type: object
+ *                     notVerified:
+ *                       type: object
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
  */
 router.get(
   '/stats',
@@ -220,7 +344,56 @@ router.get(
 );
 
 /**
- * 미인증 사용자 목록 조회 (관리자 전용)
+ * @swagger
+ * /api/admin/users-verification/unverified:
+ *   get:
+ *     summary: 미인증 사용자 목록 조회
+ *     tags: [Admin - Users Verification]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 페이지당 항목 수
+ *     responses:
+ *       200:
+ *         description: 미인증 사용자 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
  */
 router.get(
   '/unverified',

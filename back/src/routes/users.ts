@@ -4,6 +4,58 @@ import { authenticate, authorize } from '../middlewares/auth';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: 사용자 목록 조회 (관리자 전용)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: 페이지당 항목 수
+ *     responses:
+ *       200:
+ *         description: 사용자 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ */
 // Get all users (Admin only)
 router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -64,6 +116,58 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
   }
 });
 
+/**
+ * @swagger
+ * /api/users/{userId}:
+ *   get:
+ *     summary: 사용자 상세 조회 (관리자 전용)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 사용자 ID
+ *     responses:
+ *       200:
+ *         description: 사용자 정보 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     nickname:
+ *                       type: string
+ *                     phone:
+ *                       type: string
+ *                     location:
+ *                       type: string
+ *                     bio:
+ *                       type: string
+ *                     profileImage:
+ *                       type: string
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ */
 // Get user by ID (Admin only)
 router.get('/:userId', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -145,6 +249,48 @@ router.get('/:userId', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'),
   }
 });
 
+/**
+ * @swagger
+ * /api/users/stats/overview:
+ *   get:
+ *     summary: 사용자 통계 조회 (슈퍼 관리자 전용)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 사용자 통계 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalUsers:
+ *                       type: integer
+ *                       example: 1000
+ *                     roleStats:
+ *                       type: object
+ *                       additionalProperties:
+ *                         type: integer
+ *                       example:
+ *                         MEMBER: 950
+ *                         BUSINESS: 45
+ *                         SUPER_ADMIN: 5
+ *                     recentUsers:
+ *                       type: integer
+ *                       example: 50
+ *                       description: 최근 7일간 가입한 사용자 수
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음 (슈퍼 관리자만 접근 가능)
+ */
 // Get user statistics (Admin only)
 router.get('/stats/overview', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {

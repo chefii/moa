@@ -121,6 +121,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   // Load unread notifications count
   useEffect(() => {
+    // Only fetch if user is logged in
+    if (!user) return;
+
     const loadUnreadCount = async () => {
       try {
         const count = await notificationsApi.getUnreadCount();
@@ -135,7 +138,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     // Refresh every 30 seconds
     const interval = setInterval(loadUnreadCount, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   // Load notifications when dropdown opens
   const loadNotifications = async () => {

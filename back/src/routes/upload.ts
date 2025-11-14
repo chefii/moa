@@ -12,6 +12,57 @@ import {
 const router = Router();
 
 /**
+ * @swagger
+ * /api/upload/profile:
+ *   post:
+ *     summary: 프로필 이미지 업로드
+ *     tags: [Upload]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: 프로필 이미지 파일 (최대 5MB, JPG/PNG)
+ *     responses:
+ *       200:
+ *         description: 프로필 이미지 업로드 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 프로필 이미지가 업로드되었습니다.
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     filename:
+ *                       type: string
+ *                     originalname:
+ *                       type: string
+ *                     size:
+ *                       type: integer
+ *                     mimetype:
+ *                       type: string
+ *                     url:
+ *                       type: string
+ *       400:
+ *         description: 파일이 업로드되지 않음
+ *       401:
+ *         description: 인증 필요
+ */
+/**
  * 프로필 이미지 업로드
  */
 router.post(
@@ -52,6 +103,61 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/upload/post:
+ *   post:
+ *     summary: 게시물 이미지 업로드 (다중 파일)
+ *     tags: [Upload]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: 게시물 이미지 파일들 (최대 10개, 각 10MB, JPG/PNG)
+ *     responses:
+ *       200:
+ *         description: 게시물 이미지 업로드 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 3개의 이미지가 업로드되었습니다.
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       filename:
+ *                         type: string
+ *                       originalname:
+ *                         type: string
+ *                       size:
+ *                         type: integer
+ *                       mimetype:
+ *                         type: string
+ *                       url:
+ *                         type: string
+ *       400:
+ *         description: 파일이 업로드되지 않음
+ *       401:
+ *         description: 인증 필요
+ */
 /**
  * 게시물 이미지 업로드 (다중 파일)
  */
@@ -100,6 +206,57 @@ router.post(
 );
 
 /**
+ * @swagger
+ * /api/upload/event:
+ *   post:
+ *     summary: 이벤트 이미지 업로드
+ *     tags: [Upload]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: 이벤트 이미지 파일 (최대 10MB, JPG/PNG)
+ *     responses:
+ *       200:
+ *         description: 이벤트 이미지 업로드 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 이벤트 이미지가 업로드되었습니다.
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     filename:
+ *                       type: string
+ *                     originalname:
+ *                       type: string
+ *                     size:
+ *                       type: integer
+ *                     mimetype:
+ *                       type: string
+ *                     url:
+ *                       type: string
+ *       400:
+ *         description: 파일이 업로드되지 않음
+ *       401:
+ *         description: 인증 필요
+ */
+/**
  * 이벤트 이미지 업로드
  */
 router.post(
@@ -140,6 +297,59 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/upload/banner:
+ *   post:
+ *     summary: 배너 이미지 업로드 (관리자 전용)
+ *     tags: [Upload]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: 배너 이미지 파일 (최대 10MB, JPG/PNG)
+ *     responses:
+ *       200:
+ *         description: 배너 이미지 업로드 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 배너 이미지가 업로드되었습니다.
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     filename:
+ *                       type: string
+ *                     originalname:
+ *                       type: string
+ *                     size:
+ *                       type: integer
+ *                     mimetype:
+ *                       type: string
+ *                     url:
+ *                       type: string
+ *       400:
+ *         description: 파일이 업로드되지 않음
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음 (관리자만 업로드 가능)
+ */
 /**
  * 배너 이미지 업로드 (관리자 전용)
  */
@@ -190,6 +400,51 @@ router.post(
   }
 );
 
+/**
+ * @swagger
+ * /api/upload/{fileType}/{filename}:
+ *   delete:
+ *     summary: 파일 삭제
+ *     tags: [Upload]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: fileType
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [profile, post, event, banner]
+ *         description: 파일 타입
+ *       - in: path
+ *         name: filename
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 삭제할 파일명
+ *     responses:
+ *       200:
+ *         description: 파일 삭제 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 파일이 삭제되었습니다.
+ *       400:
+ *         description: 유효하지 않은 파일 타입
+ *       401:
+ *         description: 인증 필요
+ *       404:
+ *         description: 파일을 찾을 수 없음
+ *       500:
+ *         description: 파일 삭제 실패
+ */
 /**
  * 파일 삭제
  */

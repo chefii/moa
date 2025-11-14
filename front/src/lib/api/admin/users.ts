@@ -155,4 +155,10 @@ export const usersApi = {
     const response = await apiClient.get('/api/admin/users/stats/roles');
     return response.data;
   },
+
+  // Reset user password to 1234
+  resetPassword: async (id: string): Promise<{ success: boolean; message: string }> => {
+    const response = await apiClient.post(`/api/admin/users/${id}/reset-password`);
+    return response.data;
+  },
 };

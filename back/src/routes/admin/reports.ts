@@ -4,6 +4,36 @@ import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
 
+/**
+ * @swagger
+ * /api/admin/reports/badge:
+ *   get:
+ *     summary: 대기중인 신고 개수 조회 (뱃지용)
+ *     tags: [Admin - Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 대기중인 신고 개수 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     count:
+ *                       type: integer
+ *                       example: 15
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ */
 // Get pending reports count (for badge) - MUST be before /:id route
 router.get('/badge', authenticate, authorize('SUPER_ADMIN', 'ADMIN', 'MODERATOR'), async (req: Request, res: Response) => {
   try {
@@ -32,6 +62,48 @@ router.get('/badge', authenticate, authorize('SUPER_ADMIN', 'ADMIN', 'MODERATOR'
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/reports/stats/overview:
+ *   get:
+ *     summary: 신고 통계 조회
+ *     tags: [Admin - Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 신고 통계 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     totalReports:
+ *                       type: integer
+ *                       example: 150
+ *                     pendingReports:
+ *                       type: integer
+ *                       example: 10
+ *                     reviewingReports:
+ *                       type: integer
+ *                       example: 5
+ *                     resolvedReports:
+ *                       type: integer
+ *                       example: 120
+ *                     rejectedReports:
+ *                       type: integer
+ *                       example: 15
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ */
 // Get report statistics - MUST be before /:id route
 router.get('/stats/overview', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -63,6 +135,64 @@ router.get('/stats/overview', authenticate, authorize('SUPER_ADMIN'), async (req
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/reports:
+ *   get:
+ *     summary: 신고 목록 조회
+ *     tags: [Admin - Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [PENDING, REVIEWING, RESOLVED, REJECTED]
+ *         description: 신고 상태 필터
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: 페이지 번호
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: 페이지당 항목 수
+ *     responses:
+ *       200:
+ *         description: 신고 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ */
 // Get all reports
 router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -118,6 +248,62 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/reports/{id}:
+ *   get:
+ *     summary: 신고 상세 조회
+ *     tags: [Admin - Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 신고 ID
+ *     responses:
+ *       200:
+ *         description: 신고 상세 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     reporter:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                     reported:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 신고를 찾을 수 없음
+ */
 // Get report by ID
 router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
@@ -165,6 +351,57 @@ router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), asy
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/reports/{id}/status:
+ *   put:
+ *     summary: 신고 상태 업데이트
+ *     tags: [Admin - Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 신고 ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [PENDING, REVIEWING, RESOLVED, REJECTED]
+ *                 example: RESOLVED
+ *               adminNote:
+ *                 type: string
+ *                 example: 해당 게시물 삭제 처리 완료
+ *     responses:
+ *       200:
+ *         description: 신고 상태 업데이트 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *       400:
+ *         description: 필수 필드 누락
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ */
 // Update report status
 router.put('/:id/status', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
