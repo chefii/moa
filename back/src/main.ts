@@ -97,6 +97,11 @@ app.use(morgan('dev')); // Logging
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'MOA API Documentation',
+  swaggerOptions: {
+    persistAuthorization: true, // 브라우저에 토큰 저장
+    filter: true, // 검색 필터 활성화
+    displayRequestDuration: true, // 요청 시간 표시
+  },
 }));
 
 // Swagger JSON

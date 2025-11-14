@@ -28,7 +28,7 @@ const options: swaggerJsdoc.Options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'JWT Authorization header using the Bearer scheme',
+          description: 'JWT 토큰을 입력하세요. 형식: Bearer {token}이 아닌 {token}만 입력하면 됩니다.',
         },
       },
       schemas: {
@@ -88,11 +88,7 @@ const options: swaggerJsdoc.Options = {
         },
       },
     },
-    security: [
-      {
-        bearerAuth: [],
-      },
-    ],
+    // 전역 security는 제거하고 각 엔드포인트에서 개별 지정
   },
   apis: ['./src/routes/**/*.ts'], // Path to the API routes
 };
