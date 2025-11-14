@@ -53,6 +53,7 @@ interface User {
   avatar?: string;
   location?: string;
   token?: string;
+  refreshToken?: string;
 }
 
 interface AuthState {
@@ -60,6 +61,7 @@ interface AuthState {
   isAuthenticated: boolean;
   login: (user: User) => void;
   logout: () => void;
+  updateTokens: (token: string, refreshToken: string) => void;
   hasRole: (role: UserRole | string) => boolean;
   hasAnyRole: (roles: (UserRole | string)[]) => boolean;
   hasMinimumRole: (minimumRole: UserRole | string) => boolean;
@@ -79,6 +81,19 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         set({ user: null, isAuthenticated: false });
+      },
+
+      updateTokens: (token: string, refreshToken: string) => {
+        const { user } = get();
+        if (user) {
+          set({
+            user: {
+              ...user,
+              token,
+              refreshToken,
+            },
+          });
+        }
       },
 
       // 정확히 특정 권한인지 체크

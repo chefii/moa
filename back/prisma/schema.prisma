@@ -139,6 +139,7 @@ model User {
   notifications      Notification[]          @relation("UserNotifications")
   notificationReads  NotificationRead[]
   popupViews         PopupView[]
+  refreshTokens      RefreshToken[]
 
   // History Relations
   loginHistory              LoginHistory[]
@@ -607,6 +608,37 @@ model PopupView {
   @@index([userId])
   @@index([popupId])
   @@map("popup_views")
+}
+
+/// Refresh Token 테이블 - 자동 갱신 및 세션 관리
+model RefreshToken {
+  /// 토큰 고유 ID
+  id         String    @id @default(uuid())
+  /// 사용자 ID
+  userId     String    @map("user_id")
+  /// Refresh Token (해시 저장)
+  token      String    @unique
+  /// 만료 일시
+  expiresAt  DateTime  @map("expires_at")
+  /// 무효화 여부 (강제 로그아웃 시 사용)
+  isRevoked  Boolean   @default(false) @map("is_revoked")
+  /// 기기 정보 (User-Agent)
+  deviceInfo String?   @map("device_info")
+  /// IP 주소
+  ipAddress  String?   @map("ip_address")
+  /// 마지막 사용 일시
+  lastUsedAt DateTime? @map("last_used_at")
+  /// 생성 일시
+  createdAt  DateTime  @default(now()) @map("created_at")
+  /// 수정 일시
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 model Event {

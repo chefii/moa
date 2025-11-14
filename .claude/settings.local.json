@@ -12,7 +12,8 @@
       "Bash(npx prisma migrate dev:*)",
       "Bash(npx ts-node:*)",
       "Bash(npm run prisma:seed-gender:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(npm run prisma:migrate:*)"
     ],
     "deny": [],
     "ask": []

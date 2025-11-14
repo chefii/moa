@@ -208,6 +208,7 @@ export default function SignUpPage() {
       login({
         ...response.user,
         token: response.token,
+        refreshToken: response.refreshToken,
       });
 
       router.push('/profile');

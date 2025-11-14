@@ -42,6 +42,7 @@ export default function LoginPage() {
       login({
         ...response.user,
         token: response.token,
+        refreshToken: response.refreshToken,
       });
 
       // Redirect based on role

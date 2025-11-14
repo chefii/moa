@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import { prisma } from '../main';
 import { generateToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { authenticate } from '../middlewares/auth';
+import { saveRefreshToken, verifyRefreshTokenInDb, revokeRefreshToken } from '../utils/refresh-token';
 
 const router = Router();
 
@@ -130,6 +131,14 @@ router.post('/register', async (req: Request, res: Response) => {
       role: initialRole,
       roles: [initialRole],
     });
+
+    // Save refresh token to DB
+    await saveRefreshToken(
+      user.id,
+      refreshToken,
+      req.headers['user-agent'],
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress
+    );
 
     res.status(201).json({
       success: true,
@@ -324,6 +333,14 @@ router.post('/login', async (req: Request, res: Response) => {
       roles: roles,
     });
 
+    // Save refresh token to DB
+    await saveRefreshToken(
+      user.id,
+      refreshToken,
+      userAgent,
+      ipAddress
+    );
+
     res.json({
       success: true,
       data: {
@@ -419,8 +436,19 @@ router.post('/refresh', async (req: Request, res: Response) => {
       return;
     }
 
-    // Verify refresh token
+    // Verify refresh token (JWT validation)
     const decoded = verifyRefreshToken(refreshToken);
+
+    // Verify refresh token in DB (check expiration, revocation, etc.)
+    const dbVerification = await verifyRefreshTokenInDb(refreshToken);
+
+    if (!dbVerification) {
+      res.status(401).json({
+        success: false,
+        message: 'Invalid or expired refresh token',
+      });
+      return;
+    }
 
     // Fetch current user roles (roles might have changed since token was issued)
     const user = await prisma.user.findUnique({
@@ -465,6 +493,22 @@ router.post('/refresh', async (req: Request, res: Response) => {
       roles: roles,
     });
 
+    // Save new refresh token to DB
+    const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
+                      req.socket.remoteAddress ||
+                      'unknown';
+    const userAgent = req.headers['user-agent'] || '';
+
+    await saveRefreshToken(
+      decoded.userId,
+      newRefreshToken,
+      userAgent,
+      ipAddress
+    );
+
+    // Revoke old refresh token
+    await revokeRefreshToken(refreshToken);
+
     res.json({
       success: true,
       data: {
@@ -482,10 +526,26 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
 // Logout (optional - mainly client-side)
 router.post('/logout', authenticate, async (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    message: 'Logged out successfully',
-  });
+  try {
+    const { refreshToken } = req.body;
+
+    // Revoke refresh token if provided
+    if (refreshToken) {
+      await revokeRefreshToken(refreshToken);
+    }
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to logout',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
 });
 
 // Check nickname availability

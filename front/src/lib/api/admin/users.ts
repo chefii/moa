@@ -15,6 +15,9 @@ export interface AdminUser {
   nickname: string | null;
   profileImage: string | null;
   isVerified: boolean;
+  isPhoneVerified?: boolean;
+  emailVerifiedAt?: string | null;
+  phoneVerifiedAt?: string | null;
   createdAt: string;
   userRoles: UserRole[]; // 다중 역할 지원
   businessProfile?: {
@@ -29,11 +32,24 @@ export interface AdminUserDetail extends AdminUser {
   location?: string | null;
   gender?: string | null;
   age?: number | null;
-  isPhoneVerified?: boolean;
-  emailVerifiedAt?: string | null;
-  phoneVerifiedAt?: string | null;
   updatedAt?: string;
-  userRoles: UserRole[]; // 다중 역할 (detail에서는 필수)
+  userLevel?: {
+    level: number;
+    growthPoints: number;
+  };
+  userStreak?: {
+    currentStreak: number;
+    longestStreak: number;
+    lastActivityDate: string;
+  };
+  interests?: Array<{
+    category: {
+      id: string;
+      name: string;
+      icon?: string;
+      color?: string;
+    };
+  }>;
   businessProfile?: {
     businessName: string;
     businessNumber: string;
