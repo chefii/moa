@@ -68,6 +68,7 @@ enum PointType {
 }
 
 enum BannerType {
+  MAIN_BANNER
   MAIN_TOP
   MAIN_MIDDLE
   MAIN_BOTTOM
@@ -95,9 +96,67 @@ enum NoticeType {
   EVENT
 }
 
+enum FileType {
+  PROFILE    // 프로필 이미지
+  GATHERING  // 모임 이미지
+  POST       // 게시물 이미지
+  EVENT      // 이벤트 이미지
+  BANNER     // 배너 이미지
+  POPUP      // 팝업 이미지
+  CATEGORY   // 카테고리 아이콘
+  BADGE      // 배지 아이콘
+  REVIEW     // 리뷰 이미지
+  NOTICE     // 공지사항 첨부파일
+  BUSINESS   // 사업자 등록증
+  TEMP       // 임시 파일
+}
+
 // ============================================
 // MODELS
 // ============================================
+
+/// 파일 순번 관리 테이블 - 날짜+타입별 순번 관리 (YYMMDD-0000001 형식)
+model FileSequence {
+  date     String   @map("date")      // YYMMDD 형식
+  fileType FileType @map("file_type")
+  sequence Int      @default(0)       // 현재 순번
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@id([date, fileType])
+  @@map("file_sequences")
+}
+
+/// 파일 마스터 테이블 - 모든 파일 정보 중앙 관리
+model File {
+  id               String   @id @default(uuid())
+  fileType         FileType @map("file_type")
+  originalName     String   @map("original_name")              // 원본 파일명
+  physicalFileName String?  @map("physical_file_name")         // 물리 파일명 (251117-0000001.jpg)
+  savedName        String   @map("saved_name")                 // 저장된 파일명 (파일명+확장자)
+  filePath         String   @map("file_path")                  // 파일 경로
+  fileExtension    String?  @map("file_extension")             // 파일 확장자 (.jpg, .png 등)
+  fileSize         Int      @map("file_size")                  // 파일 크기 (bytes)
+  mimeType         String   @map("mime_type")                  // MIME 타입
+  url              String                                      // 접근 가능한 URL
+  uploadedBy       String?  @map("uploaded_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  userProfiles     User[]            @relation("ProfileImage")
+  gatherings       Gathering[]
+  businessProfiles BusinessProfile[]
+  banners          Banner[]
+  popups           Popup[]
+  events           Event[]
+  eventThumbnails  Event[]           @relation("EventThumbnails")
+
+  @@index([fileType])
+  @@index([uploadedBy])
+  @@index([createdAt])
+  @@index([physicalFileName])
+  @@map("files")
+}
 
 model User {
   id                String    @id @default(uuid())
@@ -105,7 +164,7 @@ model User {
   password          String
   name              String
   nickname          String?   @unique
-  profileImage      String?   @map("profile_image")
+  profileImageId    String?   @map("profile_image_id")
   bio               String?
   phone             String?
   location          String?
@@ -119,6 +178,7 @@ model User {
   updatedAt         DateTime  @updatedAt @map("updated_at")
 
   // Relations
+  profileImage       File?               @relation("ProfileImage", fields: [profileImageId], references: [id], onDelete: SetNull)
   businessProfile    BusinessProfile?
   userLevel          UserLevel?
   userStreak         UserStreak?
@@ -151,6 +211,12 @@ model User {
   suspensions               UserSuspensionHistory[]       @relation("UserSuspensions")
   adminSuspensions          UserSuspensionHistory[]       @relation("AdminSuspensions")
   settingChanges            SettingChangeHistory[]        @relation("SettingChanges")
+
+  // Board Relations
+  boardPosts                BoardPost[]                   @relation("BoardPosts")
+  boardComments             BoardComment[]                @relation("BoardComments")
+  boardPostLikes            BoardPostLike[]               @relation("BoardPostLikes")
+  boardCommentLikes         BoardCommentLike[]            @relation("BoardCommentLikes")
 
   @@map("users")
 }
@@ -218,7 +284,7 @@ model BusinessProfile {
   businessAddress     String    @map("business_address")
   businessPhone       String    @map("business_phone")
   businessDescription String?   @map("business_description")
-  businessImage       String?   @map("business_image")
+  businessImageId     String?   @map("business_image_id")
   bankName            String?   @map("bank_name")
   bankAccount         String?   @map("bank_account")
   accountHolder       String?   @map("account_holder")
@@ -230,6 +296,7 @@ model BusinessProfile {
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
   user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessImage   File?                      @relation(fields: [businessImageId], references: [id], onDelete: SetNull)
   settlements     Settlement[]
   approvalHistory BusinessApprovalHistory[]
 
@@ -238,19 +305,30 @@ model BusinessProfile {
 
 model Category {
   id          String    @id @default(uuid())
-  name        String    @unique
-  slug        String    @unique
+  name        String
+  displayName String?   @map("display_name") // 배너에 표시할 짧은 이름
+  slug        String
   icon        String?
   color       String?
   description String?
+  parentId    String?   @map("parent_id")
   order       Int       @default(0)
+  depth       Int       @default(0)  // 0: 최상위, 1: 하위 카테고리
+  type        String[]  @default([]) // GATHERING, BOARD, INTEREST 등
   isActive    Boolean   @default(true) @map("is_active")
   createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Self-referencing relation for hierarchy
+  parent         Category?        @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children       Category[]       @relation("CategoryHierarchy")
 
   gatherings     Gathering[]
   interests      UserInterest[]
   interestForest InterestForest[]
+  boardPosts     BoardPost[]      @relation("BoardPostCategory")
 
+  @@unique([name, parentId])
+  @@unique([slug, parentId])
   @@map("categories")
 }
 
@@ -274,7 +352,7 @@ model Gathering {
   title               String
   description         String
   gatheringType       GatheringType   @default(FREE) @map("gathering_type")
-  image               String?
+  imageId             String?         @map("image_id")
   locationAddress     String          @map("location_address")
   locationDetail      String?         @map("location_detail")
   latitude            Decimal?        @db.Decimal(10, 8)
@@ -292,6 +370,7 @@ model Gathering {
 
   host         User                   @relation("HostedGatherings", fields: [hostId], references: [id], onDelete: Cascade)
   category     Category               @relation(fields: [categoryId], references: [id])
+  image        File?                  @relation(fields: [imageId], references: [id], onDelete: SetNull)
   participants GatheringParticipant[]
   bookmarks    Bookmark[]
   reviews      Review[]
@@ -378,22 +457,25 @@ model Bookmark {
 }
 
 model Report {
-  id          String       @id @default(uuid())
-  reporterId  String       @map("reporter_id")
-  reportedId  String       @map("reported_id")
-  gatheringId String?      @map("gathering_id")
-  reason      String
-  description String?
-  status      ReportStatus @default(PENDING)
-  adminNote   String?      @map("admin_note")
-  resolvedBy  String?      @map("resolved_by")
-  resolvedAt  DateTime?    @map("resolved_at")
-  createdAt   DateTime     @default(now()) @map("created_at")
+  id           String    @id @default(uuid())
+  reporterId   String    @map("reporter_id")
+  reportedId   String    @map("reported_id")
+  gatheringId  String?   @map("gathering_id")
+  reasonCode   String    @map("reason_code")
+  customReason String?   @map("custom_reason") // "기타" 선택 시 직접 입력
+  description  String?
+  statusCode   String    @default("PENDING") @map("status_code")
+  adminNote    String?   @map("admin_note")
+  resolvedBy   String?   @map("resolved_by")
+  resolvedAt   DateTime? @map("resolved_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
 
-  reporter      User                   @relation("SentReports", fields: [reporterId], references: [id])
-  reported      User                   @relation("ReceivedReports", fields: [reportedId], references: [id])
-  gathering     Gathering?             @relation(fields: [gatheringId], references: [id])
-  actionHistory ReportActionHistory[]
+  reporter         User                   @relation("SentReports", fields: [reporterId], references: [id])
+  reported         User                   @relation("ReceivedReports", fields: [reportedId], references: [id])
+  gathering        Gathering?             @relation(fields: [gatheringId], references: [id])
+  reasonCommonCode CommonCode             @relation("ReportReasons", fields: [reasonCode], references: [code])
+  statusCommonCode CommonCode             @relation("ReportStatus", fields: [statusCode], references: [code])
+  actionHistory    ReportActionHistory[]
 
   @@map("reports")
 }
@@ -526,27 +608,53 @@ model CommonCode {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  reportReasons Report[] @relation("ReportReasons")
+  reportStatus  Report[] @relation("ReportStatus")
+
   @@unique([groupCode, code])
   @@map("common_codes")
 }
 
+/// 배너 테이블 - 메인 배너, 상단/중단/하단 배너, 이벤트 배너 등
 model Banner {
+  /// 배너 고유 ID
   id          String     @id @default(uuid())
+  /// 배너 타입 (MAIN_BANNER, MAIN_TOP, MAIN_MIDDLE, MAIN_BOTTOM, EVENT, POPUP)
   type        BannerType
+  /// 배너 제목
   title       String
+  /// 배너 설명 (선택)
   description String?
-  imageUrl    String     @map("image_url")
+  /// 배너 이미지 파일 ID (files 테이블 참조)
+  imageId     String?    @map("image_id")
+  /// 클릭 시 이동할 링크 URL (선택)
   linkUrl     String?    @map("link_url")
+  /// 노출 순서 (낮을수록 먼저 표시)
   order       Int        @default(0)
+  /// 노출 시작일
   startDate   DateTime   @map("start_date")
+  /// 노출 종료일
   endDate     DateTime   @map("end_date")
+  /// 활성화 여부
   isActive    Boolean    @default(true) @map("is_active")
+  /// 총 조회수
   viewCount   Int        @default(0) @map("view_count")
+  /// 총 클릭수
   clickCount  Int        @default(0) @map("click_count")
+  /// 생성자 ID
   createdBy   String     @map("created_by")
+  /// 생성 일시
   createdAt   DateTime   @default(now()) @map("created_at")
+  /// 수정 일시
   updatedAt   DateTime   @updatedAt @map("updated_at")
 
+  // Relations
+  image File? @relation(fields: [imageId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([isActive])
+  @@index([startDate])
+  @@index([endDate])
   @@map("banners")
 }
 
@@ -560,8 +668,8 @@ model Popup {
   title       String
   /// 팝업 내용 (HTML 지원)
   content     String    @db.Text
-  /// 이미지 URL
-  imageUrl    String?   @map("image_url")
+  /// 이미지 파일 ID (files 테이블 참조, 선택)
+  imageId     String?   @map("image_id")
   /// 링크 URL (클릭 시 이동)
   linkUrl     String?   @map("link_url")
   /// 버튼 텍스트
@@ -585,8 +693,14 @@ model Popup {
   /// 수정 일시
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  popupViews  PopupView[]
+  // Relations
+  image      File?       @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  popupViews PopupView[]
 
+  @@index([type])
+  @@index([isActive])
+  @@index([startDate])
+  @@index([endDate])
   @@map("popups")
 }
 
@@ -641,24 +755,49 @@ model RefreshToken {
   @@map("refresh_tokens")
 }
 
+/// 이벤트 테이블 - 프로모션, 특별 이벤트 등
 model Event {
-  id            String      @id @default(uuid())
-  title         String
-  description   String      @db.Text
-  imageUrl      String      @map("image_url")
-  thumbnailUrl  String?     @map("thumbnail_url")
-  status        EventStatus @default(SCHEDULED)
-  startDate     DateTime    @map("start_date")
-  endDate       DateTime    @map("end_date")
-  maxParticipants Int?      @map("max_participants")
-  participantCount Int      @default(0) @map("participant_count")
-  isActive      Boolean     @default(true) @map("is_active")
-  viewCount     Int         @default(0) @map("view_count")
-  likeCount     Int         @default(0) @map("like_count")
-  createdBy     String      @map("created_by")
-  createdAt     DateTime    @default(now()) @map("created_at")
-  updatedAt     DateTime    @updatedAt @map("updated_at")
+  /// 이벤트 고유 ID
+  id               String      @id @default(uuid())
+  /// 이벤트 제목
+  title            String
+  /// 이벤트 설명 (HTML 지원)
+  description      String      @db.Text
+  /// 메인 이미지 파일 ID (files 테이블 참조)
+  imageId          String?     @map("image_id")
+  /// 썸네일 이미지 파일 ID (files 테이블 참조, 선택)
+  thumbnailImageId String?     @map("thumbnail_image_id")
+  /// 이벤트 상태 (SCHEDULED, ACTIVE, ENDED, CANCELLED)
+  status           EventStatus @default(SCHEDULED)
+  /// 이벤트 시작일
+  startDate        DateTime    @map("start_date")
+  /// 이벤트 종료일
+  endDate          DateTime    @map("end_date")
+  /// 최대 참가자 수 (선택)
+  maxParticipants  Int?        @map("max_participants")
+  /// 현재 참가자 수
+  participantCount Int         @default(0) @map("participant_count")
+  /// 활성화 여부
+  isActive         Boolean     @default(true) @map("is_active")
+  /// 총 조회수
+  viewCount        Int         @default(0) @map("view_count")
+  /// 총 좋아요 수
+  likeCount        Int         @default(0) @map("like_count")
+  /// 생성자 ID
+  createdBy        String      @map("created_by")
+  /// 생성 일시
+  createdAt        DateTime    @default(now()) @map("created_at")
+  /// 수정 일시
+  updatedAt        DateTime    @updatedAt @map("updated_at")
 
+  // Relations
+  image          File? @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  thumbnailImage File? @relation("EventThumbnails", fields: [thumbnailImageId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([isActive])
+  @@index([startDate])
+  @@index([endDate])
   @@map("events")
 }
 
@@ -954,4 +1093,96 @@ model SettingChangeHistory {
   @@index([category])
   @@index([createdAt])
   @@map("setting_change_history")
+}
+
+// ============================================
+// BOARD MODELS
+// ============================================
+
+enum BoardPostStatus {
+  PUBLISHED
+  HIDDEN
+  DELETED
+}
+
+model BoardPost {
+  id          String          @id @default(uuid())
+  title       String
+  content     String          @db.Text
+  authorId    String          @map("author_id")
+  categoryId  String?         @map("category_id")
+  viewCount   Int             @default(0) @map("view_count")
+  likeCount   Int             @default(0) @map("like_count")
+  commentCount Int            @default(0) @map("comment_count")
+  isPinned    Boolean         @default(false) @map("is_pinned")
+  status      BoardPostStatus @default(PUBLISHED)
+  images      String[]        @default([])
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  author    User              @relation("BoardPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  category  Category?         @relation("BoardPostCategory", fields: [categoryId], references: [id], onDelete: SetNull)
+  comments  BoardComment[]
+  likes     BoardPostLike[]
+
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([isPinned])
+  @@map("board_posts")
+}
+
+model BoardComment {
+  id         String   @id @default(uuid())
+  postId     String   @map("post_id")
+  authorId   String   @map("author_id")
+  content    String   @db.Text
+  likeCount  Int      @default(0) @map("like_count")
+  parentId   String?  @map("parent_id") // For nested comments
+  isDeleted  Boolean  @default(false) @map("is_deleted")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  post    BoardPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User               @relation("BoardComments", fields: [authorId], references: [id], onDelete: Cascade)
+  parent  BoardComment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies BoardComment[]     @relation("CommentReplies")
+  likes   BoardCommentLike[]
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+  @@index([createdAt])
+  @@map("board_comments")
+}
+
+model BoardPostLike {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post BoardPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User      @relation("BoardPostLikes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
+  @@map("board_post_likes")
+}
+
+model BoardCommentLike {
+  id        String   @id @default(uuid())
+  commentId String   @map("comment_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  comment BoardComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User         @relation("BoardCommentLikes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@index([userId])
+  @@map("board_comment_likes")
 }

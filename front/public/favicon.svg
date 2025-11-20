@@ -4,7 +4,7 @@
     .dot { fill:#111827; }
   </style>
 
-  <rect width="1024" height="1024" fill="#F472B6"/>
+  <rect width="1024" height="1024" fill="#1F2937"/>
   <path class="ink" d="M512 140
     C374 140 268 246 268 384
     C268 580 512 900 512 900

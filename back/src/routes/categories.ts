@@ -48,23 +48,64 @@ const prisma = new PrismaClient();
 // Get all categories (for interests selection)
 router.get('/', async (req: Request, res: Response) => {
   try {
+    const { type } = req.query;
+
+    const whereClause: any = { isActive: true };
+
+    // Filter by type if provided
+    if (type && typeof type === 'string') {
+      // For type filtering, we need to return:
+      // 1. Parent categories (depth = 0) that have the type in their type array
+      // 2. Child categories (depth = 1) whose parent has the type in their type array
+      whereClause.OR = [
+        {
+          depth: 0,
+          type: {
+            has: type,
+          },
+        },
+        {
+          depth: 1,
+          parent: {
+            type: {
+              has: type,
+            },
+          },
+        },
+      ];
+    }
+
     const categories = await prisma.category.findMany({
-      where: { isActive: true },
+      where: whereClause,
       orderBy: { order: 'asc' },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        icon: true,
-        color: true,
-        description: true,
-        order: true,
+      include: {
+        parent: {
+          select: {
+            type: true,
+          },
+        },
       },
     });
 
+    // Filter to only return child categories (depth = 1) for display
+    // Parent categories are used only for filtering logic
+    const childCategories = categories
+      .filter((cat) => cat.depth === 1)
+      .map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        displayName: cat.displayName,
+        slug: cat.slug,
+        icon: cat.icon,
+        color: cat.color,
+        description: cat.description,
+        order: cat.order,
+        type: cat.type,
+      }));
+
     res.json({
       success: true,
-      data: categories,
+      data: childCategories,
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -125,16 +166,27 @@ router.get('/:slug', async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
 
-    const category = await prisma.category.findUnique({
-      where: { slug },
+    // Since slug is no longer unique (slug + parentId is unique),
+    // we find the first matching category, prioritizing top-level (parentId = null)
+    const category = await prisma.category.findFirst({
+      where: {
+        slug,
+        isActive: true,
+      },
+      orderBy: {
+        depth: 'asc', // Prioritize top-level categories (depth = 0)
+      },
       select: {
         id: true,
         name: true,
+        displayName: true,
         slug: true,
         icon: true,
         color: true,
         description: true,
         order: true,
+        depth: true,
+        parentId: true,
       },
     });
 

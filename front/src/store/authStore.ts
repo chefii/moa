@@ -4,24 +4,24 @@ import { persist } from 'zustand/middleware';
 // Role is now managed in CommonCode for flexibility
 export enum UserRole {
   // 일반 사용자
-  USER = 'USER',
-  VERIFIED_USER = 'VERIFIED_USER',
-  HOST = 'HOST',
-  PREMIUM_USER = 'PREMIUM_USER',
+  USER = 'ROLE_USER',
+  VERIFIED_USER = 'ROLE_VERIFIED_USER',
+  HOST = 'ROLE_HOST',
+  PREMIUM_USER = 'ROLE_PREMIUM_USER',
 
   // 비즈니스
-  BUSINESS_PENDING = 'BUSINESS_PENDING',
-  BUSINESS_USER = 'BUSINESS_USER',
-  BUSINESS_MANAGER = 'BUSINESS_MANAGER',
-  BUSINESS_ADMIN = 'BUSINESS_USER', // Legacy alias
+  BUSINESS_PENDING = 'ROLE_BUSINESS_PENDING',
+  BUSINESS_USER = 'ROLE_BUSINESS_USER',
+  BUSINESS_MANAGER = 'ROLE_BUSINESS_MANAGER',
+  BUSINESS_ADMIN = 'ROLE_BUSINESS_USER', // Legacy alias
 
   // 관리자
-  MODERATOR = 'MODERATOR',
-  CONTENT_MANAGER = 'CONTENT_MANAGER',
-  SUPPORT_MANAGER = 'SUPPORT_MANAGER',
-  SETTLEMENT_MANAGER = 'SETTLEMENT_MANAGER',
-  ADMIN = 'ADMIN',
-  SUPER_ADMIN = 'SUPER_ADMIN',
+  MODERATOR = 'ROLE_MODERATOR',
+  CONTENT_MANAGER = 'ROLE_CONTENT_MANAGER',
+  SUPPORT_MANAGER = 'ROLE_SUPPORT_MANAGER',
+  SETTLEMENT_MANAGER = 'ROLE_SETTLEMENT_MANAGER',
+  ADMIN = 'ROLE_ADMIN',
+  SUPER_ADMIN = 'ROLE_SUPER_ADMIN',
 }
 
 // Role type as string for flexibility
@@ -29,19 +29,19 @@ export type UserRoleType = string;
 
 // Role levels for comparison
 export const ROLE_LEVELS: Record<string, number> = {
-  USER: 1,
-  VERIFIED_USER: 2,
-  HOST: 3,
-  PREMIUM_USER: 4,
-  BUSINESS_PENDING: 5,
-  BUSINESS_USER: 6,
-  BUSINESS_MANAGER: 7,
-  MODERATOR: 100,
-  CONTENT_MANAGER: 100,
-  SUPPORT_MANAGER: 100,
-  SETTLEMENT_MANAGER: 100,
-  ADMIN: 200,
-  SUPER_ADMIN: 999,
+  ROLE_USER: 1,
+  ROLE_VERIFIED_USER: 2,
+  ROLE_HOST: 3,
+  ROLE_PREMIUM_USER: 4,
+  ROLE_BUSINESS_PENDING: 5,
+  ROLE_BUSINESS_USER: 6,
+  ROLE_BUSINESS_MANAGER: 7,
+  ROLE_MODERATOR: 100,
+  ROLE_CONTENT_MANAGER: 100,
+  ROLE_SUPPORT_MANAGER: 100,
+  ROLE_SETTLEMENT_MANAGER: 100,
+  ROLE_ADMIN: 200,
+  ROLE_SUPER_ADMIN: 999,
 };
 
 interface User {
@@ -131,7 +131,7 @@ export const useAuthStore = create<AuthState>()(
       isBusinessUser: () => {
         const { user } = get();
         if (!user) return false;
-        return ['BUSINESS_PENDING', 'BUSINESS_USER', 'BUSINESS_MANAGER'].includes(user.role);
+        return ['ROLE_BUSINESS_PENDING', 'ROLE_BUSINESS_USER', 'ROLE_BUSINESS_MANAGER'].includes(user.role);
       },
     }),
     {

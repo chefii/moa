@@ -59,7 +59,7 @@ const router = Router();
 router.patch(
   '/:userId/verification',
   authenticate,
-  authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'),
+  authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
@@ -160,7 +160,7 @@ router.patch(
 router.post(
   '/:userId/resend-email',
   authenticate,
-  authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'),
+  authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
@@ -283,7 +283,7 @@ router.post(
 router.get(
   '/stats',
   authenticate,
-  authorize('SUPER_ADMIN'),
+  authorize('ROLE_SUPER_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const [
@@ -398,7 +398,7 @@ router.get(
 router.get(
   '/unverified',
   authenticate,
-  authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'),
+  authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const page = parseInt(req.query.page as string) || 1;

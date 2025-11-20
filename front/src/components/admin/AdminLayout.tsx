@@ -81,6 +81,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const hasRequiredRole = (requiredRoles: string[]): boolean => {
     if (!requiredRoles || requiredRoles.length === 0) return true;
     if (!user?.role) return false;
+
+    // ROLE_SUPER_ADMIN can access everything
+    if (user.role === 'ROLE_SUPER_ADMIN') return true;
+
     return requiredRoles.includes(user.role);
   };
 
@@ -121,15 +125,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   // Load unread notifications count
   useEffect(() => {
-    // Only fetch if user is logged in
-    if (!user) return;
+    // Only fetch if user is logged in and has a token
+    if (!user || !user.token) return;
 
     const loadUnreadCount = async () => {
       try {
         const count = await notificationsApi.getUnreadCount();
         setUnreadCount(count);
       } catch (error) {
-        console.error('Failed to load unread count:', error);
+        // Silently fail - notifications are not critical
+        // Only log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to load unread count:', error);
+        }
       }
     };
 

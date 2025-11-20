@@ -47,13 +47,13 @@ npm run prisma:migrate
 npm run dev
 ```
 
-서버가 http://localhost:4000 에서 실행됩니다.
+서버가 http://loaclhost:4000 에서 실행됩니다.
 
 ### 7. 확인
 브라우저에서 접속:
-- API Health Check: http://localhost:4000/health
-- API 정보: http://localhost:4000/api
-- pgAdmin: http://localhost:5050
+- API Health Check: http://loaclhost:4000/health
+- API 정보: http://loaclhost:4000/api
+- pgAdmin: http://loaclhost:5050
   - 이메일: `admin@moa.com`
   - 비밀번호: `admin123`
 
@@ -97,7 +97,7 @@ docker-compose down -v
 
 ## 🔧 pgAdmin 데이터베이스 연결 설정
 
-1. http://localhost:5050 접속
+1. http://loaclhost:5050 접속
 2. 로그인 (admin@moa.com / admin123)
 3. 새 서버 추가:
    - **Name**: Moa Database

@@ -18,9 +18,13 @@ import settingsRoutes from './routes/settings';
 import categoriesRoutes from './routes/categories';
 import commonCodesRoutes from './routes/common-codes';
 import verificationRoutes from './routes/verification';
-import uploadRoutes from './routes/upload';
 import notificationsRoutes from './routes/notifications';
 import popupsRoutes from './routes/popups';
+import gatheringsRoutes from './routes/gatherings';
+import bookmarksRoutes from './routes/bookmarks';
+import bannersRoutes from './routes/banners';
+import filesRoutes from './routes/files';
+import boardRoutes from './routes/board';
 
 // Admin routes
 import adminCommonCodesRoutes from './routes/admin/common-codes';
@@ -34,6 +38,9 @@ import adminMenuCategoriesRoutes from './routes/admin/menu-categories';
 import adminMenuItemsRoutes from './routes/admin/menu-items';
 import adminUsersVerificationRoutes from './routes/admin/users-verification';
 import adminUsersRoutes from './routes/admin/users';
+import adminBadgesRoutes from './routes/admin/badges';
+import adminGatheringsRoutes from './routes/admin/gatherings';
+import adminBoardsRoutes from './routes/admin/boards';
 
 // Load environment variables
 dotenv.config();
@@ -70,7 +77,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // Initialize Redis Client
 export const redis = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
+  host: process.env.REDIS_HOST || 'loaclhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   retryStrategy: (times) => {
     const delay = Math.min(times * 50, 2000);
@@ -83,9 +90,42 @@ const app: Express = express();
 const PORT = process.env.PORT || 4000;
 
 // Middleware
-app.use(helmet()); // Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+})); // Security headers
+
+// CORS 설정 - 여러 origin 허용
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://172.30.1.22:3000',
+  'http://192.168.0.0:3000', // 다른 로컬 IP 대역도 필요시 추가
+  ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : []),
+];
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // origin이 없는 경우 허용 (모바일 앱, Postman 등)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // 로컬 개발 환경에서는 모든 localhost와 로컬 IP 허용
+    if (process.env.NODE_ENV === 'development') {
+      const isLocalhost = origin.includes('localhost');
+      const isLocalIP = /https?:\/\/(172|192\.168|10)\.\d+\.\d+\.\d+/.test(origin);
+
+      if (isLocalhost || isLocalIP) {
+        return callback(null, true);
+      }
+    }
+
+    // 허용된 origin 목록 확인
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 app.use(compression()); // Compress responses
@@ -172,13 +212,20 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/common-codes', commonCodesRoutes);
 app.use('/api/verification', verificationRoutes);
-app.use('/api/upload', uploadRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/popups', popupsRoutes);
+app.use('/api/gatherings', gatheringsRoutes);
+app.use('/api/bookmarks', bookmarksRoutes);
+app.use('/api/banners', bannersRoutes);
+app.use('/api/files', filesRoutes);
+app.use('/api/board', boardRoutes);
 
 // Static file serving for uploaded files
 const uploadDir = process.env.UPLOAD_DIR || '/Users/philip/project/moa_file';
-app.use('/uploads', express.static(uploadDir));
+app.use('/uploads', cors({
+  origin: process.env.CORS_ORIGIN || 'http://loaclhost:3000',
+  credentials: true,
+}), express.static(uploadDir));
 
 // Admin routes
 app.use('/api/admin/common-codes', adminCommonCodesRoutes);
@@ -192,6 +239,9 @@ app.use('/api/admin/menu-categories', adminMenuCategoriesRoutes);
 app.use('/api/admin/menu-items', adminMenuItemsRoutes);
 app.use('/api/admin/users-verification', adminUsersVerificationRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
+app.use('/api/admin/badges', adminBadgesRoutes);
+app.use('/api/admin/gatherings', adminGatheringsRoutes);
+app.use('/api/admin/boards', adminBoardsRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {
@@ -237,9 +287,9 @@ app.listen(PORT, () => {
   ║   Port: ${PORT}                              ${PORT.toString().length === 4 ? ' ' : ''}   ║
   ║   Environment: ${process.env.NODE_ENV || 'development'} ${(process.env.NODE_ENV || 'development').length === 10 ? '' : ' '}                  ║
   ║                                               ║
-  ║  Health Check: http://localhost:${PORT}/health   ║
-  ║  API Docs: http://localhost:${PORT}/api          ║
-  ║  Swagger UI: http://localhost:${PORT}/api-docs   ║
+  ║  Health Check: http://loaclhost:${PORT}/health   ║
+  ║  API Docs: http://loaclhost:${PORT}/api          ║
+  ║  Swagger UI: http://loaclhost:${PORT}/api-docs   ║
   ║                                               ║
   ╚═══════════════════════════════════════════════╝
   `);

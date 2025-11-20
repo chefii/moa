@@ -92,7 +92,12 @@ router.get('/active', async (req: Request, res: Response) => {
         type: true,
         title: true,
         content: true,
-        imageUrl: true,
+        image: {
+          select: {
+            id: true,
+            url: true,
+          },
+        },
         linkUrl: true,
         buttonText: true,
         showOnce: true,

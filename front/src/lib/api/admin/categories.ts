@@ -4,17 +4,24 @@ import { ApiResponse } from '../types';
 export interface Category {
   id: string;
   name: string;
+  displayName?: string;
+  slug: string;
   description?: string;
   icon?: string;
+  color?: string;
+  parentId?: string | null;
+  depth: number;
   order: number;
+  type?: string[];
   isActive: boolean;
   createdAt: string;
-  updatedAt: string;
+  parent?: Category | null;
+  children?: Category[];
 }
 
 export interface CategoryListResponse {
   data: Category[];
-  pagination: {
+  pagination?: {
     total: number;
     page: number;
     limit: number;
@@ -24,17 +31,27 @@ export interface CategoryListResponse {
 
 export interface CreateCategoryDto {
   name: string;
+  displayName?: string;
+  slug: string;
   description?: string;
   icon?: string;
+  color?: string;
+  parentId?: string | null;
   order?: number;
+  type?: string[];
   isActive?: boolean;
 }
 
 export interface UpdateCategoryDto {
   name?: string;
+  displayName?: string;
+  slug?: string;
   description?: string;
   icon?: string;
+  color?: string;
+  parentId?: string | null;
   order?: number;
+  type?: string[];
   isActive?: boolean;
 }
 
@@ -43,10 +60,12 @@ export const categoriesApi = {
   getCategories: async (
     page = 1,
     limit = 10,
-    isActive?: boolean
+    isActive?: boolean,
+    includeChildren = false
   ): Promise<CategoryListResponse> => {
     let url = `/api/admin/categories?page=${page}&limit=${limit}`;
     if (isActive !== undefined) url += `&isActive=${isActive}`;
+    if (includeChildren) url += `&includeChildren=true`;
 
     const response = await apiClient.get<any>(url);
     return {

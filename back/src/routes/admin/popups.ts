@@ -67,7 +67,7 @@ const router = Router();
  *         description: 권한 없음
  */
 // Get all popups
-router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { type, isActive, page = 1, limit = 20 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -183,9 +183,9 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
  *         description: 권한 없음
  */
 // Create popup
-router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
-    const { type, title, content, imageUrl, linkUrl, buttonText, startDate, endDate, isActive, showOnce, priority } = req.body;
+    const { type, title, content, imageId, linkUrl, buttonText, startDate, endDate, isActive, showOnce, priority } = req.body;
 
     if (!type || !title || !content || !startDate || !endDate) {
       res.status(400).json({
@@ -200,7 +200,7 @@ router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async
         type,
         title,
         content,
-        imageUrl,
+        imageId,
         linkUrl,
         buttonText,
         startDate: new Date(startDate),
@@ -292,7 +292,7 @@ router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async
  *         description: 팝업을 찾을 수 없음
  */
 // Update popup
-router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updateData: any = { ...req.body };
@@ -356,7 +356,7 @@ router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), asy
  *         description: 팝업을 찾을 수 없음
  */
 // Delete popup
-router.delete('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.popup.delete({ where: { id } });

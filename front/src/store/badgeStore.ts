@@ -16,10 +16,18 @@ export const useBadgeStore = create<BadgeState>((set) => ({
 
   refreshReportBadge: async () => {
     try {
-      const response = await apiClient.get('/api/admin/reports/badge');
+      // Add timestamp to prevent HTTP caching
+      const response = await apiClient.get(`/api/admin/reports/badge?t=${Date.now()}`, {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
       set({ reportBadgeCount: response.data.data.count });
     } catch (error) {
       console.error('Failed to refresh report badge:', error);
+      // Set to 0 on error to avoid showing stale data
+      set({ reportBadgeCount: 0 });
     }
   },
 }));

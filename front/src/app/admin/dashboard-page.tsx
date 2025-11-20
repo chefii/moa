@@ -10,6 +10,8 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import { usersApi } from '@/lib/api/users';
+import { reportsApi } from '@/lib/api/admin/reports';
+import { gatheringsApi } from '@/lib/api/gatherings';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -17,6 +19,10 @@ export default function AdminDashboard() {
     businessAccounts: 0,
     activeGatherings: 0,
     pendingReports: 0,
+    totalUsersChange: 0,
+    businessAccountsChange: 0,
+    activeGatheringsChange: 0,
+    pendingReportsChange: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -24,16 +30,59 @@ export default function AdminDashboard() {
     fetchStats();
   }, []);
 
+  const calculatePercentageChange = (current: number, previous: number): number => {
+    if (previous === 0) return current > 0 ? 100 : 0;
+    return ((current - previous) / previous) * 100;
+  };
+
   const fetchStats = async () => {
     try {
-      const userStats = await usersApi.getUserStats();
+      // Fetch user stats, report stats, and gathering stats in parallel
+      const [userStats, reportStats, gatheringStats] = await Promise.all([
+        usersApi.getUserStats(),
+        reportsApi.getReportStats().catch(() => ({
+          totalReports: 0,
+          pendingReports: 0,
+          reviewingReports: 0,
+          resolvedReports: 0,
+          rejectedReports: 0,
+        })),
+        gatheringsApi.getGatheringStats().catch(() => ({
+          totalGatherings: 0,
+          activeGatherings: 0,
+          completedGatherings: 0,
+        })),
+      ]);
+
+      const currentTotalUsers = userStats.totalUsers;
+      const currentBusinessAccounts = (userStats.roleStats.ROLE_BUSINESS_USER || 0) +
+                                      (userStats.roleStats.ROLE_BUSINESS_MANAGER || 0) +
+                                      (userStats.roleStats.ROLE_BUSINESS_PENDING || 0);
+
+      // Calculate previous week's users (those who joined more than 7 days ago)
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      // For now, we'll estimate 7-day growth
+      // In a real scenario, you'd have an API endpoint that returns historical data
+      const recentUsersCount = userStats.recentUsers || 0;
+      const previousTotalUsers = currentTotalUsers - recentUsersCount;
+
+      // Calculate percentage changes
+      const totalUsersChange = calculatePercentageChange(currentTotalUsers, previousTotalUsers);
+
+      // Calculate pending reports (PENDING + REVIEWING)
+      const pendingReportsCount = reportStats.pendingReports + reportStats.reviewingReports;
+
       setStats({
-        totalUsers: userStats.totalUsers,
-        businessAccounts: (userStats.roleStats.BUSINESS_USER || 0) +
-                         (userStats.roleStats.BUSINESS_MANAGER || 0) +
-                         (userStats.roleStats.BUSINESS_PENDING || 0),
-        activeGatherings: 0,
-        pendingReports: 5,
+        totalUsers: currentTotalUsers,
+        businessAccounts: currentBusinessAccounts,
+        activeGatherings: gatheringStats.activeGatherings,
+        pendingReports: pendingReportsCount,
+        totalUsersChange,
+        businessAccountsChange: 0, // Would need historical data
+        activeGatheringsChange: 0, // Would need historical data
+        pendingReportsChange: 0, // Would need historical data
       });
     } catch (error) {
       console.error('Failed to fetch stats:', error);
@@ -42,38 +91,47 @@ export default function AdminDashboard() {
     }
   };
 
+  const formatPercentageChange = (change: number): string => {
+    const sign = change >= 0 ? '+' : '';
+    return `${sign}${change.toFixed(1)}%`;
+  };
+
   const statCards = [
     {
       title: '총 사용자',
       value: stats.totalUsers,
-      change: '+12%',
-      trend: 'up',
+      change: stats.totalUsersChange !== 0 ? formatPercentageChange(stats.totalUsersChange) : '0%',
+      trend: stats.totalUsersChange >= 0 ? 'up' : 'down',
       icon: Users,
       color: 'from-blue-500 to-cyan-500',
+      tooltip: '지난 7일간 가입자 대비 증가율',
     },
     {
       title: '진행중인 모임',
       value: stats.activeGatherings,
-      change: '+8%',
+      change: '데이터 없음',
       trend: 'up',
       icon: Calendar,
       color: 'from-moa-primary to-moa-accent',
+      tooltip: '지난 주 대비 증가율',
     },
     {
       title: '비즈니스 계정',
       value: stats.businessAccounts,
-      change: '+5%',
+      change: '데이터 없음',
       trend: 'up',
       icon: TrendingUp,
       color: 'from-green-500 to-emerald-500',
+      tooltip: '지난 주 대비 증가율',
     },
     {
       title: '대기중인 신고',
       value: stats.pendingReports,
-      change: '-3%',
-      trend: 'down',
+      change: '데이터 없음',
+      trend: 'up',
       icon: AlertCircle,
       color: 'from-orange-500 to-red-500',
+      tooltip: '지난 주 대비 증감률',
     },
   ];
 
@@ -98,16 +156,22 @@ export default function AdminDashboard() {
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
-                <div className={`flex items-center gap-1 text-sm font-semibold ${
-                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stat.trend === 'up' ? (
-                    <ArrowUp className="w-4 h-4" />
-                  ) : (
-                    <ArrowDown className="w-4 h-4" />
-                  )}
-                  {stat.change}
-                </div>
+                {stat.change === '데이터 없음' ? (
+                  <div className="flex items-center gap-1 text-sm font-semibold text-gray-400">
+                    {stat.change}
+                  </div>
+                ) : (
+                  <div className={`flex items-center gap-1 text-sm font-semibold ${
+                    stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {stat.trend === 'up' ? (
+                      <ArrowUp className="w-4 h-4" />
+                    ) : (
+                      <ArrowDown className="w-4 h-4" />
+                    )}
+                    {stat.change}
+                  </div>
+                )}
               </div>
               <p className="text-gray-600 text-sm mb-1">{stat.title}</p>
               <p className="text-3xl font-black text-gray-900">

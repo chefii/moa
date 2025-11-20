@@ -198,7 +198,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
  *               email:
  *                 type: string
  *                 format: email
- *                 example: user@example.com
+ *                 example: asdf@asdf.com
  *                 description: 이메일
  *               name:
  *                 type: string

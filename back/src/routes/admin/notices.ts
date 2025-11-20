@@ -72,7 +72,7 @@ const router = Router();
  *         description: 권한 없음
  */
 // Get all notices
-router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { type, isPinned, isActive, page = 1, limit = 20 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -148,7 +148,7 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
  *         description: 공지사항을 찾을 수 없음
  */
 // Get notice by ID
-router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -250,7 +250,7 @@ router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), asy
  *         description: 권한 없음
  */
 // Create notice
-router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { type, title, content, isPinned, isActive, startDate, endDate } = req.body;
 
@@ -347,7 +347,7 @@ router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async
  *         description: 공지사항을 찾을 수 없음
  */
 // Update notice
-router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updateData: any = { ...req.body };
@@ -411,7 +411,7 @@ router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), asy
  *         description: 공지사항을 찾을 수 없음
  */
 // Delete notice
-router.delete('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.notice.delete({ where: { id } });

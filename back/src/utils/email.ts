@@ -60,7 +60,7 @@ export const sendVerificationEmail = async (
   name: string,
   verificationToken: string
 ): Promise<boolean> => {
-  const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
+  const verificationUrl = `${process.env.FRONTEND_URL || 'http://loaclhost:3000'}/verify-email?token=${verificationToken}`;
 
   const html = `
     <!DOCTYPE html>
@@ -265,7 +265,7 @@ export const sendPasswordResetEmail = async (
   name: string,
   resetToken: string
 ): Promise<boolean> => {
-  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://loaclhost:3000'}/reset-password?token=${resetToken}`;
 
   const html = `
     <!DOCTYPE html>

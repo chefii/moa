@@ -19,7 +19,7 @@ async function seedMenu() {
         order: 0,
         isActive: true,
         description: '사용자, 사업자, 신고 관리',
-        requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+        requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
       },
     });
 
@@ -33,7 +33,7 @@ async function seedMenu() {
           icon: 'Users',
           order: 0,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
         {
           categoryId: userManagementCategory.id,
@@ -43,7 +43,7 @@ async function seedMenu() {
           icon: 'Briefcase',
           order: 1,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: userManagementCategory.id,
@@ -54,7 +54,7 @@ async function seedMenu() {
           order: 2,
           isActive: true,
           badge: 5,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
       ],
     });
@@ -70,7 +70,7 @@ async function seedMenu() {
         order: 1,
         isActive: true,
         description: '모임 목록, 카테고리, 참가자, 리뷰 관리',
-        requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+        requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
       },
     });
 
@@ -84,7 +84,7 @@ async function seedMenu() {
           icon: 'CalendarDays',
           order: 0,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
         {
           categoryId: gatheringManagementCategory.id,
@@ -94,7 +94,7 @@ async function seedMenu() {
           icon: 'Tag',
           order: 1,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: gatheringManagementCategory.id,
@@ -104,7 +104,7 @@ async function seedMenu() {
           icon: 'UserCheck',
           order: 2,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
         {
           categoryId: gatheringManagementCategory.id,
@@ -114,7 +114,7 @@ async function seedMenu() {
           icon: 'Star',
           order: 3,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
       ],
     });
@@ -130,7 +130,7 @@ async function seedMenu() {
         order: 2,
         isActive: true,
         description: '정산 내역, 승인, 수수료, 매출 관리',
-        requiredRoles: ['SUPER_ADMIN'],
+        requiredRoles: ['ROLE_SUPER_ADMIN'],
       },
     });
 
@@ -144,7 +144,7 @@ async function seedMenu() {
           icon: 'Receipt',
           order: 0,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: settlementCategory.id,
@@ -154,7 +154,7 @@ async function seedMenu() {
           icon: 'CheckCircle',
           order: 1,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: settlementCategory.id,
@@ -164,7 +164,7 @@ async function seedMenu() {
           icon: 'Percent',
           order: 2,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: settlementCategory.id,
@@ -174,7 +174,7 @@ async function seedMenu() {
           icon: 'TrendingUp',
           order: 3,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
       ],
     });
@@ -190,7 +190,7 @@ async function seedMenu() {
         order: 3,
         isActive: true,
         description: '뱃지, 포인트, 레벨, 모멘트 관리',
-        requiredRoles: ['SUPER_ADMIN'],
+        requiredRoles: ['ROLE_SUPER_ADMIN'],
       },
     });
 
@@ -204,7 +204,7 @@ async function seedMenu() {
           icon: 'Medal',
           order: 0,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: trustSystemCategory.id,
@@ -214,7 +214,7 @@ async function seedMenu() {
           icon: 'Coins',
           order: 1,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: trustSystemCategory.id,
@@ -224,7 +224,7 @@ async function seedMenu() {
           icon: 'TrendingUp',
           order: 2,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: trustSystemCategory.id,
@@ -234,7 +234,7 @@ async function seedMenu() {
           icon: 'Sparkles',
           order: 3,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
       ],
     });
@@ -250,7 +250,7 @@ async function seedMenu() {
         order: 4,
         isActive: true,
         description: '배너, 팝업, 이벤트, 공지사항 관리',
-        requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+        requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
       },
     });
 
@@ -264,7 +264,7 @@ async function seedMenu() {
           icon: 'Image',
           order: 0,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
         {
           categoryId: contentManagementCategory.id,
@@ -274,7 +274,7 @@ async function seedMenu() {
           icon: 'MessageSquare',
           order: 1,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
         {
           categoryId: contentManagementCategory.id,
@@ -284,7 +284,7 @@ async function seedMenu() {
           icon: 'Calendar',
           order: 2,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
         {
           categoryId: contentManagementCategory.id,
@@ -294,7 +294,7 @@ async function seedMenu() {
           icon: 'Bell',
           order: 3,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
       ],
     });
@@ -310,7 +310,7 @@ async function seedMenu() {
         order: 5,
         isActive: true,
         description: 'FAQ, 1:1 문의, 이용약관 관리',
-        requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+        requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
       },
     });
 
@@ -324,7 +324,7 @@ async function seedMenu() {
           icon: 'HelpCircle',
           order: 0,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
         {
           categoryId: customerSupportCategory.id,
@@ -334,7 +334,7 @@ async function seedMenu() {
           icon: 'MessageCircle',
           order: 1,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN', 'BUSINESS_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'],
         },
         {
           categoryId: customerSupportCategory.id,
@@ -344,7 +344,7 @@ async function seedMenu() {
           icon: 'FileCheck',
           order: 2,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
       ],
     });
@@ -360,7 +360,7 @@ async function seedMenu() {
         order: 6,
         isActive: true,
         description: '공통 코드, 메뉴, 관리자 권한 관리',
-        requiredRoles: ['SUPER_ADMIN'],
+        requiredRoles: ['ROLE_SUPER_ADMIN'],
       },
     });
 
@@ -374,7 +374,7 @@ async function seedMenu() {
           icon: 'Code',
           order: 0,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: systemManagementCategory.id,
@@ -384,7 +384,7 @@ async function seedMenu() {
           icon: 'Settings',
           order: 1,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
         {
           categoryId: systemManagementCategory.id,
@@ -394,7 +394,7 @@ async function seedMenu() {
           icon: 'Shield',
           order: 2,
           isActive: true,
-          requiredRoles: ['SUPER_ADMIN'],
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
       ],
     });

@@ -1,14 +1,18 @@
 import apiClient from '../client';
 import { ApiResponse } from '../types';
 
-export type BannerType = 'MAIN_TOP' | 'MAIN_MIDDLE' | 'MAIN_BOTTOM' | 'EVENT' | 'POPUP';
+export type BannerType = 'MAIN_BANNER' | 'MAIN_TOP' | 'MAIN_MIDDLE' | 'MAIN_BOTTOM' | 'EVENT' | 'POPUP';
 
 export interface Banner {
   id: string;
   type: BannerType;
   title: string;
   description?: string;
-  imageUrl: string;
+  imageId: string;
+  image: {
+    id: string;
+    url: string;
+  };
   linkUrl?: string;
   order: number;
   startDate: string;
@@ -35,7 +39,7 @@ export interface CreateBannerDto {
   type: BannerType;
   title: string;
   description?: string;
-  imageUrl: string;
+  imageId: string;
   linkUrl?: string;
   order?: number;
   startDate: string;
@@ -47,7 +51,7 @@ export interface UpdateBannerDto {
   type?: BannerType;
   title?: string;
   description?: string;
-  imageUrl?: string;
+  imageId?: string;
   linkUrl?: string;
   order?: number;
   startDate?: string;

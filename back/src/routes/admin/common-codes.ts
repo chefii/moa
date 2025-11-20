@@ -62,7 +62,7 @@ const router = Router();
  *         description: 권한 없음 (슈퍼 관리자만 접근 가능)
  */
 // Get all common codes
-router.get('/', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { groupCode, page = 1, limit = 20 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -138,7 +138,7 @@ router.get('/', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res
  *         description: 공통 코드를 찾을 수 없음
  */
 // Get common code by ID
-router.get('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -236,7 +236,7 @@ router.get('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, 
  *         description: 권한 없음
  */
 // Create common code
-router.post('/', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { groupCode, code, name, description, value, order, isActive } = req.body;
 
@@ -338,7 +338,7 @@ router.post('/', authenticate, authorize('SUPER_ADMIN'), async (req: Request, re
  *         description: 공통 코드를 찾을 수 없음
  */
 // Update common code
-router.put('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { groupCode, code, name, description, value, order, isActive } = req.body;
@@ -407,7 +407,7 @@ router.put('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, 
  *         description: 공통 코드를 찾을 수 없음
  */
 // Delete common code
-router.delete('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -459,7 +459,7 @@ router.delete('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Reques
  *         description: 권한 없음
  */
 // Get unique group codes
-router.get('/groups/list', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.get('/groups/list', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const groups = await prisma.commonCode.findMany({
       select: {

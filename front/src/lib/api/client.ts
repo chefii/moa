@@ -40,11 +40,25 @@ apiClient.interceptors.request.use(
         try {
           const { state } = JSON.parse(authStore);
           const token = state?.user?.token;
+
+          // Debug logging in development
+          if (process.env.NODE_ENV === 'development') {
+            console.log('[apiClient] Request to:', config.url);
+            console.log('[apiClient] Token present:', !!token);
+            if (!token) {
+              console.log('[apiClient] Auth store state:', state);
+            }
+          }
+
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
           }
         } catch (error) {
           console.error('Failed to parse auth storage:', error);
+        }
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[apiClient] No auth store found in localStorage');
         }
       }
     }

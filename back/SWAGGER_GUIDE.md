@@ -3,8 +3,8 @@
 ## 📚 Swagger UI 접속
 
 백엔드 서버 실행 후 다음 URL로 접속하세요:
-- **Swagger UI**: http://localhost:4000/api-docs
-- **Swagger JSON**: http://localhost:4000/api-docs.json
+- **Swagger UI**: http://loaclhost:4000/api-docs
+- **Swagger JSON**: http://loaclhost:4000/api-docs.json
 
 ## 🔐 JWT 토큰 인증 방법
 
@@ -122,7 +122,7 @@ Swagger UI에서 인증이 필요한 API를 테스트하려면 다음 단계를 
 
 ### 1. 여러 환경 테스트
 Swagger 설정에서 서버를 변경할 수 있습니다:
-- Development: http://localhost:4000
+- Development: http://loaclhost:4000
 - Production: https://api.moaim.co.kr
 
 ### 2. 응답 예시 확인

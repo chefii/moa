@@ -19,13 +19,14 @@ import {
   CreateBannerDto,
   UpdateBannerDto,
 } from '@/lib/api/admin/banners';
+import ImageUploader from '@/components/ImageUploader';
 
 const BANNER_TYPES: { value: BannerType; label: string }[] = [
+  { value: 'MAIN_BANNER', label: '메인 배너' },
   { value: 'MAIN_TOP', label: '메인 상단' },
   { value: 'MAIN_MIDDLE', label: '메인 중단' },
   { value: 'MAIN_BOTTOM', label: '메인 하단' },
   { value: 'EVENT', label: '이벤트' },
-  { value: 'POPUP', label: '팝업' },
 ];
 
 export default function BannersPage() {
@@ -45,10 +46,10 @@ export default function BannersPage() {
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedBanner, setSelectedBanner] = useState<Banner | null>(null);
   const [formData, setFormData] = useState<CreateBannerDto>({
-    type: 'MAIN_TOP',
+    type: 'MAIN_BANNER',
     title: '',
     description: '',
-    imageUrl: '',
+    imageId: '',
     linkUrl: '',
     order: 0,
     startDate: new Date().toISOString().split('T')[0],
@@ -81,10 +82,10 @@ export default function BannersPage() {
   const handleCreate = () => {
     setModalMode('create');
     setFormData({
-      type: 'MAIN_TOP',
+      type: 'MAIN_BANNER',
       title: '',
       description: '',
-      imageUrl: '',
+      imageId: '',
       linkUrl: '',
       order: 0,
       startDate: new Date().toISOString().split('T')[0],
@@ -101,7 +102,7 @@ export default function BannersPage() {
       type: banner.type,
       title: banner.title,
       description: banner.description || '',
-      imageUrl: banner.imageUrl,
+      imageId: banner.imageId,
       linkUrl: banner.linkUrl || '',
       order: banner.order,
       startDate: banner.startDate.split('T')[0],
@@ -252,9 +253,9 @@ export default function BannersPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                          {banner.imageUrl ? (
+                          {banner.image?.url ? (
                             <img
-                              src={banner.imageUrl}
+                              src={banner.image.url}
                               alt={banner.title}
                               className="w-full h-full object-cover"
                             />
@@ -372,7 +373,15 @@ export default function BannersPage() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors z-10"
+            >
+              <X className="w-5 h-5 text-gray-500" />
+            </button>
+
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900">
                 {modalMode === 'create' ? '배너 추가' : '배너 수정'}
@@ -433,18 +442,18 @@ export default function BannersPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  이미지 URL *
+                  배너 이미지 *
                 </label>
-                <input
-                  type="url"
-                  required
-                  value={formData.imageUrl}
-                  onChange={(e) =>
-                    setFormData({ ...formData, imageUrl: e.target.value })
-                  }
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
-                  placeholder="https://example.com/image.jpg"
+                <ImageUploader
+                  value={formData.imageId}
+                  onChange={(fileId) => setFormData({ ...formData, imageId: fileId || '' })}
+                  uploadType="banner"
+                  placeholder="배너 이미지를 업로드하세요"
+                  aspectRatio="wide"
                 />
+                {!formData.imageId && (
+                  <p className="mt-1 text-xs text-red-500">* 이미지를 업로드해주세요</p>
+                )}
               </div>
 
               <div>
@@ -458,41 +467,47 @@ export default function BannersPage() {
                     setFormData({ ...formData, linkUrl: e.target.value })
                   }
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
-                  placeholder="클릭 시 이동할 URL (선택)"
+                  placeholder="배너 클릭 시 이동할 URL (선택)"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  * 입력 시 배너 클릭 시 해당 URL로 리다이렉트됩니다
+                </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    시작일 *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.startDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, startDate: e.target.value })
-                    }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
-                  />
-                </div>
+              {/* 메인 배너가 아닐 때만 날짜 필드 표시 */}
+              {formData.type !== 'MAIN_BANNER' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      시작일 *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.startDate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, startDate: e.target.value })
+                      }
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    종료일 *
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.endDate}
-                    onChange={(e) =>
-                      setFormData({ ...formData, endDate: e.target.value })
-                    }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
-                  />
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      종료일 *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.endDate}
+                      onChange={(e) =>
+                        setFormData({ ...formData, endDate: e.target.value })
+                      }
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">

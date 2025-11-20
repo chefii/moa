@@ -48,7 +48,7 @@ const prisma = new PrismaClient();
 router.get(
   '/',
   authenticate,
-  authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'),
+  authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const { categoryId, includeInactive } = req.query;
@@ -122,7 +122,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  authorize('SUPER_ADMIN'),
+  authorize('ROLE_SUPER_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -224,7 +224,7 @@ router.get(
 router.post(
   '/',
   authenticate,
-  authorize('SUPER_ADMIN'),
+  authorize('ROLE_SUPER_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const {
@@ -339,7 +339,7 @@ router.post(
 router.put(
   '/:id',
   authenticate,
-  authorize('SUPER_ADMIN'),
+  authorize('ROLE_SUPER_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -429,7 +429,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  authorize('SUPER_ADMIN'),
+  authorize('ROLE_SUPER_ADMIN'),
   async (req: Request, res: Response) => {
     try {
       const { id } = req.params;

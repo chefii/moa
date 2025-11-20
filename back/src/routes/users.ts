@@ -292,7 +292,7 @@ router.get('/:userId', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'),
  *         description: 권한 없음 (슈퍼 관리자만 접근 가능)
  */
 // Get user statistics (Admin only)
-router.get('/stats/overview', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.get('/stats/overview', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const [totalUsers, usersByRole, recentUsers] = await Promise.all([
       // Total users

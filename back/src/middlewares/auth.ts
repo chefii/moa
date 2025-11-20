@@ -18,7 +18,17 @@ export const authenticate = async (
   try {
     const authHeader = req.headers.authorization;
 
+    // Debug logging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Auth] Request URL:', req.url);
+      console.log('[Auth] Authorization header:', authHeader ? 'present' : 'missing');
+      console.log('[Auth] Headers:', JSON.stringify(req.headers, null, 2));
+    }
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Auth] FAILED: No token provided');
+      }
       res.status(401).json({
         success: false,
         message: 'No token provided',
@@ -31,8 +41,14 @@ export const authenticate = async (
     try {
       const decoded = verifyToken(token);
       req.user = decoded;
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Auth] SUCCESS: User authenticated:', decoded.userId);
+      }
       next();
     } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Auth] FAILED: Token verification error:', error);
+      }
       res.status(401).json({
         success: false,
         message: 'Invalid or expired token',
@@ -40,6 +56,7 @@ export const authenticate = async (
       return;
     }
   } catch (error) {
+    console.error('[Auth] ERROR:', error);
     res.status(500).json({
       success: false,
       message: 'Authentication error',

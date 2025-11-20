@@ -27,11 +27,11 @@ const router = Router();
  *               email:
  *                 type: string
  *                 format: email
- *                 example: user@example.com
+ *                 example: asdf@asdf.com
  *               password:
  *                 type: string
  *                 format: password
- *                 example: password123
+ *                 example: 1234
  *               name:
  *                 type: string
  *                 example: 홍길동
@@ -250,7 +250,7 @@ const parseUserAgent = (userAgent: string) => {
   let device = 'desktop';
   if (/mobile/i.test(ua)) device = 'mobile';
   else if (/tablet/i.test(ua)) device = 'tablet';
-
+  
   // Detect browser
   let browser = 'Unknown';
   if (/Chrome/i.test(ua)) browser = 'Chrome';
@@ -289,11 +289,11 @@ const parseUserAgent = (userAgent: string) => {
  *               email:
  *                 type: string
  *                 format: email
- *                 example: user@example.com
+ *                 example: asdf@asdf.com
  *               password:
  *                 type: string
  *                 format: password
- *                 example: password123
+ *                 example: 1234
  *     responses:
  *       200:
  *         description: 로그인 성공
@@ -385,7 +385,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
       res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: '이메일 혹은 비밀번호를 확인해주세요.',
       });
       return;
     }
@@ -411,7 +411,7 @@ router.post('/login', async (req: Request, res: Response) => {
 
       res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: '이메일 혹은 비밀번호를 확인해주세요.',
       });
       return;
     }
@@ -859,6 +859,210 @@ router.post('/check-nickname', async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: '닉네임 확인 중 오류가 발생했습니다.',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/kakao/callback:
+ *   post:
+ *     summary: 카카오 로그인 콜백
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: 카카오 인가 코드
+ *     responses:
+ *       200:
+ *         description: 로그인 성공
+ *       400:
+ *         description: 인가 코드 누락
+ *       500:
+ *         description: 서버 오류
+ */
+router.post('/kakao/callback', async (req: Request, res: Response) => {
+  try {
+    const { code } = req.body;
+
+    if (!code) {
+      res.status(400).json({
+        success: false,
+        message: 'Authorization code is required',
+      });
+      return;
+    }
+
+    // 1. 카카오 액세스 토큰 요청
+    const tokenResponse = await fetch('https://kauth.kakao.com/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: process.env.KAKAO_CLIENT_ID || '',
+        client_secret: process.env.KAKAO_CLIENT_SECRET || '',
+        redirect_uri: process.env.KAKAO_REDIRECT_URI || '',
+        code,
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.json();
+      console.error('Kakao token error:', errorData);
+      res.status(400).json({
+        success: false,
+        message: 'Failed to get Kakao access token',
+        error: errorData,
+      });
+      return;
+    }
+
+    const tokenData: any = await tokenResponse.json();
+    const { access_token } = tokenData;
+
+    // 2. 카카오 사용자 정보 요청
+    const userResponse = await fetch('https://kapi.kakao.com/v2/user/me', {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
+      },
+    });
+
+    if (!userResponse.ok) {
+      const errorData = await userResponse.json();
+      console.error('Kakao user info error:', errorData);
+      res.status(400).json({
+        success: false,
+        message: 'Failed to get Kakao user info',
+        error: errorData,
+      });
+      return;
+    }
+
+    const kakaoUser: any = await userResponse.json();
+    const { id: kakaoId, kakao_account } = kakaoUser;
+    const email = kakao_account?.email;
+    const nickname = kakao_account?.profile?.nickname;
+
+    if (!email) {
+      res.status(400).json({
+        success: false,
+        message: 'Email is required from Kakao account',
+      });
+      return;
+    }
+
+    // 3. 기존 사용자 확인 또는 새 사용자 생성
+    let user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        userRoles: true,
+      },
+    });
+
+    if (!user) {
+      // 새 사용자 생성 (카카오 로그인)
+      // 카카오 로그인 사용자는 비밀번호가 없으므로 랜덤 해시 생성
+      const randomPassword = Math.random().toString(36).slice(-12);
+      const hashedPassword = await bcrypt.hash(randomPassword, Number(process.env.BCRYPT_ROUNDS) || 10);
+
+      user = await prisma.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          name: nickname || 'Kakao User',
+          nickname: nickname,
+          isVerified: true, // 카카오 인증을 통해 이메일 검증됨
+          emailVerifiedAt: new Date(),
+          userRoles: {
+            create: {
+              roleCode: 'USER',
+              isPrimary: true,
+            },
+          },
+        },
+        include: {
+          userRoles: true,
+        },
+      });
+
+      // 사용자 레벨 초기화
+      await prisma.userLevel.create({
+        data: {
+          userId: user.id,
+          level: 1,
+          growthPoints: 0,
+        },
+      });
+
+      // 사용자 스트릭 초기화
+      await prisma.userStreak.create({
+        data: {
+          userId: user.id,
+          currentStreak: 0,
+          longestStreak: 0,
+          lastActivityDate: new Date(),
+        },
+      });
+    }
+
+    // 4. JWT 토큰 생성
+    const primaryRole = user.userRoles.find((ur) => ur.isPrimary)?.roleCode || 'USER';
+    const roles = user.userRoles.map((ur) => ur.roleCode);
+
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      role: primaryRole,
+      roles: roles,
+    });
+
+    const refreshToken = generateRefreshToken({
+      userId: user.id,
+      email: user.email,
+      role: primaryRole,
+      roles: roles,
+    });
+
+    // 5. Refresh Token을 DB에 저장
+    await saveRefreshToken(
+      user.id,
+      refreshToken,
+      req.headers['user-agent'],
+      req.ip
+    );
+
+    res.json({
+      success: true,
+      message: 'Kakao login successful',
+      token,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        nickname: user.nickname,
+        isVerified: user.isVerified,
+        roles: user.userRoles.map((ur) => ur.roleCode),
+      },
+    });
+  } catch (error) {
+    console.error('Kakao login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Kakao login failed',
+      error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

@@ -67,6 +67,15 @@ export default function LoginPage() {
     }
   };
 
+  const handleKakaoLogin = () => {
+    const KAKAO_CLIENT_ID = 'OGOx0hHDcFMb4BRAjkqyXtN1d7nHwwwF';
+    const REDIRECT_URI = 'http://localhost:3000/auth/kakao/callback';
+
+    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code`;
+
+    window.location.href = kakaoAuthUrl;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-orange-50 flex items-center justify-center p-4">
       <div className="max-w-lg w-full">
@@ -131,6 +140,30 @@ export default function LoginPage() {
                 로그인
               </>
             )}
+          </button>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500 font-semibold">
+                또는
+              </span>
+            </div>
+          </div>
+
+          {/* Kakao Login Button */}
+          <button
+            type="button"
+            onClick={handleKakaoLogin}
+            className="w-full py-4 bg-[#FEE500] hover:bg-[#FDD835] text-[#000000] font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
+          >
+            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3C6.477 3 2 6.477 2 10.75c0 2.568 1.594 4.844 4 6.281V21l3.219-2.125c.896.15 1.84.225 2.781.225 5.523 0 10-3.477 10-7.75S17.523 3 12 3z"/>
+            </svg>
+            카카오로 시작하기
           </button>
         </form>
 

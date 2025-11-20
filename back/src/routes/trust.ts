@@ -179,6 +179,73 @@ router.get('/badges/:userId?', authenticate, async (req: Request, res: Response)
 
 /**
  * @swagger
+ * /api/trust/badges/{userId}/all:
+ *   get:
+ *     summary: 사용자 배지 전체 목록 조회 (획득/미획득 포함)
+ *     tags: [Trust]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         description: 사용자 ID (me 또는 생략 시 본인 정보)
+ *         example: me
+ *     responses:
+ *       200:
+ *         description: 배지 전체 목록 조회 성공
+ */
+router.get('/badges/:userId/all', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.userId === 'me'
+      ? req.user!.userId
+      : req.params.userId;
+
+    // 전체 활성 배지 조회
+    const allBadges = await prisma.badge.findMany({
+      where: { isActive: true },
+      orderBy: { category: 'asc' },
+    });
+
+    // 사용자가 획득한 배지 조회
+    const userBadges = await prisma.userBadge.findMany({
+      where: { userId },
+    });
+
+    // 획득 배지 맵 생성
+    const earnedBadgeMap = new Map(
+      userBadges.map((ub) => [ub.badgeId, ub.earnedAt])
+    );
+
+    // 전체 배지에 획득 여부 추가
+    const badges = allBadges.map((badge) => ({
+      id: badge.id,
+      code: badge.code,
+      name: badge.name,
+      description: badge.description,
+      icon: badge.icon,
+      category: badge.category,
+      isEarned: earnedBadgeMap.has(badge.id),
+      earnedAt: earnedBadgeMap.get(badge.id)?.toISOString() || null,
+    }));
+
+    res.json({
+      success: true,
+      data: badges,
+    });
+  } catch (error) {
+    console.error('Get user badges all error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get user badges',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
  * /api/trust/badges:
  *   get:
  *     summary: 전체 뱃지 목록 조회

@@ -6,7 +6,17 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: 'MOA API Documentation',
       version: '1.0.0',
-      description: 'MOA 플랫폼 API 문서',
+      description: `
+## 🔐 인증 방법
+
+**1. 토큰 발급**: \`POST /api/auth/login\` 또는 \`POST /api/auth/register\` 호출 → \`accessToken\` 받기
+
+**2. 인증 설정**: 우측 상단 **🔓 Authorize** 클릭 → 토큰 입력 (⚠️ "Bearer " 없이 토큰만 입력) → Authorize 클릭
+
+**3. API 호출**: 🔒 아이콘이 있는 엔드포인트 사용 가능
+
+📝 **테스트 계정** - 일반: \`user@test.com\` / \`test1234\` | 관리자: \`admin@test.com\` / \`admin1234\`
+      `,
       contact: {
         name: 'API Support',
         email: 'support@moaim.co.kr',
@@ -14,7 +24,7 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: 'http://localhost:4000',
+        url: 'http://loaclhost:4000',
         description: 'Development server',
       },
       {
@@ -59,7 +69,7 @@ const options: swaggerJsdoc.Options = {
             email: {
               type: 'string',
               format: 'email',
-              example: 'user@example.com',
+              example: 'asdf@asdf.com',
             },
             name: {
               type: 'string',

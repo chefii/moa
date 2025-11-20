@@ -39,7 +39,7 @@ export default function AdminFooter() {
       setFooterLinks(links);
 
       // Load company info from common codes
-      const companyCodes = await commonCodesApi.getCodesByGroup('COMPANY_INFO');
+      const companyCodes = await commonCodesApi.getByGroup('COMPANY_INFO');
 
       // Transform common codes to CompanyInfo format
       const companyData: Partial<CompanyInfo> = {};
@@ -261,7 +261,7 @@ export default function AdminFooter() {
         {/* 저작권 */}
         <div className="border-t border-gray-800 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-            <p>© {currentYear} MOA. All rights reserved.</p>
+            <p>© {currentYear} MOA All rights reserved.</p>
             <p className="text-xs">
               모든 권리는 회사에 있으며, 무단 전재 및 재배포를 금지합니다.
             </p>

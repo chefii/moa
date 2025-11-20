@@ -7,27 +7,35 @@ export type ReportType = 'USER' | 'GATHERING' | 'COMMENT' | 'OTHER';
 export interface Report {
   id: string;
   reporterId: string;
-  reportedUserId?: string;
+  reportedId: string;
   gatheringId?: string;
-  commentId?: string;
-  type: ReportType;
-  reason: string;
+  reasonCode: string;
+  customReason?: string;
   description?: string;
-  status: ReportStatus;
+  statusCode: string;
+  adminNote?: string;
   resolvedAt?: string;
   resolvedBy?: string;
-  resolution?: string;
   createdAt: string;
-  updatedAt: string;
   reporter?: {
     id: string;
     name: string;
     email: string;
   };
-  reportedUser?: {
+  reported?: {
     id: string;
     name: string;
     email: string;
+  };
+  reasonCommonCode?: {
+    code: string;
+    name: string;
+    description?: string;
+  };
+  statusCommonCode?: {
+    code: string;
+    name: string;
+    description?: string;
   };
 }
 
@@ -51,7 +59,7 @@ export interface ReportStats {
 
 export interface UpdateReportStatusDto {
   status: ReportStatus;
-  resolution?: string;
+  adminNote?: string;
 }
 
 export const reportsApi = {

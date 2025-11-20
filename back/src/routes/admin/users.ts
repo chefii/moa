@@ -68,7 +68,7 @@ const router = Router();
  *         description: 권한 없음
  */
 // Get all users with role filtering
-router.get('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
+router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { role, search, page = 1, limit = 20 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -183,7 +183,7 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Req
  *         description: 사용자를 찾을 수 없음
  */
 // Get user by ID
-router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
+router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -319,7 +319,7 @@ router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: 
  *         description: 사용자를 찾을 수 없음
  */
 // Update user roles (다중 역할 지원)
-router.put('/:id/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
+router.put('/:id/roles', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { roles, primaryRole, reason } = req.body;
@@ -342,12 +342,12 @@ router.put('/:id/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async 
       'BUSINESS_PENDING',
       'BUSINESS_USER',
       'BUSINESS_MANAGER',
-      'MODERATOR',
+      'ROLE_MODERATOR',
       'CONTENT_MANAGER',
       'SUPPORT_MANAGER',
       'SETTLEMENT_MANAGER',
-      'ADMIN',
-      'SUPER_ADMIN',
+      'ROLE_ADMIN',
+      'ROLE_SUPER_ADMIN',
     ];
 
     // Validate all roles
@@ -510,7 +510,7 @@ router.put('/:id/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async 
  *         description: 권한 없음
  */
 // Get role statistics (다중 역할 지원)
-router.get('/stats/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
+router.get('/stats/roles', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN'), async (req: Request, res: Response) => {
   try {
     // Get total users count
     const totalUsers = await prisma.user.count();
@@ -525,12 +525,12 @@ router.get('/stats/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), asyn
       'BUSINESS_PENDING',
       'BUSINESS_USER',
       'BUSINESS_MANAGER',
-      'MODERATOR',
+      'ROLE_MODERATOR',
       'CONTENT_MANAGER',
       'SUPPORT_MANAGER',
       'SETTLEMENT_MANAGER',
-      'ADMIN',
-      'SUPER_ADMIN',
+      'ROLE_ADMIN',
+      'ROLE_SUPER_ADMIN',
     ];
 
     const roleCounts = await Promise.all(
@@ -611,7 +611,7 @@ router.get('/stats/roles', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), asyn
  *         description: 사용자를 찾을 수 없음
  */
 // Reset user password to 1234
-router.post('/:id/reset-password', authenticate, authorize('SUPER_ADMIN', 'ADMIN'), async (req: Request, res: Response) => {
+router.post('/:id/reset-password', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 

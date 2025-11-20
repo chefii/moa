@@ -38,17 +38,27 @@ const router = Router();
  *       403:
  *         description: 권한 없음
  */
-// Get all categories
-router.get('/', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+// Get all categories with hierarchy
+router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
-    const { isActive } = req.query;
+    const { isActive, includeChildren } = req.query;
 
     const where: any = {};
     if (isActive !== undefined) where.isActive = isActive === 'true';
 
+    // 계층 구조로 조회하려면 최상위 카테고리만 가져오기
+    if (includeChildren === 'true') {
+      where.parentId = null;
+    }
+
     const categories = await prisma.category.findMany({
       where,
       orderBy: { order: 'asc' },
+      include: includeChildren === 'true' ? {
+        children: {
+          orderBy: { order: 'asc' },
+        },
+      } : undefined,
     });
 
     res.json({
@@ -122,9 +132,9 @@ router.get('/', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res
  *         description: 권한 없음
  */
 // Create category
-router.post('/', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
-    const { name, slug, icon, description, order, isActive } = req.body;
+    const { name, displayName, slug, icon, color, description, order, isActive, parentId, type } = req.body;
 
     if (!name || !slug) {
       res.status(400).json({
@@ -134,14 +144,26 @@ router.post('/', authenticate, authorize('SUPER_ADMIN'), async (req: Request, re
       return;
     }
 
+    // parentId가 있으면 depth=1, 없으면 depth=0
+    const depth = parentId ? 1 : 0;
+
     const category = await prisma.category.create({
       data: {
         name,
+        displayName,
         slug,
         icon,
+        color,
         description,
+        parentId,
+        depth,
         order: order || 0,
+        type: type || [],
         isActive: isActive !== undefined ? isActive : true,
+      },
+      include: {
+        parent: true,
+        children: true,
       },
     });
 
@@ -213,20 +235,34 @@ router.post('/', authenticate, authorize('SUPER_ADMIN'), async (req: Request, re
  *         description: 카테고리를 찾을 수 없음
  */
 // Update category
-router.put('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, slug, icon, description, order, isActive } = req.body;
+    const { name, displayName, slug, icon, color, description, order, isActive, parentId, type } = req.body;
+
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (displayName !== undefined) updateData.displayName = displayName;
+    if (slug !== undefined) updateData.slug = slug;
+    if (icon !== undefined) updateData.icon = icon;
+    if (color !== undefined) updateData.color = color;
+    if (description !== undefined) updateData.description = description;
+    if (order !== undefined) updateData.order = order;
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (type !== undefined) updateData.type = type;
+
+    // parentId가 변경되면 depth도 업데이트
+    if (parentId !== undefined) {
+      updateData.parentId = parentId;
+      updateData.depth = parentId ? 1 : 0;
+    }
 
     const category = await prisma.category.update({
       where: { id },
-      data: {
-        name,
-        slug,
-        icon,
-        description,
-        order,
-        isActive,
+      data: updateData,
+      include: {
+        parent: true,
+        children: true,
       },
     });
 
@@ -281,7 +317,7 @@ router.put('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, 
  *         description: 카테고리를 찾을 수 없음
  */
 // Delete category
-router.delete('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.category.delete({ where: { id } });

@@ -67,7 +67,7 @@ const router = Router();
  *         description: 권한 없음
  */
 // Get all banners
-router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { type, isActive, page = 1, limit = 20 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -86,6 +86,14 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
         orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
         skip,
         take: Number(limit),
+        include: {
+          image: {
+            select: {
+              id: true,
+              url: true,
+            },
+          },
+        },
       }),
       prisma.banner.count({ where }),
     ]);
@@ -146,12 +154,20 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
  *         description: 배너를 찾을 수 없음
  */
 // Get banner by ID
-router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
     const banner = await prisma.banner.findUnique({
       where: { id },
+      include: {
+        image: {
+          select: {
+            id: true,
+            url: true,
+          },
+        },
+      },
     });
 
     if (!banner) {
@@ -247,14 +263,14 @@ router.get('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), asy
  *         description: 권한 없음
  */
 // Create banner
-router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
-    const { type, title, description, imageUrl, linkUrl, order, startDate, endDate, isActive } = req.body;
+    const { type, title, description, imageId, linkUrl, order, startDate, endDate, isActive } = req.body;
 
-    if (!type || !title || !imageUrl || !startDate || !endDate) {
+    if (!type || !title || !imageId || !startDate || !endDate) {
       res.status(400).json({
         success: false,
-        message: 'Type, title, imageUrl, startDate, and endDate are required',
+        message: 'Type, title, imageId, startDate, and endDate are required',
       });
       return;
     }
@@ -264,7 +280,7 @@ router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async
         type,
         title,
         description,
-        imageUrl,
+        imageId,
         linkUrl,
         order: order || 0,
         startDate: new Date(startDate),
@@ -350,10 +366,10 @@ router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async
  *         description: 배너를 찾을 수 없음
  */
 // Update banner
-router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { type, title, description, imageUrl, linkUrl, order, startDate, endDate, isActive } = req.body;
+    const { type, title, description, imageId, linkUrl, order, startDate, endDate, isActive } = req.body;
 
     const banner = await prisma.banner.update({
       where: { id },
@@ -361,7 +377,7 @@ router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), asy
         type,
         title,
         description,
-        imageUrl,
+        imageId,
         linkUrl,
         order,
         startDate: startDate ? new Date(startDate) : undefined,
@@ -421,7 +437,7 @@ router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), asy
  *         description: 배너를 찾을 수 없음
  */
 // Delete banner
-router.delete('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 

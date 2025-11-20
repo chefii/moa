@@ -13,6 +13,7 @@ import {
   Check,
   X,
 } from 'lucide-react';
+import * as LucideIcons from 'lucide-react';
 import {
   menuCategoriesApi,
   menuItemsApi,
@@ -24,6 +25,14 @@ import {
   UpdateMenuItemDto,
 } from '@/lib/api/admin/menu';
 import { useMenuStore } from '@/store/menuStore';
+import IconInputField from '@/components/admin/IconInputField';
+
+// 동적으로 아이콘 컴포넌트 가져오기
+const getIconComponent = (iconName?: string) => {
+  if (!iconName) return FolderOpen;
+  const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons] as React.ComponentType<any>;
+  return IconComponent || FolderOpen;
+};
 
 export default function MenuManagementPage() {
   const { refreshMenu } = useMenuStore();
@@ -230,7 +239,7 @@ export default function MenuManagementPage() {
           className="px-4 py-2.5 bg-moa-primary text-white font-semibold rounded-xl hover:shadow-lg transition-shadow flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
-          카테고리 추가
+          메뉴 추가
         </button>
       </div>
 
@@ -267,8 +276,11 @@ export default function MenuManagementPage() {
                       )}
                     </button>
 
-                    <div className="w-12 h-12 bg-gradient-to-br from-moa-primary to-moa-accent rounded-xl flex items-center justify-center">
-                      <FolderOpen className="w-6 h-6 text-white" />
+                    <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                      {(() => {
+                        const CategoryIcon = getIconComponent(category.icon);
+                        return <CategoryIcon className="w-6 h-6 text-gray-700" />;
+                      })()}
                     </div>
 
                     <div className="flex-1">
@@ -450,20 +462,14 @@ export default function MenuManagementPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    아이콘 (Lucide React)
-                  </label>
-                  <input
-                    type="text"
-                    value={categoryFormData.icon}
-                    onChange={(e) =>
-                      setCategoryFormData({ ...categoryFormData, icon: e.target.value })
-                    }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
-                    placeholder="예: UserCircle2"
-                  />
-                </div>
+                <IconInputField
+                  label="아이콘 (Lucide React)"
+                  value={categoryFormData.icon}
+                  onChange={(value) =>
+                    setCategoryFormData({ ...categoryFormData, icon: value })
+                  }
+                  placeholder="클릭하여 아이콘 선택"
+                />
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -694,54 +700,50 @@ export default function MenuManagementPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    아이콘
-                  </label>
-                  <input
-                    type="text"
-                    value={itemFormData.icon}
-                    onChange={(e) =>
-                      setItemFormData({ ...itemFormData, icon: e.target.value })
-                    }
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
-                    placeholder="Users"
-                  />
-                </div>
+              <div className="space-y-4">
+                <IconInputField
+                  label="아이콘 (Lucide React)"
+                  value={itemFormData.icon}
+                  onChange={(value) =>
+                    setItemFormData({ ...itemFormData, icon: value })
+                  }
+                  placeholder="클릭하여 아이콘 선택"
+                />
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    순서
-                  </label>
-                  <input
-                    type="number"
-                    value={itemFormData.order}
-                    onChange={(e) => {
-                      const value = e.target.value === '' ? 0 : parseInt(e.target.value);
-                      setItemFormData({ ...itemFormData, order: isNaN(value) ? 0 : value });
-                    }}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
-                  />
-                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      순서
+                    </label>
+                    <input
+                      type="number"
+                      value={itemFormData.order}
+                      onChange={(e) => {
+                        const value = e.target.value === '' ? 0 : parseInt(e.target.value);
+                        setItemFormData({ ...itemFormData, order: isNaN(value) ? 0 : value });
+                      }}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    뱃지
-                  </label>
-                  <input
-                    type="number"
-                    value={itemFormData.badge ?? ''}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setItemFormData({
-                        ...itemFormData,
-                        badge: value === '' ? undefined : parseInt(value),
-                      });
-                    }}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
-                    placeholder="숫자"
-                  />
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      뱃지
+                    </label>
+                    <input
+                      type="number"
+                      value={itemFormData.badge ?? ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setItemFormData({
+                          ...itemFormData,
+                          badge: value === '' ? undefined : parseInt(value),
+                        });
+                      }}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                      placeholder="숫자"
+                    />
+                  </div>
                 </div>
               </div>
 

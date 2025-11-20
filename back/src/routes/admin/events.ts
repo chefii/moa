@@ -67,7 +67,7 @@ const router = Router();
  *         description: 권한 없음
  */
 // Get all events
-router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { status, isActive, page = 1, limit = 20 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
@@ -177,14 +177,14 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
  *         description: 권한 없음
  */
 // Create event
-router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
-    const { title, description, imageUrl, thumbnailUrl, status, startDate, endDate, maxParticipants, isActive } = req.body;
+    const { title, description, imageId, thumbnailImageId, status, startDate, endDate, maxParticipants, isActive } = req.body;
 
-    if (!title || !description || !imageUrl || !startDate || !endDate) {
+    if (!title || !description || !imageId || !startDate || !endDate) {
       res.status(400).json({
         success: false,
-        message: 'Title, description, imageUrl, startDate, and endDate are required',
+        message: 'Title, description, imageId, startDate, and endDate are required',
       });
       return;
     }
@@ -193,8 +193,8 @@ router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async
       data: {
         title,
         description,
-        imageUrl,
-        thumbnailUrl,
+        imageId,
+        thumbnailImageId,
         status: status || 'SCHEDULED',
         startDate: new Date(startDate),
         endDate: new Date(endDate),
@@ -280,7 +280,7 @@ router.post('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async
  *         description: 이벤트를 찾을 수 없음
  */
 // Update event
-router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updateData: any = { ...req.body };
@@ -344,7 +344,7 @@ router.put('/:id', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), asy
  *         description: 이벤트를 찾을 수 없음
  */
 // Delete event
-router.delete('/:id', authenticate, authorize('SUPER_ADMIN'), async (req: Request, res: Response) => {
+router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     await prisma.event.delete({ where: { id } });
