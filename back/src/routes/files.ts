@@ -213,14 +213,14 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
       return;
     }
 
-    // 파일 시스템에서 파일 삭제
-    const UPLOAD_BASE_DIR = process.env.UPLOAD_DIR || './uploads';
-    const filePath = path.join(UPLOAD_BASE_DIR, file.savedName);
-    deleteFile(filePath);
-
-    // 데이터베이스에서 파일 정보 삭제
-    await prisma.file.delete({
+    // 소프트 삭제: 파일은 물리적으로 삭제하지 않고 DB에서만 삭제 표시
+    // 실제 파일 삭제는 배치 작업으로 나중에 처리 가능
+    await prisma.file.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
     });
 
     res.json({

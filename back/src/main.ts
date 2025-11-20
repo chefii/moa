@@ -5,10 +5,17 @@ import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
-import { PrismaClient } from '@prisma/client';
 import Redis from 'ioredis';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
+import logger from './config/logger';
+import {
+  requestIdMiddleware,
+  requestLoggingMiddleware,
+  performanceMiddleware,
+  errorLoggingMiddleware,
+} from './middleware/requestLogger';
+import { prisma } from './config/prisma';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -45,35 +52,8 @@ import adminBoardsRoutes from './routes/admin/boards';
 // Load environment variables
 dotenv.config();
 
-// Initialize Prisma Client
-export const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development'
-    ? [
-        {
-          emit: 'event',
-          level: 'query',
-        },
-        {
-          emit: 'stdout',
-          level: 'error',
-        },
-        {
-          emit: 'stdout',
-          level: 'warn',
-        },
-      ]
-    : ['error'],
-});
-
-// Log queries with parameters in development
-if (process.env.NODE_ENV === 'development') {
-  prisma.$on('query' as never, (e: any) => {
-    console.log('Query: ' + e.query);
-    console.log('Params: ' + e.params);
-    console.log('Duration: ' + e.duration + 'ms');
-    console.log('---');
-  });
-}
+// Prisma Client는 config/prisma.ts에서 import (미들웨어 적용됨)
+export { prisma } from './config/prisma';
 
 // Initialize Redis Client
 export const redis = new Redis({
@@ -131,7 +111,16 @@ app.use(cors({
 app.use(compression()); // Compress responses
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
-app.use(morgan('dev')); // Logging
+
+// Winston-based logging middleware
+app.use(requestIdMiddleware); // Request ID 생성
+app.use(requestLoggingMiddleware); // HTTP 요청/응답 로깅
+app.use(performanceMiddleware); // 성능 메트릭 수집
+
+// Morgan for basic HTTP logging (optional, 기본 HTTP 로그용)
+if (process.env.NODE_ENV === 'production') {
+  app.use(morgan('combined')); // Production logging
+}
 
 // Swagger API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -245,6 +234,12 @@ app.use('/api/admin/boards', adminBoardsRoutes);
 
 // 404 Handler
 app.use((req: Request, res: Response) => {
+  logger.warn(`404 - Route not found: ${req.method} ${req.path}`, {
+    requestId: req.requestId,
+    method: req.method,
+    path: req.path,
+  });
+
   res.status(404).json({
     success: false,
     message: 'Route not found',
@@ -252,9 +247,22 @@ app.use((req: Request, res: Response) => {
   });
 });
 
+// Error Logging Middleware
+app.use(errorLoggingMiddleware);
+
 // Error Handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Error:', err);
+  logger.error(`Unhandled Error: ${err.message}`, {
+    requestId: req.requestId,
+    error: {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+    },
+    method: req.method,
+    url: req.url,
+  });
+
   res.status(500).json({
     success: false,
     message: 'Internal server error',
@@ -264,14 +272,14 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 // Graceful Shutdown
 process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, closing server gracefully...');
+  logger.info('SIGTERM received, closing server gracefully...');
   await prisma.$disconnect();
   await redis.quit();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
-  console.log('SIGINT received, closing server gracefully...');
+  logger.info('SIGINT received, closing server gracefully...');
   await prisma.$disconnect();
   await redis.quit();
   process.exit(0);
@@ -279,7 +287,7 @@ process.on('SIGINT', async () => {
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`
+  const serverInfo = `
   ╔═══════════════════════════════════════════════╗
   ║                                               ║
   ║          🎉 모아 API Server Running 🎉        ║
@@ -287,12 +295,26 @@ app.listen(PORT, () => {
   ║   Port: ${PORT}                              ${PORT.toString().length === 4 ? ' ' : ''}   ║
   ║   Environment: ${process.env.NODE_ENV || 'development'} ${(process.env.NODE_ENV || 'development').length === 10 ? '' : ' '}                  ║
   ║                                               ║
-  ║  Health Check: http://loaclhost:${PORT}/health   ║
-  ║  API Docs: http://loaclhost:${PORT}/api          ║
-  ║  Swagger UI: http://loaclhost:${PORT}/api-docs   ║
+  ║  Health Check: http://localhost:${PORT}/health   ║
+  ║  API Docs: http://localhost:${PORT}/api          ║
+  ║  Swagger UI: http://localhost:${PORT}/api-docs   ║
   ║                                               ║
   ╚═══════════════════════════════════════════════╝
-  `);
+  `;
+
+  console.log(serverInfo);
+
+  logger.info('=== Server start ===', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    nodeVersion: process.version,
+    pid: process.pid,
+  });
+
+  logger.info('📊 Logging system initialized', {
+    logDir: process.env.LOG_DIR || '/Users/philip/project/moa_file/logs',
+    logLevel: process.env.LOG_LEVEL,
+  });
 });
 
 export default app;

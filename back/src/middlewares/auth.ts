@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, JwtPayload } from '../utils/jwt';
+import logger from '../config/logger';
+import { maskHeaders, maskUUID, createSafeUserLog } from '../utils/securityMasking';
 
 // Extend Express Request type
 declare global {
@@ -18,17 +20,21 @@ export const authenticate = async (
   try {
     const authHeader = req.headers.authorization;
 
-    // Debug logging in development
+    // Debug logging in development (with sensitive data masking)
     if (process.env.NODE_ENV === 'development') {
-      console.log('[Auth] Request URL:', req.url);
-      console.log('[Auth] Authorization header:', authHeader ? 'present' : 'missing');
-      console.log('[Auth] Headers:', JSON.stringify(req.headers, null, 2));
+      logger.debug('🔐 Auth Request', {
+        requestId: req.requestId,
+        url: req.url,
+        authHeaderPresent: authHeader ? 'present' : 'missing',
+        headers: maskHeaders(req.headers),
+      });
     }
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Auth] FAILED: No token provided');
-      }
+      logger.warn('🔐 Auth Failed: No token provided', {
+        requestId: req.requestId,
+        url: req.url,
+      });
       res.status(401).json({
         success: false,
         message: 'No token provided',
@@ -41,14 +47,22 @@ export const authenticate = async (
     try {
       const decoded = verifyToken(token);
       req.user = decoded;
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Auth] SUCCESS: User authenticated:', decoded.userId);
-      }
+
+      // Log successful authentication with masked user data
+      logger.info('🔐 Auth Success: User authenticated', {
+        requestId: req.requestId,
+        userId: maskUUID(decoded.userId),
+        role: decoded.role,
+        url: req.url,
+      });
+
       next();
     } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[Auth] FAILED: Token verification error:', error);
-      }
+      logger.warn('🔐 Auth Failed: Token verification error', {
+        requestId: req.requestId,
+        url: req.url,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       res.status(401).json({
         success: false,
         message: 'Invalid or expired token',
@@ -56,7 +70,15 @@ export const authenticate = async (
       return;
     }
   } catch (error) {
-    console.error('[Auth] ERROR:', error);
+    logger.error('🔐 Auth Error: Unexpected authentication error', {
+      requestId: req.requestId,
+      url: req.url,
+      error: error instanceof Error ? {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      } : 'Unknown error',
+    });
     res.status(500).json({
       success: false,
       message: 'Authentication error',

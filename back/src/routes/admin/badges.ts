@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient, BadgeCategory } from '@prisma/client';
+import { BadgeCategory } from '@prisma/client';
 import { authenticate, authorize } from '../../middlewares/auth';
+import { prisma } from '../../config/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 /**
  * @swagger
@@ -391,9 +391,13 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
       });
     }
 
-    // 배지 삭제
-    await prisma.badge.delete({
+    // 배지 소프트 삭제
+    await prisma.badge.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
     });
 
     res.json({

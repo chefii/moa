@@ -320,7 +320,13 @@ router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Requ
 router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    await prisma.category.delete({ where: { id } });
+    await prisma.category.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    });
 
     res.json({
       success: true,

@@ -441,8 +441,12 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
   try {
     const { id } = req.params;
 
-    await prisma.banner.delete({
+    await prisma.banner.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
     });
 
     res.json({

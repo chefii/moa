@@ -1,9 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticate, authorize } from '../../middlewares/auth';
+import { prisma } from '../../config/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 /**
  * @swagger
@@ -434,8 +433,12 @@ router.delete(
     try {
       const { id } = req.params;
 
-      await prisma.menuItem.delete({
+      await prisma.menuItem.update({
         where: { id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
       });
 
       res.json({

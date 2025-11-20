@@ -30,9 +30,13 @@ export const apiClient: AxiosInstance = axios.create({
   },
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token and detailed logging
 apiClient.interceptors.request.use(
   (config) => {
+    const startTime = Date.now();
+    // Store start time for duration calculation
+    (config as any).metadata = { startTime };
+
     // Get token from localStorage
     if (typeof window !== 'undefined') {
       const authStore = localStorage.getItem('moa-auth-storage');
@@ -41,37 +45,82 @@ apiClient.interceptors.request.use(
           const { state } = JSON.parse(authStore);
           const token = state?.user?.token;
 
-          // Debug logging in development
-          if (process.env.NODE_ENV === 'development') {
-            console.log('[apiClient] Request to:', config.url);
-            console.log('[apiClient] Token present:', !!token);
-            if (!token) {
-              console.log('[apiClient] Auth store state:', state);
-            }
-          }
-
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+          }
+
+          // Detailed logging in development
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`\n📤 [API REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
+            console.log(`   Base URL: ${config.baseURL}`);
+            console.log(`   Headers:`, {
+              ...config.headers,
+              Authorization: token ? `Bearer ${token.substring(0, 20)}...` : 'None',
+            });
+
+            if (config.params && Object.keys(config.params).length > 0) {
+              console.log(`   Query Params:`, config.params);
+            }
+
+            if (config.data) {
+              console.log(`   Request Body:`, config.data);
+            }
+
+            console.log(`   Token present: ${!!token}`);
           }
         } catch (error) {
           console.error('Failed to parse auth storage:', error);
         }
       } else {
         if (process.env.NODE_ENV === 'development') {
-          console.log('[apiClient] No auth store found in localStorage');
+          console.log(`\n📤 [API REQUEST] ${config.method?.toUpperCase()} ${config.url}`);
+          console.log(`   ⚠️  No auth store found in localStorage`);
         }
       }
     }
     return config;
   },
   (error) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.error('\n❌ [API REQUEST ERROR]', error.message);
+    }
     return Promise.reject(error);
   }
 );
 
-// Response interceptor - Handle errors and auto-refresh
+// Response interceptor - Handle errors and auto-refresh with detailed logging
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Calculate request duration
+    const duration = (response.config as any).metadata?.startTime
+      ? Date.now() - (response.config as any).metadata.startTime
+      : 0;
+
+    // Detailed logging in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`\n📥 [API RESPONSE] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+      console.log(`   Duration: ${duration}ms`);
+      console.log(`   Status: ${response.status} ${response.statusText}`);
+
+      if (response.headers) {
+        console.log(`   Content-Type: ${response.headers['content-type']}`);
+      }
+
+      // Log response data (truncate if too large)
+      if (response.data) {
+        const dataStr = JSON.stringify(response.data);
+        if (dataStr.length < 1000) {
+          console.log(`   Response Data:`, response.data);
+        } else {
+          console.log(`   Response Data: [Large response, ${dataStr.length} characters]`);
+          console.log(`   Response Preview:`, dataStr.substring(0, 200) + '...');
+        }
+      }
+      console.log(`${'─'.repeat(80)}\n`);
+    }
+
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
@@ -167,15 +216,42 @@ apiClient.interceptors.response.use(
         }
       }
 
-      console.error('API Error:', {
-        status,
-        data,
-        url: error.config?.url,
-      });
+      // Enhanced error logging in development
+      if (process.env.NODE_ENV === 'development') {
+        const duration = (error.config as any)?.metadata?.startTime
+          ? Date.now() - (error.config as any).metadata.startTime
+          : 0;
+
+        console.error(`\n❌ [API ERROR] ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${status}`);
+        console.error(`   Duration: ${duration}ms`);
+        console.error(`   Status: ${status}`);
+        console.error(`   Error Data:`, data);
+        console.error(`${'─'.repeat(80)}\n`);
+      } else {
+        console.error('API Error:', {
+          status,
+          data,
+          url: error.config?.url,
+        });
+      }
     } else if (error.request) {
-      console.error('Network Error:', error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('\n❌ [NETWORK ERROR]');
+        console.error(`   Message: ${error.message}`);
+        console.error(`   URL: ${error.config?.url}`);
+        console.error(`   Request was made but no response received`);
+        console.error(`${'─'.repeat(80)}\n`);
+      } else {
+        console.error('Network Error:', error.message);
+      }
     } else {
-      console.error('Error:', error.message);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('\n❌ [REQUEST SETUP ERROR]');
+        console.error(`   Message: ${error.message}`);
+        console.error(`${'─'.repeat(80)}\n`);
+      } else {
+        console.error('Error:', error.message);
+      }
     }
 
     return Promise.reject(error);

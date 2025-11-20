@@ -1,9 +1,9 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient, GatheringType, GatheringStatus } from '@prisma/client';
+import { GatheringType, GatheringStatus } from '@prisma/client';
 import { authenticate, authorize } from '../middlewares/auth';
+import { prisma } from '../config/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 /**
  * @swagger
@@ -693,8 +693,12 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
       return;
     }
 
-    await prisma.gathering.delete({
+    await prisma.gathering.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
     });
 
     res.json({

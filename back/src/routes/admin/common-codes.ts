@@ -411,8 +411,12 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
   try {
     const { id } = req.params;
 
-    await prisma.commonCode.delete({
+    await prisma.commonCode.update({
       where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
     });
 
     res.json({
