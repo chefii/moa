@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 import { authenticate } from '../middlewares/auth';
 import {
   createFileUploadMiddleware,

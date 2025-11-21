@@ -58,9 +58,11 @@ export default function CategoriesPage() {
     description: '',
     icon: '',
     color: '#6366f1',
+    imageUrl: '',
     parentId: null,
     order: 0,
     type: [],
+    isFeatured: false,
     isActive: true,
   });
 
@@ -179,9 +181,11 @@ export default function CategoriesPage() {
       description: '',
       icon: '',
       color: '#6366f1',
+      imageUrl: '',
       parentId,
       order: childCount,
       type: [],
+      isFeatured: false,
       isActive: true,
     });
     setShowChildModal(true);
@@ -198,9 +202,11 @@ export default function CategoriesPage() {
       description: child.description || '',
       icon: child.icon || '',
       color: child.color || '#6366f1',
+      imageUrl: child.imageUrl || '',
       parentId: child.parentId,
       order: child.order,
       type: child.type || [],
+      isFeatured: child.isFeatured || false,
       isActive: child.isActive,
     });
     setShowChildModal(true);
@@ -443,7 +449,7 @@ export default function CategoriesPage() {
                     <thead>
                       <tr className="border-b border-gray-200">
                         <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                          아이콘
+                          이미지
                         </th>
                         <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
                           카테고리명
@@ -456,6 +462,9 @@ export default function CategoriesPage() {
                         </th>
                         <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
                           상태
+                        </th>
+                        <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                          추천
                         </th>
                         <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
                           작업
@@ -471,18 +480,26 @@ export default function CategoriesPage() {
                             className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                           >
                             <td className="py-3 px-4">
-                              <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                style={{
-                                  backgroundColor: child.color || '#6366f1',
-                                }}
-                              >
-                                {child.icon ? (
-                                  <span className="text-xl">{child.icon}</span>
-                                ) : (
-                                  <Tag className="w-5 h-5 text-white" />
-                                )}
-                              </div>
+                              {child.imageUrl ? (
+                                <img
+                                  src={child.imageUrl}
+                                  alt={child.name}
+                                  className="w-14 h-14 rounded-lg object-cover shadow-sm"
+                                />
+                              ) : (
+                                <div
+                                  className="w-14 h-14 rounded-lg flex items-center justify-center"
+                                  style={{
+                                    backgroundColor: child.color || '#6366f1',
+                                  }}
+                                >
+                                  {child.icon ? (
+                                    <span className="text-xl">{child.icon}</span>
+                                  ) : (
+                                    <Tag className="w-5 h-5 text-white" />
+                                  )}
+                                </div>
+                              )}
                             </td>
                             <td className="py-3 px-4">
                               <span className="font-semibold text-gray-900">{child.name}</span>
@@ -506,6 +523,16 @@ export default function CategoriesPage() {
                                   <X className="w-3 h-3" />
                                   비활성
                                 </span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4">
+                              {child.isFeatured ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                                  <Check className="w-3 h-3" />
+                                  추천
+                                </span>
+                              ) : (
+                                <span className="text-sm text-gray-400">-</span>
                               )}
                             </td>
                             <td className="py-3 px-4">
@@ -776,6 +803,36 @@ export default function CategoriesPage() {
                 />
               </div>
 
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  이미지 URL
+                </label>
+                <input
+                  type="text"
+                  value={childFormData.imageUrl}
+                  onChange={(e) =>
+                    setChildFormData({ ...childFormData, imageUrl: e.target.value })
+                  }
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-moa-primary"
+                  placeholder="https://images.unsplash.com/photo-..."
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Unsplash 또는 이미지 URL을 입력하세요 (권장: 800x800 크기)
+                </p>
+                {childFormData.imageUrl && (
+                  <div className="mt-3">
+                    <img
+                      src={childFormData.imageUrl}
+                      alt="Preview"
+                      className="w-32 h-32 rounded-lg object-cover shadow-md"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -792,7 +849,7 @@ export default function CategoriesPage() {
                     maxLength={2}
                   />
                   <p className="text-xs text-gray-500 mt-1 text-center">
-                    이모지 1개를 입력하세요
+                    이미지가 없을 때 표시될 이모지
                   </p>
                 </div>
 
@@ -817,6 +874,9 @@ export default function CategoriesPage() {
                       placeholder="#6366f1"
                     />
                   </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    이미지가 없을 때 배경색
+                  </p>
                 </div>
               </div>
 
@@ -835,7 +895,24 @@ export default function CategoriesPage() {
                 />
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-2">
+                <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={childFormData.isFeatured}
+                    onChange={(e) =>
+                      setChildFormData({ ...childFormData, isFeatured: e.target.checked })
+                    }
+                    className="w-4 h-4 text-moa-primary border-gray-300 rounded focus:ring-moa-primary"
+                  />
+                  <div>
+                    <span className="text-sm font-semibold text-gray-900">추천</span>
+                    <p className="text-xs text-gray-500">
+                      메인 페이지에 추천 카테고리로 표시됩니다
+                    </p>
+                  </div>
+                </label>
+
                 <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
                   <input
                     type="checkbox"

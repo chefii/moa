@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import MobileLayout from '@/components/MobileLayout';
 import MobileHeader from '@/components/MobileHeader';
 import GatheringCard from '@/components/GatheringCard';
+import CategoryGrid from '@/components/CategoryGrid';
 import { bannersApi, Banner } from '@/lib/api/banners';
 import { gatheringsApi, Gathering } from '@/lib/api/gatherings';
 import { categoriesApi, Category } from '@/lib/api/categories';
@@ -96,8 +97,8 @@ export default function Home() {
         });
         setNewGatherings(newData.data);
 
-        // Fetch categories (only GATHERING type for main page)
-        const categoriesData = await categoriesApi.getCategories({ type: 'GATHERING' });
+        // Fetch categories (only GATHERING type and featured for main page) 
+        const categoriesData = await categoriesApi.getCategories({ type: 'GATHERING', featured: true }); //GATHERING 모임 카테고리에서 featured=true 만 조회
         setCategories(categoriesData);
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -349,41 +350,10 @@ export default function Home() {
 
       {/* Categories */}
       <section className="py-6 bg-white">
-        {/* <h2 className="text-lg font-black text-gray-900 mb-4 px-5">카테고리</h2> */}
-        <div className="overflow-x-auto scrollbar-hide">
-          <div className="flex gap-3 px-5 pb-2">
-            {categories.map((category) => {
-              const displayText = category.displayName || category.name;
-              const showEmoji = isEmoji(category.icon);
-
-              return (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`flex-shrink-0 flex flex-col items-center gap-2 p-3 rounded-full transition-all active:scale-95 min-w-[80px] ${
-                    selectedCategory === category.id
-                      ? 'bg-moa-primary/10 border-2 border-moa-primary'
-                      : 'bg-gray-50 border-2 border-transparent'
-                  }`}
-                >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl"
-                    style={{
-                      backgroundColor: category.color || '#3b82f6'
-                    }}
-                  >
-                    {showEmoji ? (
-                      <span className="drop-shadow">{category.icon}</span>
-                    ) : (
-                      <Users className="w-6 h-6 text-white" />
-                    )}
-                  </div>
-                  <p className="text-xs font-bold text-gray-900 whitespace-nowrap">{displayText}</p>
-                </button>
-              );
-            })}
-          </div>
+        <div className="mb-4 px-5">
+          {/* <h2 className="text-lg font-black text-gray-900">카테고리</h2> */}
         </div>
+        <CategoryGrid categories={categories} />
       </section>
 
       {/* Popular Gatherings */}

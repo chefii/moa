@@ -314,11 +314,13 @@ model Category {
   slug        String
   icon        String?
   color       String?
+  imageUrl    String?   @map("image_url") // 카테고리 이미지 URL
   description String?
   parentId    String?   @map("parent_id")
   order       Int       @default(0)
   depth       Int       @default(0)  // 0: 최상위, 1: 하위 카테고리
   type        String[]  @default([]) // GATHERING, BOARD, INTEREST 등
+  isFeatured  Boolean   @default(false) @map("is_featured") // 메인에 노출 여부
   isActive    Boolean   @default(true) @map("is_active")
   isDeleted   Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
   deletedAt   DateTime? @map("deleted_at")                 // 삭제 일시

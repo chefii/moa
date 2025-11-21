@@ -8,14 +8,19 @@ export interface Category {
   slug: string;
   icon?: string;
   color?: string;
+  imageUrl?: string;
   description?: string;
   order: number;
   type?: string[];
+  isFeatured?: boolean;
+  _count?: {
+    gatherings: number;
+  };
 }
 
 export const categoriesApi = {
   // Get all categories
-  getCategories: async (params?: { type?: string }): Promise<Category[]> => {
+  getCategories: async (params?: { type?: string; featured?: boolean }): Promise<Category[]> => {
     const response = await apiClient.get<ApiResponse<Category[]>>('/api/categories', {
       params,
     });

@@ -47,31 +47,27 @@ const router = Router();
 // Get all categories (for interests selection)
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { type } = req.query;
+    const { type, featured } = req.query;
 
-    const whereClause: any = { isActive: true };
+    const whereClause: any = {
+      isActive: true,
+      isDeleted: false,
+    };
 
     // Filter by type if provided
     if (type && typeof type === 'string') {
-      // For type filtering, we need to return:
-      // 1. Parent categories (depth = 0) that have the type in their type array
-      // 2. Child categories (depth = 1) whose parent has the type in their type array
-      whereClause.OR = [
-        {
-          depth: 0,
-          type: {
-            has: type,
-          },
+      // 부모 카테고리의 type으로 필터링하여 2뎁스 카테고리 반환
+      whereClause.depth = 1;
+      whereClause.parent = {
+        type: {
+          has: type,
         },
-        {
-          depth: 1,
-          parent: {
-            type: {
-              has: type,
-            },
-          },
-        },
-      ];
+      };
+    }
+
+    // Filter by featured if provided
+    if (featured === 'true') {
+      whereClause.isFeatured = true;
     }
 
     const categories = await prisma.category.findMany({
@@ -83,28 +79,32 @@ router.get('/', async (req: Request, res: Response) => {
             type: true,
           },
         },
+        _count: {
+          select: {
+            gatherings: true,
+          },
+        },
       },
     });
 
-    // Filter to only return child categories (depth = 1) for display
-    // Parent categories are used only for filtering logic
-    const childCategories = categories
-      .filter((cat) => cat.depth === 1)
-      .map((cat) => ({
-        id: cat.id,
-        name: cat.name,
-        displayName: cat.displayName,
-        slug: cat.slug,
-        icon: cat.icon,
-        color: cat.color,
-        description: cat.description,
-        order: cat.order,
-        type: cat.type,
-      }));
+    const formattedCategories = categories.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      displayName: cat.displayName,
+      slug: cat.slug,
+      icon: cat.icon,
+      color: cat.color,
+      imageUrl: cat.imageUrl,
+      description: cat.description,
+      order: cat.order,
+      type: cat.type,
+      isFeatured: cat.isFeatured,
+      _count: cat._count,
+    }));
 
     res.json({
       success: true,
-      data: childCategories,
+      data: formattedCategories,
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -182,6 +182,7 @@ router.get('/:slug', async (req: Request, res: Response) => {
         slug: true,
         icon: true,
         color: true,
+        imageUrl: true,
         description: true,
         order: true,
         depth: true,
