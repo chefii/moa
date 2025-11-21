@@ -1,3 +1,4 @@
+import logger from '../config/logger';
 import nodemailer from 'nodemailer';
 
 // Create transporter (개발 환경에서는 SMTP 설정이 없어도 동작)
@@ -28,11 +29,11 @@ interface EmailOptions {
 export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
   // SMTP 설정이 없는 경우에만 콘솔 출력
   if (!transporter) {
-    console.log('=== 이메일 발송 (개발 모드 - SMTP 미설정) ===');
-    console.log('수신:', options.to);
-    console.log('제목:', options.subject);
-    console.log('본문 미리보기:', options.html.substring(0, 200) + '...');
-    console.log('============================');
+    logger.info('=== 이메일 발송 (개발 모드 - SMTP 미설정) ===');
+    logger.info('수신:', options.to);
+    logger.info('제목:', options.subject);
+    logger.info('본문 미리보기:', options.html.substring(0, 200) + '...');
+    logger.info('============================');
     return true;
   }
 
@@ -45,12 +46,12 @@ export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
       html: options.html,
     });
 
-    console.log('✅ 이메일 발송 성공:', info.messageId);
-    console.log('수신자:', options.to);
-    console.log('제목:', options.subject);
+    logger.info('✅ 이메일 발송 성공:', info.messageId);
+    logger.info('수신자:', options.to);
+    logger.info('제목:', options.subject);
     return true;
   } catch (error) {
-    console.error('❌ 이메일 발송 실패:', error);
+    logger.error('❌ 이메일 발송 실패:', error);
     return false;
   }
 };
@@ -60,7 +61,7 @@ export const sendVerificationEmail = async (
   name: string,
   verificationToken: string
 ): Promise<boolean> => {
-  const verificationUrl = `${process.env.FRONTEND_URL || 'http://loaclhost:3000'}/verify-email?token=${verificationToken}`;
+  const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
 
   const html = `
     <!DOCTYPE html>
@@ -265,7 +266,7 @@ export const sendPasswordResetEmail = async (
   name: string,
   resetToken: string
 ): Promise<boolean> => {
-  const resetUrl = `${process.env.FRONTEND_URL || 'http://loaclhost:3000'}/reset-password?token=${resetToken}`;
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
   const html = `
     <!DOCTYPE html>

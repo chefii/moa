@@ -1,3 +1,4 @@
+import logger from '../config/logger';
 import axios from 'axios';
 
 /**
@@ -35,10 +36,10 @@ export const sendSMS = async (
 ): Promise<SMSResult> => {
   // 개발 환경에서는 콘솔에 출력
   if (process.env.NODE_ENV === 'development') {
-    console.log('=== SMS 발송 (개발 모드) ===');
-    console.log('수신번호:', phoneNumber);
-    console.log('메시지:', message);
-    console.log('===========================');
+    logger.info('=== SMS 발송 (개발 모드) ===');
+    logger.info('수신번호:', phoneNumber);
+    logger.info('메시지:', message);
+    logger.info('===========================');
     return { success: true, message: 'Development mode - SMS logged to console' };
   }
 
@@ -73,7 +74,7 @@ export const sendSMS = async (
       };
     }
   } catch (error) {
-    console.error('SMS send error:', error);
+    logger.error('SMS send error:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'SMS 발송 실패',
@@ -100,10 +101,10 @@ export const sendSMSAligo = async (
   message: string
 ): Promise<SMSResult> => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('=== 알리고 SMS 발송 (개발 모드) ===');
-    console.log('수신번호:', phoneNumber);
-    console.log('메시지:', message);
-    console.log('====================================');
+    logger.info('=== 알리고 SMS 발송 (개발 모드) ===');
+    logger.info('수신번호:', phoneNumber);
+    logger.info('메시지:', message);
+    logger.info('====================================');
     return { success: true };
   }
 
@@ -132,7 +133,7 @@ export const sendSMSAligo = async (
       };
     }
   } catch (error) {
-    console.error('Aligo SMS send error:', error);
+    logger.error('Aligo SMS send error:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'SMS 발송 실패',
@@ -148,10 +149,10 @@ export const sendSMSNaver = async (
   message: string
 ): Promise<SMSResult> => {
   if (process.env.NODE_ENV === 'development') {
-    console.log('=== 네이버 클라우드 SMS 발송 (개발 모드) ===');
-    console.log('수신번호:', phoneNumber);
-    console.log('메시지:', message);
-    console.log('==========================================');
+    logger.info('=== 네이버 클라우드 SMS 발송 (개발 모드) ===');
+    logger.info('수신번호:', phoneNumber);
+    logger.info('메시지:', message);
+    logger.info('==========================================');
     return { success: true };
   }
 
@@ -195,7 +196,7 @@ export const sendSMSNaver = async (
       };
     }
   } catch (error) {
-    console.error('Naver Cloud SMS send error:', error);
+    logger.error('Naver Cloud SMS send error:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'SMS 발송 실패',

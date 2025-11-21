@@ -1,6 +1,7 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 import { sendVerificationEmail } from '../../utils/email';
 
@@ -101,7 +102,7 @@ router.patch(
         data: user,
       });
     } catch (error) {
-      console.error('Update verification status error:', error);
+      logger.error('Update verification status error:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to update verification status',
@@ -233,7 +234,7 @@ router.post(
         },
       });
     } catch (error) {
-      console.error('Resend verification email error:', error);
+      logger.error('Resend verification email error:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to resend verification email',
@@ -333,7 +334,7 @@ router.get(
         },
       });
     } catch (error) {
-      console.error('Get verification stats error:', error);
+      logger.error('Get verification stats error:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to get verification statistics',
@@ -443,7 +444,7 @@ router.get(
         },
       });
     } catch (error) {
-      console.error('Get unverified users error:', error);
+      logger.error('Get unverified users error:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to get unverified users',

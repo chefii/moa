@@ -1,3 +1,4 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
 import { authenticate, authorize } from '../../middlewares/auth';
 import { prisma } from '../../config/prisma';
@@ -64,7 +65,7 @@ router.get(
         data: categories,
       });
     } catch (error) {
-      console.error('Error fetching menu categories:', error);
+      logger.error('Error fetching menu categories:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to fetch menu categories',
@@ -138,7 +139,7 @@ router.get(
         data: category,
       });
     } catch (error) {
-      console.error('Error fetching menu category:', error);
+      logger.error('Error fetching menu category:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to fetch menu category',
@@ -229,7 +230,7 @@ router.post(
         data: category,
       });
     } catch (error) {
-      console.error('Error creating menu category:', error);
+      logger.error('Error creating menu category:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to create menu category',
@@ -323,7 +324,7 @@ router.put(
         data: category,
       });
     } catch (error) {
-      console.error('Error updating menu category:', error);
+      logger.error('Error updating menu category:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to update menu category',
@@ -390,7 +391,7 @@ router.delete(
         message: 'Menu category deleted successfully',
       });
     } catch (error) {
-      console.error('Error deleting menu category:', error);
+      logger.error('Error deleting menu category:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to delete menu category',

@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import logger from '../config/logger';
+import { prisma } from '../config/prisma';
 
 /**
  * 데이터 기반 배지 자동 지급 서비스
@@ -150,11 +149,11 @@ async function getUserConditionValue(userId: string, conditionType: string): Pro
       }
 
       default:
-        console.warn(`알 수 없는 조건 타입: ${conditionType}`);
+        logger.warn(`알 수 없는 조건 타입: ${conditionType}`);
         return 0;
     }
   } catch (error) {
-    console.error(`조건 값 계산 실패 (${conditionType}):`, error);
+    logger.error(`조건 값 계산 실패 (${conditionType}):`, error);
     return 0;
   }
 }
@@ -194,10 +193,10 @@ async function awardBadgeById(userId: string, badgeId: string, badgeName: string
       },
     });
 
-    console.log(`✅ 배지 지급 완료: ${badgeName} -> 사용자 ${userId}`);
+    logger.info(`✅ 배지 지급 완료: ${badgeName} -> 사용자 ${userId}`);
     return true;
   } catch (error) {
-    console.error('배지 지급 실패:', error);
+    logger.error('배지 지급 실패:', error);
     return false;
   }
 }
@@ -245,7 +244,7 @@ export async function checkBadgesByConditionType(userId: string, conditionType: 
     // 사용자의 실제 값 계산
     const userValue = await getUserConditionValue(userId, conditionType);
 
-    console.log(`📊 [${conditionType}] 사용자 값: ${userValue}`);
+    logger.info(`📊 [${conditionType}] 사용자 값: ${userValue}`);
 
     // 각 배지의 조건 체크 및 지급
     for (const badge of badges) {
@@ -256,7 +255,7 @@ export async function checkBadgesByConditionType(userId: string, conditionType: 
       }
     }
   } catch (error) {
-    console.error(`배지 체크 실패 (${conditionType}):`, error);
+    logger.error(`배지 체크 실패 (${conditionType}):`, error);
   }
 }
 
@@ -265,7 +264,7 @@ export async function checkBadgesByConditionType(userId: string, conditionType: 
  */
 export async function checkAllBadges(userId: string) {
   try {
-    console.log(`\n🏅 배지 자동 지급 시작 - 사용자: ${userId}`);
+    logger.info(`\n🏅 배지 자동 지급 시작 - 사용자: ${userId}`);
 
     // 모든 조건 타입 목록
     const conditionTypes = [
@@ -287,9 +286,9 @@ export async function checkAllBadges(userId: string) {
       await checkBadgesByConditionType(userId, conditionType);
     }
 
-    console.log(`✨ 배지 자동 지급 완료\n`);
+    logger.info(`✨ 배지 자동 지급 완료\n`);
   } catch (error) {
-    console.error('전체 배지 체크 실패:', error);
+    logger.error('전체 배지 체크 실패:', error);
   }
 }
 
@@ -314,77 +313,8 @@ export async function checkBadgesForAction(userId: string, action: string) {
   }
 }
 
-// ============================================
-// 하위 호환성을 위한 기존 함수들 (Deprecated)
-// ============================================
-
-/**
- * @deprecated checkBadgesByConditionType('PARTICIPATION_COUNT')를 사용하세요
- */
-export async function checkParticipationBadges(userId: string) {
-  return checkBadgesByConditionType(userId, 'PARTICIPATION_COUNT');
-}
-
-/**
- * @deprecated checkBadgesByConditionType('HOSTING_COUNT')를 사용하세요
- */
-export async function checkHostingBadges(userId: string) {
-  return checkBadgesByConditionType(userId, 'HOSTING_COUNT');
-}
-
-/**
- * @deprecated checkBadgesByConditionType('ATTENDANCE_RATE')를 사용하세요
- */
-export async function checkAttendanceBadges(userId: string) {
-  return checkBadgesByConditionType(userId, 'ATTENDANCE_RATE');
-}
-
-/**
- * @deprecated checkBadgesByConditionType('REVIEW_COUNT')를 사용하세요
- */
-export async function checkReviewBadges(userId: string) {
-  return checkBadgesByConditionType(userId, 'REVIEW_COUNT');
-}
-
-/**
- * @deprecated checkBadgesByConditionType('STREAK_DAYS')를 사용하세요
- */
-export async function checkStreakBadges(userId: string) {
-  return checkBadgesByConditionType(userId, 'STREAK_DAYS');
-}
-
-/**
- * @deprecated checkBadgesByConditionType('FRIEND_COUNT')를 사용하세요
- */
-export async function checkFriendBadges(userId: string) {
-  return checkBadgesByConditionType(userId, 'FRIEND_COUNT');
-}
-
-/**
- * @deprecated checkBadgesByConditionType('RATING_SCORE')를 사용하세요
- */
-export async function checkRatingBadges(userId: string) {
-  return checkBadgesByConditionType(userId, 'RATING_SCORE');
-}
-
-/**
- * @deprecated checkBadgesByConditionType('EARLY_USER')를 사용하세요
- */
-export async function checkEarlyUserBadge(userId: string) {
-  return checkBadgesByConditionType(userId, 'EARLY_USER');
-}
-
 export default {
   checkAllBadges,
   checkBadgesForAction,
   checkBadgesByConditionType,
-  // Deprecated functions
-  checkParticipationBadges,
-  checkHostingBadges,
-  checkAttendanceBadges,
-  checkReviewBadges,
-  checkStreakBadges,
-  checkFriendBadges,
-  checkRatingBadges,
-  checkEarlyUserBadge,
 };

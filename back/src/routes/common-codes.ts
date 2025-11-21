@@ -1,3 +1,4 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 
@@ -72,7 +73,7 @@ router.get('/group/:groupCode', async (req: Request, res: Response) => {
       data: codes,
     });
   } catch (error) {
-    console.error('Error fetching common codes:', error);
+    logger.error('Error fetching common codes:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch common codes',
@@ -133,7 +134,7 @@ router.get('/regions', async (req: Request, res: Response) => {
       data: metroRegions,
     });
   } catch (error) {
-    console.error('Error fetching regions:', error);
+    logger.error('Error fetching regions:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch regions',
@@ -207,7 +208,7 @@ router.get('/regions/:regionCode/districts', async (req: Request, res: Response)
       data: districts,
     });
   } catch (error) {
-    console.error('Error fetching districts:', error);
+    logger.error('Error fetching districts:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch districts',

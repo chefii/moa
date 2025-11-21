@@ -1,6 +1,7 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
 import crypto from 'crypto';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 import { authenticate } from '../middlewares/auth';
 import { sendVerificationEmail } from '../utils/email';
 import {
@@ -113,7 +114,7 @@ router.post('/email/send', authenticate, async (req: Request, res: Response) => 
       message: 'Verification email sent successfully',
     });
   } catch (error) {
-    console.error('Send verification email error:', error);
+    logger.error('Send verification email error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to send verification email',
@@ -232,7 +233,7 @@ router.post('/email/verify', async (req: Request, res: Response) => {
       message: 'Email verified successfully',
     });
   } catch (error) {
-    console.error('Verify email error:', error);
+    logger.error('Verify email error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to verify email',
@@ -392,7 +393,7 @@ router.post('/phone/send', authenticate, async (req: Request, res: Response) => 
       },
     });
   } catch (error) {
-    console.error('Send verification SMS error:', error);
+    logger.error('Send verification SMS error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to send verification SMS',
@@ -520,7 +521,7 @@ router.post('/phone/verify', authenticate, async (req: Request, res: Response) =
       message: 'Phone number verified successfully',
     });
   } catch (error) {
-    console.error('Verify phone error:', error);
+    logger.error('Verify phone error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to verify phone number',
@@ -617,7 +618,7 @@ router.get('/status', authenticate, async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Get verification status error:', error);
+    logger.error('Get verification status error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get verification status',

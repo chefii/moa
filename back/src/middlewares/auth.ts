@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, JwtPayload } from '../utils/jwt';
 import logger from '../config/logger';
-import { maskHeaders, maskUUID, createSafeUserLog } from '../utils/securityMasking';
+import { maskHeaders, maskUUID } from '../utils/securityMasking';
 
 // Extend Express Request type
 declare global {

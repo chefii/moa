@@ -1,3 +1,4 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
 import { authenticate, authorize } from '../../middlewares/auth';
 import { prisma } from '../../config/prisma';
@@ -73,7 +74,7 @@ router.get(
         data: menuItems,
       });
     } catch (error) {
-      console.error('Error fetching menu items:', error);
+      logger.error('Error fetching menu items:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to fetch menu items',
@@ -145,7 +146,7 @@ router.get(
         data: menuItem,
       });
     } catch (error) {
-      console.error('Error fetching menu item:', error);
+      logger.error('Error fetching menu item:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to fetch menu item',
@@ -262,7 +263,7 @@ router.post(
         data: menuItem,
       });
     } catch (error) {
-      console.error('Error creating menu item:', error);
+      logger.error('Error creating menu item:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to create menu item',
@@ -379,7 +380,7 @@ router.put(
         data: menuItem,
       });
     } catch (error) {
-      console.error('Error updating menu item:', error);
+      logger.error('Error updating menu item:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to update menu item',
@@ -446,7 +447,7 @@ router.delete(
         message: 'Menu item deleted successfully',
       });
     } catch (error) {
-      console.error('Error deleting menu item:', error);
+      logger.error('Error deleting menu item:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to delete menu item',

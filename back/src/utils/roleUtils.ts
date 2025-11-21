@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/prisma';
 
 // 권한 레벨 (숫자가 클수록 높은 권한)
 export const ROLE_LEVELS = {
@@ -161,15 +159,21 @@ export async function getAllRoles() {
  * 권한별 사용자 수 조회
  */
 export async function getRoleStatistics() {
-  const users = await prisma.user.groupBy({
-    by: ['role'],
-    _count: {
-      role: true,
+  // UserRole 테이블에서 역할별 통계를 가져옵니다
+  const userRoles = await prisma.userRole.findMany({
+    select: {
+      roleCode: true,
     },
   });
 
-  return users.map(item => ({
-    role: item.role,
-    count: item._count.role,
+  // 역할별 카운트 계산
+  const roleCounts = userRoles.reduce((acc, ur) => {
+    acc[ur.roleCode] = (acc[ur.roleCode] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return Object.entries(roleCounts).map(([role, count]) => ({
+    role,
+    count,
   }));
 }

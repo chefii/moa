@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import logger from '../config/logger';
 import { FileUploadType, mapUploadTypeToFileType } from './fileUploadConfig';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/prisma';
 
 /**
  * 현재 날짜를 YYMMDD 형식으로 반환
@@ -67,7 +66,7 @@ export async function getNextFileSequence(uploadType: FileUploadType): Promise<n
 
     return result;
   } catch (error) {
-    console.error('Error getting next file sequence:', error);
+    logger.error('Error getting next file sequence:', error);
     throw new Error('Failed to generate file sequence');
   }
 }

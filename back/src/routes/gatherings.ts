@@ -1,3 +1,4 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
 import { GatheringType, GatheringStatus } from '@prisma/client';
 import { authenticate, authorize } from '../middlewares/auth';
@@ -71,7 +72,7 @@ router.get('/stats', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', '
       },
     });
   } catch (error) {
-    console.error('Gatherings stats error:', error);
+    logger.error('Gatherings stats error:', error);
     res.status(500).json({
       success: false,
       message: '모임 통계 조회에 실패했습니다.',
@@ -269,7 +270,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       data: gathering,
     });
   } catch (error) {
-    console.error('Gathering creation error:', error);
+    logger.error('Gathering creation error:', error);
     res.status(500).json({
       success: false,
       message: '모임 생성에 실패했습니다.',
@@ -395,7 +396,7 @@ router.get('/', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Gatherings fetch error:', error);
+    logger.error('Gatherings fetch error:', error);
     res.status(500).json({
       success: false,
       message: '모임 목록 조회에 실패했습니다.',
@@ -488,7 +489,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       data: gathering,
     });
   } catch (error) {
-    console.error('Gathering fetch error:', error);
+    logger.error('Gathering fetch error:', error);
     res.status(500).json({
       success: false,
       message: '모임 조회에 실패했습니다.',
@@ -628,7 +629,7 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
       data: updatedGathering,
     });
   } catch (error) {
-    console.error('Gathering update error:', error);
+    logger.error('Gathering update error:', error);
     res.status(500).json({
       success: false,
       message: '모임 수정에 실패했습니다.',
@@ -706,7 +707,7 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
       message: '모임이 삭제되었습니다.',
     });
   } catch (error) {
-    console.error('Gathering deletion error:', error);
+    logger.error('Gathering deletion error:', error);
     res.status(500).json({
       success: false,
       message: '모임 삭제에 실패했습니다.',

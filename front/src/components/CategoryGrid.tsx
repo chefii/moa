@@ -68,11 +68,12 @@ export default function CategoryGrid({ categories, className = '' }: CategoryGri
                 <h3 className="text-gray-900 font-bold text-sm leading-tight">
                   {category.displayName || category.name}
                 </h3>
+                {/*
                 {category._count && category._count.gatherings > 0 && (
                   <p className="text-gray-500 text-xs mt-0.5">
                     {category._count.gatherings}+
                   </p>
-                )}
+                )} */}
               </div>
             </div>
           </Link>

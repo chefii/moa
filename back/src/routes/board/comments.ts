@@ -1,3 +1,4 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
 import { authenticate } from '../../middlewares/auth';
 import { prisma } from '../../config/prisma';
@@ -75,7 +76,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       data: comment,
     });
   } catch (error) {
-    console.error('Error creating comment:', error);
+    logger.error('Error creating comment:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create comment',
@@ -161,7 +162,7 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
       data: updatedComment,
     });
   } catch (error) {
-    console.error('Error updating comment:', error);
+    logger.error('Error updating comment:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update comment',
@@ -233,7 +234,7 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
       message: 'Comment deleted successfully',
     });
   } catch (error) {
-    console.error('Error deleting comment:', error);
+    logger.error('Error deleting comment:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete comment',
@@ -313,7 +314,7 @@ router.post('/:id/like', authenticate, async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    console.error('Error toggling comment like:', error);
+    logger.error('Error toggling comment like:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to toggle comment like',

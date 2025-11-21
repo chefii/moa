@@ -1,5 +1,6 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 import { authenticate, authorize } from '../middlewares/auth';
 
 const router = Router();
@@ -107,7 +108,7 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
       },
     });
   } catch (error) {
-    console.error('Get users error:', error);
+    logger.error('Get users error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch users',
@@ -240,7 +241,7 @@ router.get('/:userId', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'),
       data: user,
     });
   } catch (error) {
-    console.error('Get user error:', error);
+    logger.error('Get user error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user',
@@ -328,7 +329,7 @@ router.get('/stats/overview', authenticate, authorize('ROLE_SUPER_ADMIN'), async
       },
     });
   } catch (error) {
-    console.error('Get user stats error:', error);
+    logger.error('Get user stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user statistics',

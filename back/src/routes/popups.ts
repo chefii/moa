@@ -1,5 +1,6 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 import { authenticate } from '../middlewares/auth';
 
 const router = Router();
@@ -129,7 +130,7 @@ router.get('/active', async (req: Request, res: Response) => {
       data: filteredPopups,
     });
   } catch (error) {
-    console.error('Get active popups error:', error);
+    logger.error('Get active popups error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch active popups',
@@ -217,14 +218,14 @@ router.post('/view/:popupId', async (req: Request, res: Response) => {
           increment: 1,
         },
       },
-    }).catch(err => console.error('Failed to increment view count:', err));
+    }).catch(err => logger.error('Failed to increment view count:', err));
 
     res.json({
       success: true,
       message: 'Popup view recorded',
     });
   } catch (error) {
-    console.error('Record popup view error:', error);
+    logger.error('Record popup view error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to record popup view',

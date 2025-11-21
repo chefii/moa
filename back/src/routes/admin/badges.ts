@@ -1,3 +1,4 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
 import { BadgeCategory } from '@prisma/client';
 import { authenticate, authorize } from '../../middlewares/auth';
@@ -39,7 +40,7 @@ router.get('/stats/overview', authenticate, authorize('ROLE_SUPER_ADMIN'), async
       },
     });
   } catch (error) {
-    console.error('배지 통계 조회 오류:', error);
+    logger.error('배지 통계 조회 오류:', error);
     res.status(500).json({
       success: false,
       message: '배지 통계 조회에 실패했습니다.',
@@ -94,7 +95,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request
       data: badges,
     });
   } catch (error) {
-    console.error('배지 목록 조회 오류:', error);
+    logger.error('배지 목록 조회 오류:', error);
     res.status(500).json({
       success: false,
       message: '배지 목록 조회에 실패했습니다.',
@@ -146,7 +147,7 @@ router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Requ
       data: badge,
     });
   } catch (error) {
-    console.error('배지 조회 오류:', error);
+    logger.error('배지 조회 오류:', error);
     res.status(500).json({
       success: false,
       message: '배지 조회에 실패했습니다.',
@@ -249,7 +250,7 @@ router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Reques
       data: badge,
     });
   } catch (error) {
-    console.error('배지 생성 오류:', error);
+    logger.error('배지 생성 오류:', error);
     res.status(500).json({
       success: false,
       message: '배지 생성에 실패했습니다.',
@@ -335,7 +336,7 @@ router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Requ
       data: badge,
     });
   } catch (error) {
-    console.error('배지 수정 오류:', error);
+    logger.error('배지 수정 오류:', error);
     res.status(500).json({
       success: false,
       message: '배지 수정에 실패했습니다.',
@@ -405,7 +406,7 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
       message: '배지가 삭제되었습니다.',
     });
   } catch (error) {
-    console.error('배지 삭제 오류:', error);
+    logger.error('배지 삭제 오류:', error);
     res.status(500).json({
       success: false,
       message: '배지 삭제에 실패했습니다.',
@@ -457,7 +458,7 @@ router.patch('/:id/toggle', authenticate, authorize('ROLE_SUPER_ADMIN'), async (
       data: updatedBadge,
     });
   } catch (error) {
-    console.error('배지 상태 변경 오류:', error);
+    logger.error('배지 상태 변경 오류:', error);
     res.status(500).json({
       success: false,
       message: '배지 상태 변경에 실패했습니다.',

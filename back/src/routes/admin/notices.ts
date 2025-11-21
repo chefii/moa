@@ -1,5 +1,6 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
@@ -103,7 +104,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN
       },
     });
   } catch (error) {
-    console.error('Get notices error:', error);
+    logger.error('Get notices error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch notices',
@@ -179,7 +180,7 @@ router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
       data: notice,
     });
   } catch (error) {
-    console.error('Get notice error:', error);
+    logger.error('Get notice error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch notice',
@@ -280,7 +281,7 @@ router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMI
       data: notice,
     });
   } catch (error) {
-    console.error('Create notice error:', error);
+    logger.error('Create notice error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create notice',
@@ -365,7 +366,7 @@ router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
       data: notice,
     });
   } catch (error) {
-    console.error('Update notice error:', error);
+    logger.error('Update notice error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update notice',
@@ -427,7 +428,7 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
       message: 'Notice deleted successfully',
     });
   } catch (error) {
-    console.error('Delete notice error:', error);
+    logger.error('Delete notice error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete notice',

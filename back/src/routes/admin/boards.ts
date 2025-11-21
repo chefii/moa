@@ -1,5 +1,6 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
@@ -110,7 +111,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_
       },
     });
   } catch (error) {
-    console.error('Get board posts error:', error);
+    logger.error('Get board posts error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch board posts',
@@ -168,7 +169,7 @@ router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'RO
       data: post,
     });
   } catch (error) {
-    console.error('Get board post error:', error);
+    logger.error('Get board post error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch board post',
@@ -219,7 +220,7 @@ router.patch('/:id/status', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_AD
       data: post,
     });
   } catch (error) {
-    console.error('Update post status error:', error);
+    logger.error('Update post status error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update post status',
@@ -252,7 +253,7 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 
       message: 'Post deleted successfully',
     });
   } catch (error) {
-    console.error('Delete post error:', error);
+    logger.error('Delete post error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete post',
@@ -293,7 +294,7 @@ router.get('/stats/overview', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_
       },
     });
   } catch (error) {
-    console.error('Get board stats error:', error);
+    logger.error('Get board stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch board stats',

@@ -349,7 +349,7 @@ export default function Home() {
       </section>
 
       {/* Categories */}
-      <section className="py-6 bg-white">
+      <section className="pb-6 bg-white">
         <div className="mb-4 px-5">
           {/* <h2 className="text-lg font-black text-gray-900">카테고리</h2> */}
         </div>

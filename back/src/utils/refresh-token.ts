@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 
 // Refresh Token 해시 생성
 export const hashToken = (token: string): string => {

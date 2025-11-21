@@ -165,41 +165,6 @@ export function maskSensitiveData(data: any, depth: number = 0): any {
   return data;
 }
 
-/**
- * 로그용 안전한 사용자 정보 객체 생성
- */
-export function createSafeUserLog(userId: string, email?: string, role?: string): object {
-  const log: Record<string, string> = {
-    userId: maskUUID(userId),
-  };
-
-  if (email) {
-    log.email = maskEmail(email);
-  }
-
-  if (role) {
-    log.role = role; // 역할은 민감하지 않으므로 그대로
-  }
-
-  return log;
-}
-
-/**
- * 개발 환경에서만 민감한 정보 노출
- * 프로덕션에서는 항상 마스킹
- */
-export function maskForEnvironment(data: any, forceShow: boolean = false): any {
-  const isDevelopment = process.env.NODE_ENV;
-  const allowSensitiveLogging = process.env.ALLOW_SENSITIVE_LOGGING;
-
-  // 개발 환경이고 명시적으로 허용된 경우에만 원본 데이터 반환
-  if ((isDevelopment && allowSensitiveLogging) || forceShow) {
-    return data;
-  }
-
-  // 그 외에는 항상 마스킹
-  return maskSensitiveData(data);
-}
 
 /**
  * IP 주소 마스킹 (GDPR 준수)

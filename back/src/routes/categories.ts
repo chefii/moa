@@ -1,3 +1,4 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 
@@ -107,7 +108,7 @@ router.get('/', async (req: Request, res: Response) => {
       data: formattedCategories,
     });
   } catch (error) {
-    console.error('Error fetching categories:', error);
+    logger.error('Error fetching categories:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch categories',
@@ -202,7 +203,7 @@ router.get('/:slug', async (req: Request, res: Response) => {
       data: category,
     });
   } catch (error) {
-    console.error('Error fetching category:', error);
+    logger.error('Error fetching category:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch category',

@@ -1,5 +1,6 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 import { authenticate } from '../middlewares/auth';
 
 const router = Router();
@@ -119,7 +120,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Get notifications error:', error);
+    logger.error('Get notifications error:', error);
     res.status(500).json({
       success: false,
       message: '알림 목록 조회에 실패했습니다.',
@@ -192,7 +193,7 @@ router.get('/unread-count', authenticate, async (req: Request, res: Response) =>
       },
     });
   } catch (error) {
-    console.error('Get unread count error:', error);
+    logger.error('Get unread count error:', error);
     res.status(500).json({
       success: false,
       message: '미읽음 알림 개수 조회에 실패했습니다.',
@@ -275,7 +276,7 @@ router.post('/:id/read', authenticate, async (req: Request, res: Response) => {
       message: '알림을 읽음 처리했습니다.',
     });
   } catch (error) {
-    console.error('Mark notification as read error:', error);
+    logger.error('Mark notification as read error:', error);
     res.status(500).json({
       success: false,
       message: '알림 읽음 처리에 실패했습니다.',
@@ -351,7 +352,7 @@ router.post('/read-all', authenticate, async (req: Request, res: Response) => {
       message: '모든 알림을 읽음 처리했습니다.',
     });
   } catch (error) {
-    console.error('Mark all notifications as read error:', error);
+    logger.error('Mark all notifications as read error:', error);
     res.status(500).json({
       success: false,
       message: '알림 일괄 읽음 처리에 실패했습니다.',

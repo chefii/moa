@@ -1,5 +1,6 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
@@ -53,7 +54,7 @@ router.get('/badge', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', '
       },
     });
   } catch (error) {
-    console.error('Get report badge count error:', error);
+    logger.error('Get report badge count error:', error);
     // Return 0 instead of 500 error to prevent UI from breaking
     res.json({
       success: true,
@@ -128,7 +129,7 @@ router.get('/stats/overview', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_
       },
     });
   } catch (error) {
-    console.error('Get report statistics error:', error);
+    logger.error('Get report statistics error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch report statistics',
@@ -248,7 +249,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN
       },
     });
   } catch (error) {
-    console.error('Get reports error:', error);
+    logger.error('Get reports error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch reports',
@@ -358,7 +359,7 @@ router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
       data: report,
     });
   } catch (error) {
-    console.error('Get report error:', error);
+    logger.error('Get report error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch report',
@@ -446,7 +447,7 @@ router.put('/:id/status', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSI
       data: report,
     });
   } catch (error) {
-    console.error('Update report status error:', error);
+    logger.error('Update report status error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update report status',

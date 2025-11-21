@@ -1,5 +1,6 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
@@ -109,7 +110,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN
       },
     });
   } catch (error) {
-    console.error('Get banners error:', error);
+    logger.error('Get banners error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch banners',
@@ -183,7 +184,7 @@ router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
       data: banner,
     });
   } catch (error) {
-    console.error('Get banner error:', error);
+    logger.error('Get banner error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch banner',
@@ -295,7 +296,7 @@ router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMI
       data: banner,
     });
   } catch (error) {
-    console.error('Create banner error:', error);
+    logger.error('Create banner error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create banner',
@@ -391,7 +392,7 @@ router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
       data: banner,
     });
   } catch (error) {
-    console.error('Update banner error:', error);
+    logger.error('Update banner error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update banner',
@@ -454,7 +455,7 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
       message: 'Banner deleted successfully',
     });
   } catch (error) {
-    console.error('Delete banner error:', error);
+    logger.error('Delete banner error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete banner',
@@ -512,7 +513,7 @@ router.post('/:id/view', async (req: Request, res: Response) => {
       message: 'View count incremented',
     });
   } catch (error) {
-    console.error('Increment view count error:', error);
+    logger.error('Increment view count error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to increment view count',
@@ -570,7 +571,7 @@ router.post('/:id/click', async (req: Request, res: Response) => {
       message: 'Click count incremented',
     });
   } catch (error) {
-    console.error('Increment click count error:', error);
+    logger.error('Increment click count error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to increment click count',

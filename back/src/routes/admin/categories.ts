@@ -1,5 +1,6 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
@@ -66,7 +67,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request
       data: categories,
     });
   } catch (error) {
-    console.error('Get categories error:', error);
+    logger.error('Get categories error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch categories',
@@ -172,7 +173,7 @@ router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Reques
       data: category,
     });
   } catch (error) {
-    console.error('Create category error:', error);
+    logger.error('Create category error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create category',
@@ -271,7 +272,7 @@ router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Requ
       data: category,
     });
   } catch (error) {
-    console.error('Update category error:', error);
+    logger.error('Update category error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update category',
@@ -333,7 +334,7 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
       message: 'Category deleted successfully',
     });
   } catch (error) {
-    console.error('Delete category error:', error);
+    logger.error('Delete category error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete category',

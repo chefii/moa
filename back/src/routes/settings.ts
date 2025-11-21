@@ -1,3 +1,4 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
 import { authenticate, authorize } from '../middlewares/auth';
 import { prisma } from '../config/prisma';
@@ -61,7 +62,7 @@ router.get('/site-settings', async (req: Request, res: Response) => {
       data: settings,
     });
   } catch (error) {
-    console.error('Error fetching site settings:', error);
+    logger.error('Error fetching site settings:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch site settings',
@@ -123,7 +124,7 @@ router.get('/site-settings/category/:category', async (req: Request, res: Respon
       data: settingsObject,
     });
   } catch (error) {
-    console.error('Error fetching site settings by category:', error);
+    logger.error('Error fetching site settings by category:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch site settings',
@@ -202,7 +203,7 @@ router.get('/footer-links', async (req: Request, res: Response) => {
       data: links,
     });
   } catch (error) {
-    console.error('Error fetching footer links:', error);
+    logger.error('Error fetching footer links:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch footer links',

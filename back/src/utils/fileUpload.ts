@@ -1,3 +1,4 @@
+import logger from '../config/logger';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -108,7 +109,7 @@ export async function resizeImage(
       fs.renameSync(filePath + '.resized', filePath);
     }
   } catch (error) {
-    console.error('Image resize error:', error);
+    logger.error('Image resize error:', error);
     throw new Error('Failed to resize image');
   }
 }
@@ -122,7 +123,7 @@ export function deleteFile(filePath: string): void {
       fs.unlinkSync(filePath);
     }
   } catch (error) {
-    console.error('File delete error:', error);
+    logger.error('File delete error:', error);
   }
 }
 
@@ -131,7 +132,7 @@ export function deleteFile(filePath: string): void {
  */
 export function getFileUrl(savedName: string, uploadType: FileUploadType): string {
   const config = FILE_UPLOAD_CONFIGS[uploadType];
-  const baseUrl = process.env.BASE_URL || 'http://loaclhost:4000';
+  const baseUrl = process.env.BASE_URL || 'http://localhost:4000';
   return `${baseUrl}/uploads/${config.directory}/${savedName}`;
 }
 

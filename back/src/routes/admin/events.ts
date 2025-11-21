@@ -1,5 +1,6 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
@@ -97,7 +98,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN
       },
     });
   } catch (error) {
-    console.error('Get events error:', error);
+    logger.error('Get events error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch events',
@@ -209,7 +210,7 @@ router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMI
       data: event,
     });
   } catch (error) {
-    console.error('Create event error:', error);
+    logger.error('Create event error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create event',
@@ -298,7 +299,7 @@ router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
       data: event,
     });
   } catch (error) {
-    console.error('Update event error:', error);
+    logger.error('Update event error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update event',
@@ -360,7 +361,7 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
       message: 'Event deleted successfully',
     });
   } catch (error) {
-    console.error('Delete event error:', error);
+    logger.error('Delete event error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete event',

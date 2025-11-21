@@ -1,5 +1,6 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 import { authenticate } from '../middlewares/auth';
 
 const router = Router();
@@ -78,7 +79,7 @@ router.get('/level/:userId?', authenticate, async (req: Request, res: Response) 
       },
     });
   } catch (error) {
-    console.error('Get user level error:', error);
+    logger.error('Get user level error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get user level',
@@ -168,7 +169,7 @@ router.get('/badges/:userId?', authenticate, async (req: Request, res: Response)
       data: badges,
     });
   } catch (error) {
-    console.error('Get user badges error:', error);
+    logger.error('Get user badges error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get user badges',
@@ -235,7 +236,7 @@ router.get('/badges/:userId/all', authenticate, async (req: Request, res: Respon
       data: badges,
     });
   } catch (error) {
-    console.error('Get user badges all error:', error);
+    logger.error('Get user badges all error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get user badges',
@@ -282,7 +283,7 @@ router.get('/badges', async (req: Request, res: Response) => {
       count: badges.length,
     });
   } catch (error) {
-    console.error('Get badges error:', error);
+    logger.error('Get badges error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get badges',
@@ -362,7 +363,7 @@ router.get('/streak/:userId?', authenticate, async (req: Request, res: Response)
       },
     });
   } catch (error) {
-    console.error('Get user streak error:', error);
+    logger.error('Get user streak error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get user streak',
@@ -469,7 +470,7 @@ router.get('/points/:userId?', authenticate, async (req: Request, res: Response)
       },
     });
   } catch (error) {
-    console.error('Get user points error:', error);
+    logger.error('Get user points error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get user points',
@@ -546,7 +547,7 @@ router.get('/points/transactions', authenticate, async (req: Request, res: Respo
       data: transactions,
     });
   } catch (error) {
-    console.error('Get point transactions error:', error);
+    logger.error('Get point transactions error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get point transactions',

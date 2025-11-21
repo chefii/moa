@@ -1,5 +1,6 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 import { authenticate } from '../middlewares/auth';
 
 const router = Router();
@@ -84,7 +85,7 @@ router.post('/:gatheringId', authenticate, async (req: Request, res: Response) =
       data: bookmark,
     });
   } catch (error) {
-    console.error('Add bookmark error:', error);
+    logger.error('Add bookmark error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to add bookmark',
@@ -150,7 +151,7 @@ router.delete('/:gatheringId', authenticate, async (req: Request, res: Response)
       message: 'Bookmark removed',
     });
   } catch (error) {
-    console.error('Remove bookmark error:', error);
+    logger.error('Remove bookmark error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to remove bookmark',
@@ -209,7 +210,7 @@ router.get('/:gatheringId/check', authenticate, async (req: Request, res: Respon
       },
     });
   } catch (error) {
-    console.error('Check bookmark error:', error);
+    logger.error('Check bookmark error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to check bookmark',
@@ -299,7 +300,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Get bookmarks error:', error);
+    logger.error('Get bookmarks error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch bookmarks',

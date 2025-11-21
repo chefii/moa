@@ -1,3 +1,4 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { authenticate } from '../middlewares/auth';
@@ -93,7 +94,7 @@ router.post('/upload/:type', authenticate, async (req: Request, res: Response) =
     // Multer 미들웨어 실행
     upload.single('file')(req, res, async (err: any) => {
       if (err) {
-        console.error('File upload error:', err);
+        logger.error('File upload error:', err);
         res.status(400).json({
           success: false,
           message: err.message || 'File upload failed',
@@ -164,7 +165,7 @@ router.post('/upload/:type', authenticate, async (req: Request, res: Response) =
       }
     });
   } catch (error) {
-    console.error('Upload endpoint error:', error);
+    logger.error('Upload endpoint error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to upload file',
@@ -228,7 +229,7 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
       message: 'File deleted successfully',
     });
   } catch (error) {
-    console.error('File delete error:', error);
+    logger.error('File delete error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete file',
@@ -289,7 +290,7 @@ router.get('/config/:type', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Get config error:', error);
+    logger.error('Get config error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get upload config',

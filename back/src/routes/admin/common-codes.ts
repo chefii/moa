@@ -1,5 +1,6 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
@@ -93,7 +94,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request
       },
     });
   } catch (error) {
-    console.error('Get common codes error:', error);
+    logger.error('Get common codes error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch common codes',
@@ -159,7 +160,7 @@ router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Requ
       data: code,
     });
   } catch (error) {
-    console.error('Get common code error:', error);
+    logger.error('Get common code error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch common code',
@@ -265,7 +266,7 @@ router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Reques
       data: commonCode,
     });
   } catch (error) {
-    console.error('Create common code error:', error);
+    logger.error('Create common code error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create common code',
@@ -361,7 +362,7 @@ router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Requ
       data: commonCode,
     });
   } catch (error) {
-    console.error('Update common code error:', error);
+    logger.error('Update common code error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update common code',
@@ -424,7 +425,7 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
       message: 'Common code deleted successfully',
     });
   } catch (error) {
-    console.error('Delete common code error:', error);
+    logger.error('Delete common code error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete common code',
@@ -482,7 +483,7 @@ router.get('/groups/list', authenticate, authorize('ROLE_SUPER_ADMIN'), async (r
       data: groupCodes,
     });
   } catch (error) {
-    console.error('Get group codes error:', error);
+    logger.error('Get group codes error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch group codes',

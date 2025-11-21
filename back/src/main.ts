@@ -5,6 +5,7 @@ import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import Redis from 'ioredis';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
@@ -16,6 +17,7 @@ import {
   errorLoggingMiddleware,
 } from './middleware/requestLogger';
 import { prisma } from './config/prisma';
+import { errorMiddleware, notFoundHandler } from './utils/errorHandler';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -49,15 +51,37 @@ import adminBadgesRoutes from './routes/admin/badges';
 import adminGatheringsRoutes from './routes/admin/gatherings';
 import adminBoardsRoutes from './routes/admin/boards';
 
-// Load environment variables
-dotenv.config();
+// ===========================================
+// 환경별 설정 파일 자동 로드
+// ===========================================
+const nodeEnv = process.env.NODE_ENV || 'development';
+const envFile = `.env.${nodeEnv}`;
+const envPath = path.resolve(process.cwd(), envFile);
+
+// 환경별 .env 파일 로드
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+  console.log(`✅ Loaded environment config: ${envFile}`);
+} else {
+  // 환경별 파일이 없으면 기본 .env 파일 로드
+  dotenv.config();
+  console.log(`⚠️  ${envFile} not found, using default .env`);
+}
+
+// 필수 환경 변수 검증
+const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'REFRESH_TOKEN_SECRET'];
+const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key]);
+
+if (missingEnvVars.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missingEnvVars.join(', ')}`);
+  process.exit(1);
+}
 
 // Prisma Client는 config/prisma.ts에서 import (미들웨어 적용됨)
-export { prisma } from './config/prisma';
 
 // Initialize Redis Client
 export const redis = new Redis({
-  host: process.env.REDIS_HOST || 'loaclhost',
+  host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   retryStrategy: (times) => {
     const delay = Math.min(times * 50, 2000);
@@ -212,7 +236,7 @@ app.use('/api/board', boardRoutes);
 // Static file serving for uploaded files
 const uploadDir = process.env.UPLOAD_DIR || '/Users/philip/project/moa_file';
 app.use('/uploads', cors({
-  origin: process.env.CORS_ORIGIN || 'http://loaclhost:3000',
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   credentials: true,
 }), express.static(uploadDir));
 
@@ -232,43 +256,14 @@ app.use('/api/admin/badges', adminBadgesRoutes);
 app.use('/api/admin/gatherings', adminGatheringsRoutes);
 app.use('/api/admin/boards', adminBoardsRoutes);
 
-// 404 Handler
-app.use((req: Request, res: Response) => {
-  logger.warn(`404 - Route not found: ${req.method} ${req.path}`, {
-    requestId: req.requestId,
-    method: req.method,
-    path: req.path,
-  });
-
-  res.status(404).json({
-    success: false,
-    message: 'Route not found',
-    path: req.path,
-  });
-});
+// 404 Not Found Handler
+app.use(notFoundHandler);
 
 // Error Logging Middleware
 app.use(errorLoggingMiddleware);
 
-// Error Handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  logger.error(`Unhandled Error: ${err.message}`, {
-    requestId: req.requestId,
-    error: {
-      name: err.name,
-      message: err.message,
-      stack: err.stack,
-    },
-    method: req.method,
-    url: req.url,
-  });
-
-  res.status(500).json({
-    success: false,
-    message: 'Internal server error',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
-  });
-});
+// Error Handler Middleware
+app.use(errorMiddleware);
 
 // Graceful Shutdown
 process.on('SIGTERM', async () => {
@@ -302,7 +297,7 @@ app.listen(PORT, () => {
   ╚═══════════════════════════════════════════════╝
   `;
 
-  console.log(serverInfo);
+  logger.info(serverInfo);
 
   logger.info('=== Server start ===', {
     port: PORT,

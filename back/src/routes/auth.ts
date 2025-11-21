@@ -1,6 +1,7 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 import { generateToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { authenticate } from '../middlewares/auth';
 import { saveRefreshToken, verifyRefreshTokenInDb, revokeRefreshToken } from '../utils/refresh-token';
@@ -233,7 +234,7 @@ router.post('/register', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Register error:', error);
+    logger.error('Register error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to register user',
@@ -439,8 +440,8 @@ router.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
-    const roles = user.userRoles.map(ur => ur.roleCode);
-    const primaryRole = user.userRoles.find(ur => ur.isPrimary)?.roleCode || roles[0];
+    const roles = user.userRoles.map((ur: any) => ur.roleCode);
+    const primaryRole = user.userRoles.find((ur: any) => ur.isPrimary)?.roleCode || roles[0];
 
     // Generate tokens with roles array
     const token = generateToken({
@@ -483,7 +484,7 @@ router.post('/login', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to login',
@@ -565,8 +566,8 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
     }
 
     // Extract roles
-    const roles = user.userRoles.map(ur => ur.roleCode);
-    const primaryRole = user.userRoles.find(ur => ur.isPrimary)?.roleCode || roles[0];
+    const roles = user.userRoles.map((ur: any) => ur.roleCode);
+    const primaryRole = user.userRoles.find((ur: any) => ur.isPrimary)?.roleCode || roles[0];
 
     res.json({
       success: true,
@@ -577,7 +578,7 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Get me error:', error);
+    logger.error('Get me error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get user',
@@ -679,8 +680,8 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     // Extract current roles
-    const roles = user.userRoles.map(ur => ur.roleCode);
-    const primaryRole = user.userRoles.find(ur => ur.isPrimary)?.roleCode || roles[0];
+    const roles = user.userRoles.map((ur: any) => ur.roleCode);
+    const primaryRole = user.userRoles.find((ur: any) => ur.isPrimary)?.roleCode || roles[0];
 
     // Generate new tokens with current roles
     const newToken = generateToken({
@@ -777,7 +778,7 @@ router.post('/logout', authenticate, async (req: Request, res: Response) => {
       message: 'Logged out successfully',
     });
   } catch (error) {
-    console.error('Logout error:', error);
+    logger.error('Logout error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to logout',
@@ -855,7 +856,7 @@ router.post('/check-nickname', async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    console.error('Nickname check error:', error);
+    logger.error('Nickname check error:', error);
     res.status(500).json({
       success: false,
       message: '닉네임 확인 중 오류가 발생했습니다.',
@@ -918,7 +919,7 @@ router.post('/kakao/callback', async (req: Request, res: Response) => {
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json();
-      console.error('Kakao token error:', errorData);
+      logger.error('Kakao token error:', errorData);
       res.status(400).json({
         success: false,
         message: 'Failed to get Kakao access token',
@@ -941,7 +942,7 @@ router.post('/kakao/callback', async (req: Request, res: Response) => {
 
     if (!userResponse.ok) {
       const errorData = await userResponse.json();
-      console.error('Kakao user info error:', errorData);
+      logger.error('Kakao user info error:', errorData);
       res.status(400).json({
         success: false,
         message: 'Failed to get Kakao user info',
@@ -1054,11 +1055,11 @@ router.post('/kakao/callback', async (req: Request, res: Response) => {
         name: user.name,
         nickname: user.nickname,
         isVerified: user.isVerified,
-        roles: user.userRoles.map((ur) => ur.roleCode),
+        roles: user.userRoles.map((ur: any) => ur.roleCode),
       },
     });
   } catch (error) {
-    console.error('Kakao login error:', error);
+    logger.error('Kakao login error:', error);
     res.status(500).json({
       success: false,
       message: 'Kakao login failed',

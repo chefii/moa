@@ -1,5 +1,6 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
@@ -116,7 +117,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN
       },
     });
   } catch (error) {
-    console.error('Get gatherings error:', error);
+    logger.error('Get gatherings error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch gatherings',
@@ -214,7 +215,7 @@ router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
       data: gathering,
     });
   } catch (error) {
-    console.error('Get gathering error:', error);
+    logger.error('Get gathering error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch gathering',
@@ -308,7 +309,7 @@ router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
       data: gathering,
     });
   } catch (error) {
-    console.error('Update gathering error:', error);
+    logger.error('Update gathering error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update gathering',
@@ -355,7 +356,7 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
       message: 'Gathering deleted successfully',
     });
   } catch (error) {
-    console.error('Delete gathering error:', error);
+    logger.error('Delete gathering error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete gathering',
@@ -401,7 +402,7 @@ router.get('/stats/overview', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_
       },
     });
   } catch (error) {
-    console.error('Get stats error:', error);
+    logger.error('Get stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch stats',

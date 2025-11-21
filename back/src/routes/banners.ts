@@ -1,5 +1,6 @@
+import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../main';
+import { prisma } from '../config/prisma';
 
 const router = Router();
 
@@ -79,7 +80,7 @@ router.get('/active', async (req: Request, res: Response) => {
       data: banners,
     });
   } catch (error) {
-    console.error('Get active banners error:', error);
+    logger.error('Get active banners error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch active banners',
@@ -122,7 +123,7 @@ router.post('/:id/view', async (req: Request, res: Response) => {
       message: 'View count incremented',
     });
   } catch (error) {
-    console.error('Increment view count error:', error);
+    logger.error('Increment view count error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to increment view count',
@@ -165,7 +166,7 @@ router.post('/:id/click', async (req: Request, res: Response) => {
       message: 'Click count incremented',
     });
   } catch (error) {
-    console.error('Increment click count error:', error);
+    logger.error('Increment click count error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to increment click count',

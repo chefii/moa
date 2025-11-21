@@ -1,3 +1,4 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
 import { BoardPostStatus } from '@prisma/client';
 import { authenticate, authorize } from '../../middlewares/auth';
@@ -106,7 +107,7 @@ router.get('/', async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Error fetching board posts:', error);
+    logger.error('Error fetching board posts:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch board posts',
@@ -208,7 +209,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       data: post,
     });
   } catch (error) {
-    console.error('Error fetching board post:', error);
+    logger.error('Error fetching board post:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch board post',
@@ -287,7 +288,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
       data: post,
     });
   } catch (error) {
-    console.error('Error creating board post:', error);
+    logger.error('Error creating board post:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create board post',
@@ -368,7 +369,7 @@ router.put('/:id', authenticate, async (req: Request, res: Response) => {
       data: updatedPost,
     });
   } catch (error) {
-    console.error('Error updating board post:', error);
+    logger.error('Error updating board post:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update board post',
@@ -433,7 +434,7 @@ router.delete('/:id', authenticate, async (req: Request, res: Response) => {
       message: 'Post deleted successfully',
     });
   } catch (error) {
-    console.error('Error deleting board post:', error);
+    logger.error('Error deleting board post:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete board post',
@@ -513,7 +514,7 @@ router.post('/:id/like', authenticate, async (req: Request, res: Response) => {
       });
     }
   } catch (error) {
-    console.error('Error toggling post like:', error);
+    logger.error('Error toggling post like:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to toggle post like',

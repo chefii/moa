@@ -1,5 +1,6 @@
+import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
-import { prisma } from '../../main';
+import { prisma } from '../../config/prisma';
 import { authenticate, authorize } from '../../middlewares/auth';
 
 const router = Router();
@@ -97,7 +98,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN
       },
     });
   } catch (error) {
-    console.error('Get popups error:', error);
+    logger.error('Get popups error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch popups',
@@ -217,7 +218,7 @@ router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMI
       data: popup,
     });
   } catch (error) {
-    console.error('Create popup error:', error);
+    logger.error('Create popup error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create popup',
@@ -310,7 +311,7 @@ router.put('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
       data: popup,
     });
   } catch (error) {
-    console.error('Update popup error:', error);
+    logger.error('Update popup error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to update popup',
@@ -372,7 +373,7 @@ router.delete('/:id', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: R
       message: 'Popup deleted successfully',
     });
   } catch (error) {
-    console.error('Delete popup error:', error);
+    logger.error('Delete popup error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to delete popup',
