@@ -50,8 +50,14 @@ interface User {
   name: string;
   nickname?: string;
   role: UserRoleType; // Changed to string for flexibility
-  avatar?: string;
+  avatar?: {
+    id: string;
+    url: string;
+  };
   location?: string;
+  bio?: string;
+  gender?: string;
+  age?: number;
   token?: string;
   refreshToken?: string;
 }

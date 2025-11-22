@@ -37,18 +37,13 @@ if (process.env.NODE_ENV === 'development') {
 
     if (duration > slowQueryThreshold) {
       // 느린 쿼리 경고
-      logger.warn(`🐌 Slow Query Detected (${duration}ms)`, {
-        query: e.query,
+      logger.warn(`🐌 Slow Query (${duration}ms): ${e.query}`, {
         params: e.params,
         duration,
       });
     } else {
-      // 일반 쿼리 디버그 로그
-      logger.debug(`💾 DB Query (${duration}ms)`, {
-        query: e.query.substring(0, 200), // 쿼리 길이 제한
-        params: e.params,
-        duration,
-      });
+      // 일반 쿼리 INFO 로그 (파라미터 포함)
+      logger.info(`💾 Query (${duration}ms): ${e.query} | Params: ${e.params}`);
     }
   });
 }

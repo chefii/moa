@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import MobileLayout from '@/components/MobileLayout';
 import MobileHeader from '@/components/MobileHeader';
 import GatheringCard from '@/components/GatheringCard';
 import CategoryGrid from '@/components/CategoryGrid';
+import RegionalGatherings from '@/components/RegionalGatherings';
 import { bannersApi, Banner } from '@/lib/api/banners';
 import { gatheringsApi, Gathering } from '@/lib/api/gatherings';
 import { categoriesApi, Category } from '@/lib/api/categories';
@@ -30,6 +31,7 @@ import {
   User,
   MessageSquare,
   LucideIcon,
+  CheckCircle,
 } from 'lucide-react';
 
 // 아이콘이 emoji인지 확인하는 함수
@@ -42,6 +44,7 @@ const isEmoji = (str?: string): boolean => {
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [mainBanners, setMainBanners] = useState<Banner[]>([]);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
@@ -49,11 +52,26 @@ export default function Home() {
   const [newGatherings, setNewGatherings] = useState<Gathering[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showWelcomeToast, setShowWelcomeToast] = useState(false);
 
   // Drag/Swipe states
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // 신규 회원 환영 토스트
+  useEffect(() => {
+    const welcome = searchParams.get('welcome');
+    if (welcome === 'true') {
+      setShowWelcomeToast(true);
+      // URL에서 welcome 파라미터 제거
+      router.replace('/');
+      // 3초 후 토스트 숨김
+      setTimeout(() => {
+        setShowWelcomeToast(false);
+      }, 3000);
+    }
+  }, [searchParams, router]);
 
   // Auto-slide banner every 5 seconds
   useEffect(() => {
@@ -228,6 +246,16 @@ export default function Home() {
       {/* Header */}
       <MobileHeader />
 
+      {/* Welcome Toast for New Signups */}
+      {showWelcomeToast && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-300 ease-out animate-bounce">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2">
+            <CheckCircle className="w-5 h-5" />
+            <span className="font-semibold">회원가입이 완료되었습니다!</span>
+          </div>
+        </div>
+      )}
+
       {/* Hero Banner Slider */}
       <section className="relative overflow-hidden">
         {/* Banner Slides */}
@@ -394,7 +422,7 @@ export default function Home() {
                 tags={gathering.tags}
                 host={{
                   name: gathering.host?.name || '호스트',
-                  avatar: gathering.host?.profileImage,
+                  avatar: gathering.host?.profileImage?.url,
                   bio: gathering.host?.bio,
                 }}
                 onClick={() => handleGatheringClick(gathering)}
@@ -407,6 +435,9 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Regional Gatherings */}
+      <RegionalGatherings />
 
       {/* New Gatherings */}
       <section className="px-5 py-6 bg-white">
@@ -446,7 +477,7 @@ export default function Home() {
                 tags={gathering.tags}
                 host={{
                   name: gathering.host?.name || '호스트',
-                  avatar: gathering.host?.profileImage,
+                  avatar: gathering.host?.profileImage?.url,
                   bio: gathering.host?.bio,
                 }}
                 onClick={() => handleGatheringClick(gathering)}

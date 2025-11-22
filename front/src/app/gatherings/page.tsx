@@ -298,7 +298,7 @@ export default function GatheringsPage() {
                 price={gathering.price}
                 host={{
                   name: gathering.host?.name || '익명',
-                  avatar: gathering.host?.profileImage,
+                  avatar: gathering.host?.profileImage?.url,
                   bio: gathering.host?.bio,
                 }}
                 onClick={() => handleGatheringClick(gathering)}
@@ -376,7 +376,7 @@ export default function GatheringsPage() {
             tags: selectedGathering.tags,
             host: {
               name: selectedGathering.host?.name || '익명',
-              avatar: selectedGathering.host?.profileImage,
+              avatar: selectedGathering.host?.profileImage?.url,
               bio: selectedGathering.host?.bio,
             },
           }}

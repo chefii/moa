@@ -97,18 +97,19 @@ enum NoticeType {
 }
 
 enum FileType {
-  PROFILE    // 프로필 이미지
-  GATHERING  // 모임 이미지
-  POST       // 게시물 이미지
-  EVENT      // 이벤트 이미지
-  BANNER     // 배너 이미지
-  POPUP      // 팝업 이미지
-  CATEGORY   // 카테고리 아이콘
-  BADGE      // 배지 아이콘
-  REVIEW     // 리뷰 이미지
-  NOTICE     // 공지사항 첨부파일
-  BUSINESS   // 사업자 등록증
-  TEMP       // 임시 파일
+  PROFILE // 프로필 이미지
+  BACKGROUND // 배경 이미지
+  GATHERING // 모임 이미지
+  POST // 게시물 이미지
+  EVENT // 이벤트 이미지
+  BANNER // 배너 이미지
+  POPUP // 팝업 이미지
+  CATEGORY // 카테고리 아이콘
+  BADGE // 배지 아이콘
+  REVIEW // 리뷰 이미지
+  NOTICE // 공지사항 첨부파일
+  BUSINESS // 사업자 등록증
+  TEMP // 임시 파일
 }
 
 // ============================================
@@ -117,9 +118,9 @@ enum FileType {
 
 /// 파일 순번 관리 테이블 - 날짜+타입별 순번 관리 (YYMMDD-0000001 형식)
 model FileSequence {
-  date     String   @map("date")      // YYMMDD 형식
-  fileType FileType @map("file_type")
-  sequence Int      @default(0)       // 현재 순번
+  date      String   @map("date") // YYMMDD 형식
+  fileType  FileType @map("file_type")
+  sequence  Int      @default(0) // 현재 순번
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@id([date, fileType])
@@ -128,30 +129,31 @@ model FileSequence {
 
 /// 파일 마스터 테이블 - 모든 파일 정보 중앙 관리
 model File {
-  id               String   @id @default(uuid())
-  fileType         FileType @map("file_type")
-  originalName     String   @map("original_name")              // 원본 파일명
-  physicalFileName String?  @map("physical_file_name")         // 물리 파일명 (251117-0000001.jpg)
-  savedName        String   @map("saved_name")                 // 저장된 파일명 (파일명+확장자)
-  filePath         String   @map("file_path")                  // 파일 경로
-  fileExtension    String?  @map("file_extension")             // 파일 확장자 (.jpg, .png 등)
-  fileSize         Int      @map("file_size")                  // 파일 크기 (bytes)
-  mimeType         String   @map("mime_type")                  // MIME 타입
-  url              String                                      // 접근 가능한 URL
-  uploadedBy       String?  @map("uploaded_by")
-  isDeleted        Boolean  @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt        DateTime? @map("deleted_at")                // 삭제 일시
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id               String    @id @default(uuid())
+  fileType         FileType  @map("file_type")
+  originalName     String    @map("original_name") // 원본 파일명
+  physicalFileName String?   @map("physical_file_name") // 물리 파일명 (251117-0000001.jpg)
+  savedName        String    @map("saved_name") // 저장된 파일명 (파일명+확장자)
+  filePath         String    @map("file_path") // 파일 경로
+  fileExtension    String?   @map("file_extension") // 파일 확장자 (.jpg, .png 등)
+  fileSize         Int       @map("file_size") // 파일 크기 (bytes)
+  mimeType         String    @map("mime_type") // MIME 타입
+  url              String // 접근 가능한 URL
+  uploadedBy       String?   @map("uploaded_by")
+  isDeleted        Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
+  deletedAt        DateTime? @map("deleted_at") // 삭제 일시
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  userProfiles     User[]            @relation("ProfileImage")
-  gatherings       Gathering[]
-  businessProfiles BusinessProfile[]
-  banners          Banner[]
-  popups           Popup[]
-  events           Event[]
-  eventThumbnails  Event[]           @relation("EventThumbnails")
+  userProfiles        User[]                @relation("ProfileImage")
+  userBackgroundImages UserBackgroundImage[]
+  gatherings          Gathering[]
+  businessProfiles    BusinessProfile[]
+  banners             Banner[]
+  popups              Popup[]
+  events              Event[]
+  eventThumbnails     Event[]               @relation("EventThumbnails")
 
   @@index([fileType])
   @@index([uploadedBy])
@@ -161,90 +163,179 @@ model File {
 }
 
 model User {
-  id                String    @id @default(uuid())
-  email             String    @unique
-  password          String
-  name              String
-  nickname          String?   @unique
-  profileImageId    String?   @map("profile_image_id")
-  bio               String?
-  phone             String?
-  location          String?
-  gender            String?   // 성별 (CommonCode에서 관리)
-  age               Int?      // 나이
-  isVerified        Boolean   @default(false) @map("is_verified")
-  isPhoneVerified   Boolean   @default(false) @map("is_phone_verified")
-  emailVerifiedAt   DateTime? @map("email_verified_at")
-  phoneVerifiedAt   DateTime? @map("phone_verified_at")
-  isDeleted         Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt         DateTime? @map("deleted_at")                 // 삭제 일시
-  createdAt         DateTime  @default(now()) @map("created_at")
-  updatedAt         DateTime  @updatedAt @map("updated_at")
+  id             String  @id @default(uuid())
+  email          String  @unique
+  password       String? // 소셜 로그인만 사용하는 경우 null 가능
+  name           String
+  nickname       String? @unique
+  profileImageId String? @map("profile_image_id")
+  bio            String?
+  phone          String?
+  location       String?
+
+  // 개인정보
+  gender    String? // 성별 (CommonCode에서 관리: MALE, FEMALE, OTHER)
+  age       Int? // 나이 (실시간 계산 또는 직접 입력)
+  birthyear String? // 생년 (예: "1988")
+  birthday  String? // 생일 (MMDD 형식, 예: "0222")
+  ageRange  String? // 연령대 (예: "30~39", 카카오/네이버에서 제공)
+
+  isVerified      Boolean   @default(false) @map("is_verified")
+  isPhoneVerified Boolean   @default(false) @map("is_phone_verified")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  phoneVerifiedAt DateTime? @map("phone_verified_at")
+  isDeleted       Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
+  deletedAt       DateTime? @map("deleted_at") // 삭제 일시
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  profileImage       File?               @relation("ProfileImage", fields: [profileImageId], references: [id], onDelete: SetNull)
-  businessProfile    BusinessProfile?
-  userLevel          UserLevel?
-  userStreak         UserStreak?
-  userRoles          UserRole[]              // 다중 역할 지원
-  hostedGatherings   Gathering[]             @relation("HostedGatherings")
-  participations     GatheringParticipant[]
-  interests          UserInterest[]
-  bookmarks          Bookmark[]
-  sentReviews        Review[]                @relation("SentReviews")
-  receivedReviews    Review[]                @relation("ReceivedReviews")
-  chatMessages       ChatMessage[]
-  sentReports        Report[]                @relation("SentReports")
-  receivedReports    Report[]                @relation("ReceivedReports")
-  userBadges         UserBadge[]
-  pointTransactions  UserPoint[]
-  momentCollections  MomentCollection[]
-  interestForest     InterestForest[]
-  notifications      Notification[]          @relation("UserNotifications")
-  notificationReads  NotificationRead[]
-  popupViews         PopupView[]
-  refreshTokens      RefreshToken[]
+  profileImage      File?                  @relation("ProfileImage", fields: [profileImageId], references: [id], onDelete: SetNull)
+  backgroundImages  UserBackgroundImage[] // 배경 이미지 (최대 10개)
+  userSso           UserSso[] // 소셜 로그인 계정 (카카오, 구글 등)
+  businessProfile   BusinessProfile?
+  userLevel         UserLevel?
+  userStreak        UserStreak?
+  userRoles         UserRole[] // 다중 역할 지원
+  hostedGatherings  Gathering[]            @relation("HostedGatherings")
+  participations    GatheringParticipant[]
+  interests         UserInterest[]
+  bookmarks         Bookmark[]
+  sentReviews       Review[]               @relation("SentReviews")
+  receivedReviews   Review[]               @relation("ReceivedReviews")
+  chatMessages      ChatMessage[]
+  sentReports       Report[]               @relation("SentReports")
+  receivedReports   Report[]               @relation("ReceivedReports")
+  userBadges        UserBadge[]
+  pointTransactions UserPoint[]
+  momentCollections MomentCollection[]
+  interestForest    InterestForest[]
+  notifications     Notification[]         @relation("UserNotifications")
+  notificationReads NotificationRead[]
+  popupViews        PopupView[]
+  refreshTokens     RefreshToken[]
 
   // History Relations
-  loginHistory              LoginHistory[]
-  roleChanges               RoleChangeHistory[]           @relation("RoleChanges")
-  adminRoleChanges          RoleChangeHistory[]           @relation("AdminRoleChanges")
-  businessApprovalHistory   BusinessApprovalHistory[]
-  reportActions             ReportActionHistory[]         @relation("ReportActions")
-  settlementActions         SettlementActionHistory[]     @relation("SettlementActions")
-  suspensions               UserSuspensionHistory[]       @relation("UserSuspensions")
-  adminSuspensions          UserSuspensionHistory[]       @relation("AdminSuspensions")
-  settingChanges            SettingChangeHistory[]        @relation("SettingChanges")
+  loginHistory            LoginHistory[]
+  roleChanges             RoleChangeHistory[]       @relation("RoleChanges")
+  adminRoleChanges        RoleChangeHistory[]       @relation("AdminRoleChanges")
+  businessApprovalHistory BusinessApprovalHistory[]
+  reportActions           ReportActionHistory[]     @relation("ReportActions")
+  settlementActions       SettlementActionHistory[] @relation("SettlementActions")
+  suspensions             UserSuspensionHistory[]   @relation("UserSuspensions")
+  adminSuspensions        UserSuspensionHistory[]   @relation("AdminSuspensions")
+  settingChanges          SettingChangeHistory[]    @relation("SettingChanges")
 
   // Board Relations
-  boardPosts                BoardPost[]                   @relation("BoardPosts")
-  boardComments             BoardComment[]                @relation("BoardComments")
-  boardPostLikes            BoardPostLike[]               @relation("BoardPostLikes")
-  boardCommentLikes         BoardCommentLike[]            @relation("BoardCommentLikes")
+  boardPosts        BoardPost[]        @relation("BoardPosts")
+  boardComments     BoardComment[]     @relation("BoardComments")
+  boardPostLikes    BoardPostLike[]    @relation("BoardPostLikes")
+  boardCommentLikes BoardCommentLike[] @relation("BoardCommentLikes")
 
   @@map("users")
+}
+
+/// 사용자 배경 이미지 테이블 - 최대 10개까지 등록 가능
+model UserBackgroundImage {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  fileId    String   @map("file_id")
+  order     Int      @default(0) // 정렬 순서 (0-9)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([fileId])
+  @@map("user_background_images")
+}
+
+/// 소셜 로그인 계정 연동 테이블 (SSO)
+/// 한 사용자가 여러 소셜 계정을 연결할 수 있음 (카카오, 구글, 네이버, 애플 등)
+model UserSso {
+  /// 소셜 계정 고유 ID
+  id         String @id @default(uuid())
+  /// 사용자 ID (users 테이블 참조)
+  userId     String @map("user_id")
+  /// 소셜 로그인 제공자 (KAKAO, GOOGLE, NAVER, APPLE)
+  provider   String
+  /// 소셜 제공자의 고유 사용자 ID (예: 카카오 ID)
+  providerId String @map("provider_id")
+
+  // 소셜 계정에서 받은 정보
+  /// 소셜 계정 이메일
+  email          String?
+  /// 소셜 계정 이름
+  name           String?
+  /// 소셜 계정 닉네임
+  nickname       String?
+  /// 프로필 이미지 URL
+  profileImage   String? @map("profile_image")
+  /// 썸네일 이미지 URL
+  thumbnailImage String? @map("thumbnail_image")
+
+  // 추가 정보 (카카오의 경우)
+  /// 전화번호 (예: +82 10-1234-5678)
+  phoneNumber String? @map("phone_number")
+  /// 연령대 (예: 30~39)
+  ageRange    String? @map("age_range")
+  /// 생년 (예: 1988)
+  birthyear   String?
+  /// 생일 (MMDD 형식, 예: 0222)
+  birthday    String?
+  /// 성별 (male, female)
+  gender      String?
+
+  // OAuth 토큰 (암호화 저장 권장)
+  /// 액세스 토큰 (API 호출용, 민감정보)
+  accessToken  String?   @map("access_token")
+  /// 리프레시 토큰 (토큰 갱신용, 민감정보)
+  refreshToken String?   @map("refresh_token")
+  /// 토큰 만료 시각
+  tokenExpiry  DateTime? @map("token_expiry")
+
+  /// 소셜 계정 연결 일시
+  connectedAt DateTime  @default(now()) @map("connected_at")
+  /// 마지막 로그인 일시
+  lastLoginAt DateTime? @map("last_login_at")
+  /// 생성 일시
+  createdAt   DateTime  @default(now()) @map("created_at")
+  /// 수정 일시
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Constraints
+  @@unique([provider, providerId]) // 같은 소셜 계정(카카오 ID)의 중복 방지
+  @@unique([userId, provider]) // 한 유저당 같은 제공자는 하나만 연결
+  @@index([userId])
+  @@index([provider])
+  @@index([providerId])
+  @@map("user_sso")
 }
 
 /// 사용자 역할 매핑 테이블 - 한 사용자가 여러 역할을 가질 수 있도록 지원
 model UserRole {
   /// 역할 매핑 고유 ID
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   /// 사용자 ID (users 테이블 참조)
-  userId    String   @map("user_id")
+  userId    String    @map("user_id")
   /// 역할 코드 (CommonCode ROLE 그룹의 code 값)
-  roleCode  String   @map("role_code")
+  roleCode  String    @map("role_code")
   /// 주요 역할 여부 (UI에서 대표로 표시할 역할)
-  isPrimary Boolean  @default(false) @map("is_primary")
+  isPrimary Boolean   @default(false) @map("is_primary")
   /// 역할을 부여한 관리자 ID (추적용)
-  grantedBy String?  @map("granted_by")
+  grantedBy String?   @map("granted_by")
   /// 역할 부여 일시
-  grantedAt DateTime @default(now()) @map("granted_at")
+  grantedAt DateTime  @default(now()) @map("granted_at")
   /// 역할 만료일 (임시 역할용, null이면 영구)
   expiresAt DateTime? @map("expires_at")
   /// 생성 일시
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
   /// 수정 일시
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -259,8 +350,8 @@ model VerificationToken {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
   token     String   @unique
-  type      String   // EMAIL or PHONE
-  code      String?  // For phone verification (6 digits)
+  type      String // EMAIL or PHONE
+  code      String? // For phone verification (6 digits)
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -268,12 +359,12 @@ model VerificationToken {
 }
 
 model UserLevel {
-  id            String   @id @default(uuid())
-  userId        String   @unique @map("user_id")
-  level         Int      @default(1)
-  growthPoints  Int      @default(0) @map("growth_points")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id           String   @id @default(uuid())
+  userId       String   @unique @map("user_id")
+  level        Int      @default(1)
+  growthPoints Int      @default(0) @map("growth_points")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -299,8 +390,8 @@ model BusinessProfile {
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
-  user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  businessImage   File?                      @relation(fields: [businessImageId], references: [id], onDelete: SetNull)
+  user            User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessImage   File?                     @relation(fields: [businessImageId], references: [id], onDelete: SetNull)
   settlements     Settlement[]
   approvalHistory BusinessApprovalHistory[]
 
@@ -318,17 +409,17 @@ model Category {
   description String?
   parentId    String?   @map("parent_id")
   order       Int       @default(0)
-  depth       Int       @default(0)  // 0: 최상위, 1: 하위 카테고리
+  depth       Int       @default(0) // 0: 최상위, 1: 하위 카테고리
   type        String[]  @default([]) // GATHERING, BOARD, INTEREST 등
   isFeatured  Boolean   @default(false) @map("is_featured") // 메인에 노출 여부
   isActive    Boolean   @default(true) @map("is_active")
   isDeleted   Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt   DateTime? @map("deleted_at")                 // 삭제 일시
+  deletedAt   DateTime? @map("deleted_at") // 삭제 일시
   createdAt   DateTime  @default(now()) @map("created_at")
 
   // Self-referencing relation for hierarchy
-  parent         Category?        @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children       Category[]       @relation("CategoryHierarchy")
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Category[] @relation("CategoryHierarchy")
 
   gatherings     Gathering[]
   interests      UserInterest[]
@@ -374,7 +465,7 @@ model Gathering {
   status              GatheringStatus @default(RECRUITING)
   tags                String[]
   isDeleted           Boolean         @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt           DateTime?       @map("deleted_at")                 // 삭제 일시
+  deletedAt           DateTime?       @map("deleted_at") // 삭제 일시
   createdAt           DateTime        @default(now()) @map("created_at")
   updatedAt           DateTime        @updatedAt @map("updated_at")
 
@@ -480,11 +571,11 @@ model Report {
   resolvedAt   DateTime? @map("resolved_at")
   createdAt    DateTime  @default(now()) @map("created_at")
 
-  reporter         User                   @relation("SentReports", fields: [reporterId], references: [id])
-  reported         User                   @relation("ReceivedReports", fields: [reportedId], references: [id])
-  gathering        Gathering?             @relation(fields: [gatheringId], references: [id])
-  reasonCommonCode CommonCode             @relation("ReportReasons", fields: [reasonCode], references: [code])
-  statusCommonCode CommonCode             @relation("ReportStatus", fields: [statusCode], references: [code])
+  reporter         User                  @relation("SentReports", fields: [reporterId], references: [id])
+  reported         User                  @relation("ReceivedReports", fields: [reportedId], references: [id])
+  gathering        Gathering?            @relation(fields: [gatheringId], references: [id])
+  reasonCommonCode CommonCode            @relation("ReportReasons", fields: [reasonCode], references: [code])
+  statusCommonCode CommonCode            @relation("ReportStatus", fields: [statusCode], references: [code])
   actionHistory    ReportActionHistory[]
 
   @@map("reports")
@@ -501,8 +592,8 @@ model Settlement {
   settledAt         DateTime?        @map("settled_at")
   createdAt         DateTime         @default(now()) @map("created_at")
 
-  businessProfile BusinessProfile            @relation(fields: [businessProfileId], references: [id])
-  gathering       Gathering                  @relation(fields: [gatheringId], references: [id])
+  businessProfile BusinessProfile           @relation(fields: [businessProfileId], references: [id])
+  gathering       Gathering                 @relation(fields: [gatheringId], references: [id])
   actionHistory   SettlementActionHistory[]
 
   @@map("settlements")
@@ -523,7 +614,7 @@ model Badge {
   conditionValue Int           @map("condition_value")
   isActive       Boolean       @default(true) @map("is_active")
   isDeleted      Boolean       @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt      DateTime?     @map("deleted_at")                 // 삭제 일시
+  deletedAt      DateTime?     @map("deleted_at") // 삭제 일시
   createdAt      DateTime      @default(now()) @map("created_at")
 
   userBadges UserBadge[]
@@ -618,7 +709,7 @@ model CommonCode {
   order       Int       @default(0)
   isActive    Boolean   @default(true) @map("is_active")
   isDeleted   Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt   DateTime? @map("deleted_at")                 // 삭제 일시
+  deletedAt   DateTime? @map("deleted_at") // 삭제 일시
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
@@ -679,41 +770,41 @@ model Banner {
 /// 팝업 테이블 - 공지사항 팝업, 이벤트 팝업 등
 model Popup {
   /// 팝업 고유 ID
-  id          String    @id @default(uuid())
+  id         String    @id @default(uuid())
   /// 팝업 타입 (MODAL, BOTTOM_SHEET, TOAST)
-  type        PopupType
+  type       PopupType
   /// 팝업 제목
-  title       String
+  title      String
   /// 팝업 내용 (HTML 지원)
-  content     String    @db.Text
+  content    String    @db.Text
   /// 이미지 파일 ID (files 테이블 참조, 선택)
-  imageId     String?   @map("image_id")
+  imageId    String?   @map("image_id")
   /// 링크 URL (클릭 시 이동)
-  linkUrl     String?   @map("link_url")
+  linkUrl    String?   @map("link_url")
   /// 버튼 텍스트
-  buttonText  String?   @map("button_text")
+  buttonText String?   @map("button_text")
   /// 노출 시작일
-  startDate   DateTime  @map("start_date")
+  startDate  DateTime  @map("start_date")
   /// 노출 종료일
-  endDate     DateTime  @map("end_date")
+  endDate    DateTime  @map("end_date")
   /// 활성화 여부
-  isActive    Boolean   @default(true) @map("is_active")
+  isActive   Boolean   @default(true) @map("is_active")
   /// 소프트 삭제 여부
-  isDeleted   Boolean   @default(false) @map("is_deleted")
+  isDeleted  Boolean   @default(false) @map("is_deleted")
   /// 삭제 일시
-  deletedAt   DateTime? @map("deleted_at")
+  deletedAt  DateTime? @map("deleted_at")
   /// 1회만 표시 여부
-  showOnce    Boolean   @default(false) @map("show_once")
+  showOnce   Boolean   @default(false) @map("show_once")
   /// 우선순위 (높을수록 먼저 표시)
-  priority    Int       @default(0)
+  priority   Int       @default(0)
   /// 총 조회수
-  viewCount   Int       @default(0) @map("view_count")
+  viewCount  Int       @default(0) @map("view_count")
   /// 생성자 ID
-  createdBy   String    @map("created_by")
+  createdBy  String    @map("created_by")
   /// 생성 일시
-  createdAt   DateTime  @default(now()) @map("created_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
   /// 수정 일시
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   // Relations
   image      File?       @relation(fields: [imageId], references: [id], onDelete: SetNull)
@@ -729,16 +820,16 @@ model Popup {
 /// 팝업 조회 기록 테이블 - 사용자별 팝업 조회 이력 추적 (1회만 표시 기능 지원)
 model PopupView {
   /// 조회 기록 고유 ID
-  id        String   @id @default(uuid())
+  id       String   @id @default(uuid())
   /// 팝업 ID
-  popupId   String   @map("popup_id")
+  popupId  String   @map("popup_id")
   /// 사용자 ID (비회원은 null)
-  userId    String?  @map("user_id")
+  userId   String?  @map("user_id")
   /// 조회 일시
-  viewedAt  DateTime @default(now()) @map("viewed_at")
+  viewedAt DateTime @default(now()) @map("viewed_at")
 
-  popup     Popup    @relation(fields: [popupId], references: [id], onDelete: Cascade)
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  popup Popup @relation(fields: [popupId], references: [id], onDelete: Cascade)
+  user  User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([popupId, userId])
   @@index([userId])
@@ -828,20 +919,20 @@ model Event {
 }
 
 model Notice {
-  id          String     @id @default(uuid())
-  type        NoticeType @default(GENERAL)
-  title       String
-  content     String     @db.Text
-  isPinned    Boolean    @default(false) @map("is_pinned")
-  isActive    Boolean    @default(true) @map("is_active")
-  isDeleted   Boolean    @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt   DateTime?  @map("deleted_at")                 // 삭제 일시
-  viewCount   Int        @default(0) @map("view_count")
-  startDate   DateTime?  @map("start_date")
-  endDate     DateTime?  @map("end_date")
-  createdBy   String     @map("created_by")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  id        String     @id @default(uuid())
+  type      NoticeType @default(GENERAL)
+  title     String
+  content   String     @db.Text
+  isPinned  Boolean    @default(false) @map("is_pinned")
+  isActive  Boolean    @default(true) @map("is_active")
+  isDeleted Boolean    @default(false) @map("is_deleted") // 소프트 삭제 여부
+  deletedAt DateTime?  @map("deleted_at") // 삭제 일시
+  viewCount Int        @default(0) @map("view_count")
+  startDate DateTime?  @map("start_date")
+  endDate   DateTime?  @map("end_date")
+  createdBy String     @map("created_by")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
 
   @@map("notices")
 }
@@ -861,15 +952,15 @@ model FAQ {
 }
 
 model Terms {
-  id        String   @id @default(uuid())
-  type      String
-  title     String
-  content   String   @db.Text
-  version   String
-  isActive  Boolean  @default(true) @map("is_active")
-  isRequired Boolean @default(true) @map("is_required")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id         String   @id @default(uuid())
+  type       String
+  title      String
+  content    String   @db.Text
+  version    String
+  isActive   Boolean  @default(true) @map("is_active")
+  isRequired Boolean  @default(true) @map("is_required")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@map("terms")
 }
@@ -883,7 +974,7 @@ model MenuCategory {
   order         Int        @default(0)
   isActive      Boolean    @default(true) @map("is_active")
   isDeleted     Boolean    @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt     DateTime?  @map("deleted_at")                 // 삭제 일시
+  deletedAt     DateTime?  @map("deleted_at") // 삭제 일시
   description   String?
   requiredRoles String[]   @default([]) @map("required_roles")
   createdAt     DateTime   @default(now()) @map("created_at")
@@ -894,22 +985,22 @@ model MenuCategory {
 }
 
 model MenuItem {
-  id             String       @id @default(uuid())
-  categoryId     String       @map("category_id")
-  category       MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  name           String
-  nameEn         String?      @map("name_en")
-  path           String       @unique
-  icon           String?
-  order          Int          @default(0)
-  isActive       Boolean      @default(true) @map("is_active")
-  isDeleted      Boolean      @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt      DateTime?    @map("deleted_at")                 // 삭제 일시
-  badge          Int?
-  description    String?
-  requiredRoles  String[]     @default([]) @map("required_roles")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
+  id            String       @id @default(uuid())
+  categoryId    String       @map("category_id")
+  category      MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name          String
+  nameEn        String?      @map("name_en")
+  path          String       @unique
+  icon          String?
+  order         Int          @default(0)
+  isActive      Boolean      @default(true) @map("is_active")
+  isDeleted     Boolean      @default(false) @map("is_deleted") // 소프트 삭제 여부
+  deletedAt     DateTime?    @map("deleted_at") // 삭제 일시
+  badge         Int?
+  description   String?
+  requiredRoles String[]     @default([]) @map("required_roles")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
 
   @@map("menu_items")
 }
@@ -919,15 +1010,15 @@ model MenuItem {
 // ============================================
 
 model SiteSetting {
-  id        String   @id @default(uuid())
-  key       String   @unique
-  value     String
-  category  String   @default("general") // general, company, contact, social, etc.
-  label     String
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  category    String   @default("general") // general, company, contact, social, etc.
+  label       String
   description String?
-  order     Int      @default(0)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  order       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("site_settings")
 }
@@ -951,14 +1042,14 @@ model FooterLink {
 // ============================================
 
 model Notification {
-  id          String   @id @default(uuid())
-  userId      String?  @map("user_id") // null이면 전체 알림
-  type        String   // SYSTEM, GATHERING, REPORT, etc.
-  title       String
-  content     String   @db.Text
-  link        String?  // 클릭시 이동할 링크
-  priority    Int      @default(0) // 0: 일반, 1: 중요, 2: 긴급
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id") // null이면 전체 알림
+  type      String // SYSTEM, GATHERING, REPORT, etc.
+  title     String
+  content   String   @db.Text
+  link      String? // 클릭시 이동할 링크
+  priority  Int      @default(0) // 0: 일반, 1: 중요, 2: 긴급
+  createdAt DateTime @default(now()) @map("created_at")
 
   user  User?              @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
   reads NotificationRead[]
@@ -967,10 +1058,10 @@ model Notification {
 }
 
 model NotificationRead {
-  id             String       @id @default(uuid())
-  notificationId String       @map("notification_id")
-  userId         String       @map("user_id")
-  readAt         DateTime     @default(now()) @map("read_at")
+  id             String   @id @default(uuid())
+  notificationId String   @map("notification_id")
+  userId         String   @map("user_id")
+  readAt         DateTime @default(now()) @map("read_at")
 
   notification Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1009,17 +1100,17 @@ model LoginHistory {
 
 // 역할 변경 히스토리
 model RoleChangeHistory {
-  id          String   @id @default(uuid())
-  userId      String   @map("user_id") // 역할이 변경된 사용자
-  changedBy   String   @map("changed_by") // 역할을 변경한 관리자
-  oldRole     String   @map("old_role")
-  newRole     String   @map("new_role")
-  reason      String? // 변경 사유
-  ipAddress   String?  @map("ip_address")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id") // 역할이 변경된 사용자
+  changedBy String   @map("changed_by") // 역할을 변경한 관리자
+  oldRole   String   @map("old_role")
+  newRole   String   @map("new_role")
+  reason    String? // 변경 사유
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  user    User @relation("RoleChanges", fields: [userId], references: [id], onDelete: Cascade)
-  admin   User @relation("AdminRoleChanges", fields: [changedBy], references: [id], onDelete: Cascade)
+  user  User @relation("RoleChanges", fields: [userId], references: [id], onDelete: Cascade)
+  admin User @relation("AdminRoleChanges", fields: [changedBy], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([changedBy])
@@ -1048,14 +1139,14 @@ model BusinessApprovalHistory {
 
 // 신고 처리 히스토리
 model ReportActionHistory {
-  id          String   @id @default(uuid())
-  reportId    String   @map("report_id")
-  actionBy    String   @map("action_by") // 처리한 관리자
-  oldStatus   String   @map("old_status")
-  newStatus   String   @map("new_status")
-  adminNote   String?  @map("admin_note") @db.Text
-  ipAddress   String?  @map("ip_address")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  reportId  String   @map("report_id")
+  actionBy  String   @map("action_by") // 처리한 관리자
+  oldStatus String   @map("old_status")
+  newStatus String   @map("new_status")
+  adminNote String?  @map("admin_note") @db.Text
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
 
   report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
   admin  User   @relation("ReportActions", fields: [actionBy], references: [id], onDelete: Cascade)
@@ -1138,26 +1229,26 @@ enum BoardPostStatus {
 }
 
 model BoardPost {
-  id          String          @id @default(uuid())
-  title       String
-  content     String          @db.Text
-  authorId    String          @map("author_id")
-  categoryId  String?         @map("category_id")
-  viewCount   Int             @default(0) @map("view_count")
-  likeCount   Int             @default(0) @map("like_count")
-  commentCount Int            @default(0) @map("comment_count")
-  isPinned    Boolean         @default(false) @map("is_pinned")
-  status      BoardPostStatus @default(PUBLISHED)
-  images      String[]        @default([])
-  isDeleted   Boolean         @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt   DateTime?       @map("deleted_at")                 // 삭제 일시
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  id           String          @id @default(uuid())
+  title        String
+  content      String          @db.Text
+  authorId     String          @map("author_id")
+  categoryId   String?         @map("category_id")
+  viewCount    Int             @default(0) @map("view_count")
+  likeCount    Int             @default(0) @map("like_count")
+  commentCount Int             @default(0) @map("comment_count")
+  isPinned     Boolean         @default(false) @map("is_pinned")
+  status       BoardPostStatus @default(PUBLISHED)
+  images       String[]        @default([])
+  isDeleted    Boolean         @default(false) @map("is_deleted") // 소프트 삭제 여부
+  deletedAt    DateTime?       @map("deleted_at") // 삭제 일시
+  createdAt    DateTime        @default(now()) @map("created_at")
+  updatedAt    DateTime        @updatedAt @map("updated_at")
 
-  author    User              @relation("BoardPosts", fields: [authorId], references: [id], onDelete: Cascade)
-  category  Category?         @relation("BoardPostCategory", fields: [categoryId], references: [id], onDelete: SetNull)
-  comments  BoardComment[]
-  likes     BoardPostLike[]
+  author   User            @relation("BoardPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  category Category?       @relation("BoardPostCategory", fields: [categoryId], references: [id], onDelete: SetNull)
+  comments BoardComment[]
+  likes    BoardPostLike[]
 
   @@index([authorId])
   @@index([categoryId])
@@ -1168,16 +1259,16 @@ model BoardPost {
 }
 
 model BoardComment {
-  id         String    @id @default(uuid())
-  postId     String    @map("post_id")
-  authorId   String    @map("author_id")
-  content    String    @db.Text
-  likeCount  Int       @default(0) @map("like_count")
-  parentId   String?   @map("parent_id") // For nested comments
-  isDeleted  Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt  DateTime? @map("deleted_at")                 // 삭제 일시
-  createdAt  DateTime  @default(now()) @map("created_at")
-  updatedAt  DateTime  @updatedAt @map("updated_at")
+  id        String    @id @default(uuid())
+  postId    String    @map("post_id")
+  authorId  String    @map("author_id")
+  content   String    @db.Text
+  likeCount Int       @default(0) @map("like_count")
+  parentId  String?   @map("parent_id") // For nested comments
+  isDeleted Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
+  deletedAt DateTime? @map("deleted_at") // 삭제 일시
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
 
   post    BoardPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
   author  User               @relation("BoardComments", fields: [authorId], references: [id], onDelete: Cascade)

@@ -119,6 +119,8 @@ export const gatheringsApi = {
     categoryId?: string;
     status?: GatheringStatus;
     sort?: 'recent' | 'popular' | 'upcoming';
+    cityCode?: string;
+    districtCode?: string;
   }): Promise<GatheringListResponse> => {
     const response = await apiClient.get<ApiResponse<Gathering[]>>('/api/gatherings', {
       params,

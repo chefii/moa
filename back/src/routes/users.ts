@@ -2,6 +2,10 @@ import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { authenticate, authorize } from '../middlewares/auth';
+import { createFileUploadMiddleware, createFileInfo, resizeImage } from '../utils/fileUpload';
+import { mapUploadTypeToFileType } from '../utils/fileUploadConfig';
+import { getNextFileSequence } from '../utils/fileSequence';
+import { FileType, Prisma } from '@prisma/client';
 
 const router = Router();
 
@@ -333,6 +337,399 @@ router.get('/stats/overview', authenticate, authorize('ROLE_SUPER_ADMIN'), async
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user statistics',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/me/profile-image:
+ *   put:
+ *     summary: 프로필 이미지 업로드
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: 프로필 이미지 파일 (JPG, PNG / 권장 128x128px / 최대 250KB)
+ *     responses:
+ *       200:
+ *         description: 프로필 이미지 업로드 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Profile image uploaded successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     profileImage:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                         url:
+ *                           type: string
+ *                         originalName:
+ *                           type: string
+ *                         size:
+ *                           type: number
+ *       400:
+ *         description: 잘못된 요청 (파일 없음, 잘못된 형식)
+ *       401:
+ *         description: 인증 필요
+ */
+const profileUpload = createFileUploadMiddleware('profile');
+
+router.put('/me/profile-image', authenticate, profileUpload.single('file'), async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({
+        success: false,
+        message: 'No file uploaded',
+      });
+      return;
+    }
+
+    // 이미지 리사이징 (128x128px)
+    await resizeImage(req.file.path, 128, 128);
+
+    // 파일 정보 생성
+    const fileInfo = createFileInfo(req.file, 'profile');
+    const fileType = mapUploadTypeToFileType('profile') as FileType;
+    const fileExtension = req.file.originalname.substring(req.file.originalname.lastIndexOf('.'));
+
+    // File 테이블에 저장
+    const fileRecord = await prisma.file.create({
+      data: {
+        url: fileInfo.url,
+        fileType: fileType,
+        originalName: fileInfo.originalName,
+        savedName: fileInfo.savedName,
+        filePath: fileInfo.path,
+        fileExtension: fileExtension,
+        mimeType: fileInfo.mimeType,
+        fileSize: fileInfo.size,
+      },
+    });
+
+    // 기존 프로필 이미지 ID 조회
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { profileImageId: true },
+    });
+
+    // User의 profileImageId 업데이트
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        profileImageId: fileRecord.id,
+      },
+    });
+
+    // 기존 프로필 이미지가 있었다면 삭제 (선택사항)
+    if (user?.profileImageId) {
+      await prisma.file.delete({
+        where: { id: user.profileImageId },
+      }).catch(err => {
+        logger.warn(`Failed to delete old profile image: ${err.message}`);
+      });
+    }
+
+    logger.info(`✅ Profile image uploaded for user: ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Profile image uploaded successfully',
+      data: {
+        profileImage: {
+          id: fileRecord.id,
+          url: fileRecord.url,
+          originalName: fileRecord.originalName,
+          size: fileRecord.fileSize,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error('Upload profile image error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload profile image',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/me/background-images:
+ *   post:
+ *     summary: 배경 이미지 업로드 (최대 10개)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               files:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: 배경 이미지 파일들 (JPG, PNG, WEBP / 최대 500KB)
+ *     responses:
+ *       200:
+ *         description: 배경 이미지 업로드 성공
+ */
+const backgroundUpload = createFileUploadMiddleware('background');
+
+router.post('/me/background-images', authenticate, backgroundUpload.array('files', 10), async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    const files = req.files as Express.Multer.File[];
+    if (!files || files.length === 0) {
+      res.status(400).json({
+        success: false,
+        message: 'No files uploaded',
+      });
+      return;
+    }
+
+    // 기존 배경 이미지 개수 확인
+    const existingCount = await prisma.userBackgroundImage.count({
+      where: { userId },
+    });
+
+    if (existingCount + files.length > 10) {
+      res.status(400).json({
+        success: false,
+        message: `최대 10개까지 업로드 가능합니다. 현재 ${existingCount}개가 등록되어 있습니다.`,
+      });
+      return;
+    }
+
+    const uploadedImages = [];
+    const fileType = mapUploadTypeToFileType('background') as FileType;
+
+    for (const file of files) {
+      // 이미지 리사이징 (1200x600px)
+      await resizeImage(file.path, 1200, 600);
+
+      // 파일 정보 생성
+      const fileInfo = createFileInfo(file, 'background');
+      const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.'));
+
+      // File 테이블에 저장
+      const fileRecord = await prisma.file.create({
+        data: {
+          url: fileInfo.url,
+          fileType: fileType,
+          originalName: fileInfo.originalName,
+          savedName: fileInfo.savedName,
+          filePath: fileInfo.path,
+          fileExtension: fileExtension,
+          mimeType: fileInfo.mimeType,
+          fileSize: fileInfo.size,
+        },
+      });
+
+      // UserBackgroundImage 테이블에 저장
+      const backgroundImage: Prisma.UserBackgroundImageGetPayload<{ include: { file: true } }> = await prisma.userBackgroundImage.create({
+        data: {
+          userId,
+          fileId: fileRecord.id,
+          order: existingCount + uploadedImages.length,
+        },
+        include: {
+          file: true,
+        },
+      });
+
+      uploadedImages.push({
+        id: backgroundImage.id,
+        url: backgroundImage.file.url,
+        order: backgroundImage.order,
+      });
+    }
+
+    logger.info(`✅ Background images uploaded for user: ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Background images uploaded successfully',
+      data: {
+        images: uploadedImages,
+      },
+    });
+  } catch (error) {
+    logger.error('Upload background images error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload background images',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/me/background-images:
+ *   get:
+ *     summary: 내 배경 이미지 목록 조회
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 배경 이미지 목록 조회 성공
+ */
+router.get('/me/background-images', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    const backgroundImages = await prisma.userBackgroundImage.findMany({
+      where: { userId },
+      include: {
+        file: true,
+      },
+      orderBy: {
+        order: 'asc',
+      },
+    });
+
+    res.json({
+      success: true,
+      data: backgroundImages.map(img => ({
+        id: img.id,
+        url: img.file.url,
+        order: img.order,
+      })),
+    });
+  } catch (error) {
+    logger.error('Get background images error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get background images',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/me/background-images/{id}:
+ *   delete:
+ *     summary: 배경 이미지 삭제
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 배경 이미지 ID
+ *     responses:
+ *       200:
+ *         description: 배경 이미지 삭제 성공
+ */
+router.delete('/me/background-images/:id', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+    const { id } = req.params;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    // 배경 이미지 조회 및 권한 확인
+    const backgroundImage = await prisma.userBackgroundImage.findFirst({
+      where: {
+        id,
+        userId,
+      },
+    });
+
+    if (!backgroundImage) {
+      res.status(404).json({
+        success: false,
+        message: 'Background image not found',
+      });
+      return;
+    }
+
+    // File 삭제
+    await prisma.file.delete({
+      where: { id: backgroundImage.fileId },
+    });
+
+    // UserBackgroundImage 삭제
+    await prisma.userBackgroundImage.delete({
+      where: { id },
+    });
+
+    logger.info(`✅ Background image deleted: ${id}`);
+
+    res.json({
+      success: true,
+      message: 'Background image deleted successfully',
+    });
+  } catch (error) {
+    logger.error('Delete background image error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete background image',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }

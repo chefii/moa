@@ -1,6 +1,10 @@
 import apiClient from './client';
 import { ApiResponse } from './types';
 
+export interface UserSso {
+  provider: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -14,6 +18,8 @@ export interface User {
   emailVerifiedAt?: string;
   phoneVerifiedAt?: string;
   createdAt: string;
+  userSso?: UserSso[];
+  hasPassword?: boolean; // true if user signed up with email/password
 }
 
 export interface Category {
@@ -80,5 +86,68 @@ export const usersApi = {
   getUserStats: async (): Promise<UserStatsResponse> => {
     const response = await apiClient.get<ApiResponse<UserStatsResponse>>('/api/users/stats/overview');
     return response.data.data!;
+  },
+
+  // Update user profile
+  updateProfile: async (data: {
+    name?: string;
+    nickname?: string;
+    phone?: string;
+    location?: string;
+    bio?: string;
+    gender?: string;
+    age?: number;
+  }): Promise<UserDetail> => {
+    const response = await apiClient.put<ApiResponse<UserDetail>>('/api/auth/profile', data);
+    return response.data.data!;
+  },
+
+  // Upload profile image
+  uploadProfileImage: async (file: File): Promise<{ url: string; id: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.put<ApiResponse<{ profileImage: { url: string; id: string } }>>(
+      '/api/users/me/profile-image',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data.data!.profileImage;
+  },
+
+  // Upload background images
+  uploadBackgroundImages: async (files: File[]): Promise<{ id: string; url: string; order: number }[]> => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    const response = await apiClient.post<ApiResponse<{ images: { id: string; url: string; order: number }[] }>>(
+      '/api/users/me/background-images',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data.data!.images;
+  },
+
+  // Get background images
+  getBackgroundImages: async (): Promise<{ id: string; url: string; order: number }[]> => {
+    const response = await apiClient.get<ApiResponse<{ id: string; url: string; order: number }[]>>(
+      '/api/users/me/background-images'
+    );
+    return response.data.data!;
+  },
+
+  // Delete background image
+  deleteBackgroundImage: async (id: string): Promise<void> => {
+    await apiClient.delete(`/api/users/me/background-images/${id}`);
   },
 };

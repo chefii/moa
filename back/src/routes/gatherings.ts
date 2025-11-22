@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { GatheringType, GatheringStatus } from '@prisma/client';
 import { authenticate, authorize } from '../middlewares/auth';
 import { prisma } from '../config/prisma';
+import { extractRegionFromAddress, getCityByCode, getDistrictByCode } from '../constants/regions';
 
 const router = Router();
 
@@ -322,6 +323,8 @@ router.get('/', async (req: Request, res: Response) => {
     const categoryId = req.query.categoryId as string;
     const status = req.query.status as string;
     const sort = (req.query.sort as string) || 'recent';
+    const cityCode = req.query.cityCode as string;
+    const districtCode = req.query.districtCode as string;
 
     const skip = (page - 1) * limit;
 
@@ -345,49 +348,70 @@ router.get('/', async (req: Request, res: Response) => {
       orderBy = { currentParticipants: 'desc' };
     }
 
-    const [gatherings, total] = await Promise.all([
-      prisma.gathering.findMany({
-        where,
-        include: {
-          host: {
-            select: {
-              id: true,
-              name: true,
-              profileImage: true,
-            },
-          },
-          category: {
-            select: {
-              id: true,
-              name: true,
-              icon: true,
-              color: true,
-            },
-          },
-          image: {
-            select: {
-              id: true,
-              url: true,
-              savedName: true,
-            },
-          },
-          _count: {
-            select: {
-              participants: true,
-              bookmarks: true,
-            },
+    // 모임 조회
+    let gatherings = await prisma.gathering.findMany({
+      where,
+      include: {
+        host: {
+          select: {
+            id: true,
+            name: true,
+            profileImage: true,
           },
         },
-        orderBy,
-        skip,
-        take: limit,
-      }),
-      prisma.gathering.count({ where }),
-    ]);
+        category: {
+          select: {
+            id: true,
+            name: true,
+            icon: true,
+            color: true,
+          },
+        },
+        image: {
+          select: {
+            id: true,
+            url: true,
+            savedName: true,
+          },
+        },
+        _count: {
+          select: {
+            participants: true,
+            bookmarks: true,
+          },
+        },
+      },
+      orderBy,
+    });
+
+    // 지역 필터링 (cityCode 또는 districtCode가 있는 경우)
+    if (cityCode || districtCode) {
+      gatherings = gatherings.filter((gathering) => {
+        const region = extractRegionFromAddress(gathering.locationAddress);
+
+        // cityCode만 있는 경우: 해당 시/도의 모든 모임
+        if (cityCode && !districtCode) {
+          return region.cityCode === cityCode;
+        }
+
+        // districtCode도 있는 경우: 해당 구/군의 모임만
+        if (cityCode && districtCode) {
+          return region.cityCode === cityCode && region.districtCode === districtCode;
+        }
+
+        return true;
+      });
+
+      logger.info('지역 필터 적용', { cityCode, districtCode, resultCount: gatherings.length });
+    }
+
+    // 페이지네이션 적용
+    const total = gatherings.length;
+    const paginatedGatherings = gatherings.slice(skip, skip + limit);
 
     res.json({
       success: true,
-      data: gatherings,
+      data: paginatedGatherings,
       pagination: {
         total,
         page,

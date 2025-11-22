@@ -33,7 +33,8 @@ interface Badge {
 }
 
 export default function ProfilePage() {
-  const { user, logout, isAuthenticated } = useAuthStore();
+  const { user, logout, isAuthenticated, login } = useAuthStore();
+  const [isHydrated, setIsHydrated] = useState(false);
   const [stats, setStats] = useState({
     participations: 38,
     hostedMeetings: 5,
@@ -50,6 +51,27 @@ export default function ProfilePage() {
   const [badges, setBadges] = useState<Badge[]>([]);
   const [badgesLoading, setBadgesLoading] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Zustand persist hydration 체크
+  useEffect(() => {
+    console.log('[Profile] Component mounted');
+    setIsHydrated(true);
+  }, []);
+
+  // Check authentication status after hydration
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    console.log('[Profile] After hydration check:');
+    console.log('  - isAuthenticated:', isAuthenticated);
+    console.log('  - user:', user);
+
+    // If not authenticated after hydration, don't try to fetch
+    if (!isAuthenticated || !user) {
+      console.log('[Profile] No authentication, showing login prompt');
+      return;
+    }
+  }, [isHydrated, isAuthenticated, user]);
 
   // 배지 API 카테고리를 프론트엔드 카테고리로 매핑
   const mapBadgeCategory = (apiCategory: string): 'basic' | 'special' | 'rare' => {
@@ -138,7 +160,21 @@ export default function ProfilePage() {
     setShowLogoutModal(false);
   };
 
+  // Hydration이 완료되기 전에는 로딩 상태 표시
+  if (!isHydrated) {
+    console.log('[Profile] Showing hydration loading...');
+    return (
+      <MobileLayout>
+        <MobileHeader />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-moa-primary"></div>
+        </div>
+      </MobileLayout>
+    );
+  }
+
   if (!isAuthenticated || !user) {
+    console.log('[Profile] Not authenticated, showing login prompt', { isAuthenticated, user });
     return (
       <MobileLayout>
         <MobileHeader />
@@ -178,9 +214,9 @@ export default function ProfilePage() {
         </div>
 
         <div className="relative">
-          {/* Settings Button */}
+          {/* Profile Edit Button */}
           <Link
-            href="/settings"
+            href="/profile/edit"
             className="absolute top-0 right-0 p-2 hover:bg-white/20 rounded-lg transition-colors"
           >
             <Settings className="w-5 h-5" />
@@ -188,13 +224,21 @@ export default function ProfilePage() {
 
           {/* Profile Info */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30">
-              <span className="text-3xl font-bold">
-                {user.name?.charAt(0) || 'U'}
-              </span>
+            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30 overflow-hidden">
+              {user.avatar?.url && typeof user.avatar.url === 'string' ? (
+                <img
+                  src={user.avatar.url}
+                  alt="프로필 사진"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-3xl font-bold">
+                  {user.nickname?.charAt(0) || user.name?.charAt(0) || 'U'}
+                </span>
+              )}
             </div>
             <div>
-              <h1 className="text-2xl font-black mb-1">{user.name}</h1>
+              <h1 className="text-2xl font-black mb-1">{user.nickname || user.name}</h1>
               <p className="text-sm opacity-90">{user.email}</p>
             </div>
           </div>
@@ -377,19 +421,6 @@ export default function ProfilePage() {
 
         {/* Menu List */}
         <section className="bg-white rounded-2xl overflow-hidden">
-          <Link
-            href="/profile/edit"
-            className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors border-b border-gray-100"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Settings className="w-5 h-5 text-blue-600" />
-              </div>
-              <span className="font-semibold text-gray-900">프로필 수정</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
-          </Link>
-
           <Link
             href="/my-gatherings"
             className="flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors border-b border-gray-100"

@@ -29,6 +29,7 @@ export type FileUploadType =
   | 'popup'
   | 'event'
   | 'profile'
+  | 'background'
   | 'gathering'
   | 'category'
   | 'badge'
@@ -44,6 +45,7 @@ export function mapUploadTypeToFileType(uploadType: FileUploadType): string {
     popup: 'POPUP',
     event: 'EVENT',
     profile: 'PROFILE',
+    background: 'BACKGROUND',
     gathering: 'GATHERING',
     category: 'CATEGORY',
     badge: 'BADGE',
@@ -100,6 +102,17 @@ export const FILE_UPLOAD_CONFIGS: Record<FileUploadType, FileUploadConfig> = {
       height: 128,
     },
     description: '프로필 이미지 (JPG, PNG / 권장: 128x128px / 최대: 250KB)',
+  },
+  background: {
+    directory: 'backgrounds',
+    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp'],
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    maxFileSize: 500 * 1024, // 500KB
+    recommendedSize: {
+      width: 1200,
+      height: 600,
+    },
+    description: '배경 이미지 (JPG, PNG, WEBP / 권장: 1200x600px / 최대: 500KB)',
   },
   gathering: {
     directory: 'gatherings',

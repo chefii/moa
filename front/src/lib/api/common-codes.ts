@@ -10,9 +10,20 @@ export interface CommonCode {
   order: number;
 }
 
+// Region type alias for backward compatibility
+export type Region = CommonCode;
+
 export const commonCodesApi = {
   // Get common codes by group code
   getByGroup: async (groupCode: string): Promise<CommonCode[]> => {
+    const response = await apiClient.get<ApiResponse<CommonCode[]>>(
+      `/api/common-codes/group/${groupCode}`
+    );
+    return response.data.data || [];
+  },
+
+  // Alias for getByGroup
+  getCommonCodes: async (groupCode: string): Promise<CommonCode[]> => {
     const response = await apiClient.get<ApiResponse<CommonCode[]>>(
       `/api/common-codes/group/${groupCode}`
     );

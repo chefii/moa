@@ -128,6 +128,19 @@ router.post('/register', async (req: Request, res: Response) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // 전화번호 포맷 정리 (하이픈 제거)
+    const formattedPhone = phone?.replace(/[^0-9]/g, '');
+
+    // 성별 포맷 정리 (GENDER_MALE → MALE, GENDER_FEMALE → FEMALE)
+    let formattedGender = gender;
+    if (gender) {
+      if (gender === 'GENDER_MALE' || gender === 'male') {
+        formattedGender = 'MALE';
+      } else if (gender === 'GENDER_FEMALE' || gender === 'female') {
+        formattedGender = 'FEMALE';
+      }
+    }
+
     // Create user
     const user = await prisma.user.create({
       data: {
@@ -135,9 +148,9 @@ router.post('/register', async (req: Request, res: Response) => {
         password: hashedPassword,
         name,
         nickname,
-        phone,
+        phone: formattedPhone,
         location,
-        gender,
+        gender: formattedGender,
         age: age ? parseInt(age) : null,
       },
       select: {
@@ -391,6 +404,30 @@ router.post('/login', async (req: Request, res: Response) => {
       return;
     }
 
+    // Check if user has a password (social-only accounts don't have passwords)
+    if (!user.password) {
+      // Record failed login attempt - social-only account
+      await prisma.loginHistory.create({
+        data: {
+          userId: user.id,
+          email,
+          ipAddress,
+          userAgent,
+          device,
+          browser,
+          os,
+          status: 'FAILURE',
+          failureReason: 'Social login only account',
+        },
+      });
+
+      res.status(401).json({
+        success: false,
+        message: '소셜 로그인 전용 계정입니다. 카카오 로그인을 이용해주세요.',
+      });
+      return;
+    }
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
@@ -541,10 +578,24 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
         id: true,
         email: true,
         name: true,
-        profileImage: true,
+        nickname: true,
+        profileImage: {
+          select: {
+            id: true,
+            url: true,
+          },
+        },
         bio: true,
         phone: true,
+        location: true,
+        gender: true,
+        age: true,
+        password: true, // To check if user has password
         createdAt: true,
+        isVerified: true,
+        isPhoneVerified: true,
+        emailVerifiedAt: true,
+        phoneVerifiedAt: true,
         userRoles: {
           select: {
             roleCode: true,
@@ -552,6 +603,11 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
           },
           orderBy: {
             isPrimary: 'desc',
+          },
+        },
+        userSso: {
+          select: {
+            provider: true,
           },
         },
       },
@@ -569,12 +625,21 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
     const roles = user.userRoles.map((ur: any) => ur.roleCode);
     const primaryRole = user.userRoles.find((ur: any) => ur.isPrimary)?.roleCode || roles[0];
 
+    // Check if user has password (for identifying signup method)
+    const hasPassword = !!user.password;
+
+    // Remove password from response for security
+    const { password, ...userWithoutPassword } = user;
+
     res.json({
       success: true,
       data: {
-        ...user,
+        ...userWithoutPassword,
+        avatar: userWithoutPassword.profileImage,
+        profileImage: undefined,
         role: primaryRole, // primary role for backward compatibility
         roles, // 다중 역할 배열
+        hasPassword, // true if user signed up with email/password
       },
     });
   } catch (error) {
@@ -582,6 +647,129 @@ router.get('/me', authenticate, async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get user',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   put:
+ *     summary: 프로필 업데이트
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: 홍길동
+ *               nickname:
+ *                 type: string
+ *                 example: 귀여운펭귄
+ *               phone:
+ *                 type: string
+ *                 example: 010-1234-5678
+ *               location:
+ *                 type: string
+ *                 example: 서울 강남구
+ *               bio:
+ *                 type: string
+ *                 example: 안녕하세요
+ *               gender:
+ *                 type: string
+ *                 example: MALE
+ *               age:
+ *                 type: number
+ *                 example: 25
+ *     responses:
+ *       200:
+ *         description: 프로필 업데이트 성공
+ *       401:
+ *         description: 인증 필요
+ */
+router.put('/profile', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.userId;
+    const { name, nickname, phone, location, bio, gender, age } = req.body;
+
+    // Check if nickname is being changed and if it's already taken
+    if (nickname) {
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          nickname,
+          NOT: { id: userId },
+        },
+      });
+
+      if (existingUser) {
+        res.status(409).json({
+          success: false,
+          message: 'Nickname already taken',
+        });
+        return;
+      }
+    }
+
+    // Update user profile
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(name && { name }),
+        ...(nickname && { nickname }),
+        ...(phone !== undefined && { phone }),
+        ...(location !== undefined && { location }),
+        ...(bio !== undefined && { bio }),
+        ...(gender !== undefined && { gender }),
+        ...(age !== undefined && { age }),
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        nickname: true,
+        phone: true,
+        location: true,
+        bio: true,
+        gender: true,
+        age: true,
+        profileImage: {
+          select: {
+            id: true,
+            url: true,
+          },
+        },
+        createdAt: true,
+        updatedAt: true,
+        isVerified: true,
+        isPhoneVerified: true,
+        emailVerifiedAt: true,
+        phoneVerifiedAt: true,
+      },
+    });
+
+    logger.info(`✅ Profile updated for user: ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        ...updatedUser,
+        avatar: updatedUser.profileImage,
+        profileImage: undefined,
+      },
+    });
+  } catch (error) {
+    logger.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update profile',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
@@ -901,25 +1089,34 @@ router.post('/kakao/callback', async (req: Request, res: Response) => {
       });
       return;
     }
-
+    console.log(" ============= ");
     // 1. 카카오 액세스 토큰 요청
+    const tokenParams = {
+      grant_type: 'authorization_code',
+      client_id: process.env.KAKAO_CLIENT_ID || '',
+      client_secret: process.env.KAKAO_CLIENT_SECRET || '',
+      redirect_uri: process.env.KAKAO_REDIRECT_URI || '',
+      code,
+    };
+
+    logger.info('Kakao token request params: ' + JSON.stringify({
+      client_id: tokenParams.client_id,
+      redirect_uri: tokenParams.redirect_uri,
+      code: code.substring(0, 20) + '...', // 보안을 위해 일부만 로깅
+    }, null, 2));
+
     const tokenResponse = await fetch('https://kauth.kakao.com/oauth/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: process.env.KAKAO_CLIENT_ID || '',
-        client_secret: process.env.KAKAO_CLIENT_SECRET || '',
-        redirect_uri: process.env.KAKAO_REDIRECT_URI || '',
-        code,
-      }),
+      body: new URLSearchParams(tokenParams),
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json();
-      logger.error('Kakao token error:', errorData);
+      const errorData = await tokenResponse.json().catch(() => ({ error: 'Unable to parse error response' }));
+      logger.error('Kakao token error - Status: ' + tokenResponse.status);
+      logger.error('Kakao token error - Response: ' + JSON.stringify(errorData, null, 2));
       res.status(400).json({
         success: false,
         message: 'Failed to get Kakao access token',
@@ -942,7 +1139,7 @@ router.post('/kakao/callback', async (req: Request, res: Response) => {
 
     if (!userResponse.ok) {
       const errorData = await userResponse.json();
-      logger.error('Kakao user info error:', errorData);
+      logger.error('Kakao user info error: ' + JSON.stringify(errorData, null, 2));
       res.status(400).json({
         success: false,
         message: 'Failed to get Kakao user info',
@@ -952,9 +1149,36 @@ router.post('/kakao/callback', async (req: Request, res: Response) => {
     }
 
     const kakaoUser: any = await userResponse.json();
-    const { id: kakaoId, kakao_account } = kakaoUser;
+
+    // 카카오에서 받은 전체 데이터 로깅
+    logger.info('📋 Kakao User Data: ' + JSON.stringify(kakaoUser, null, 2));
+
+    const { id: kakaoId, kakao_account, properties } = kakaoUser;
     const email = kakao_account?.email;
-    const nickname = kakao_account?.profile?.nickname;
+    const name = kakao_account?.name;
+    const nickname = kakao_account?.profile?.nickname || properties?.nickname;
+    const profileImage = kakao_account?.profile?.profile_image_url || properties?.profile_image;
+    const thumbnailImage = kakao_account?.profile?.thumbnail_image_url || properties?.thumbnail_image;
+    const phoneNumber = kakao_account?.phone_number;
+    const ageRange = kakao_account?.age_range;
+    const birthyear = kakao_account?.birthyear;
+    const birthday = kakao_account?.birthday;
+    const gender = kakao_account?.gender;
+
+    // 전화번호 포맷 정리 (카카오는 +82 10-xxxx-xxxx 또는 821012345678 형식)
+    let formattedPhone = phoneNumber?.replace(/[^0-9]/g, ''); // 숫자만 추출
+    if (formattedPhone?.startsWith('82')) {
+      formattedPhone = '0' + formattedPhone.substring(2); // 82 → 0
+    }
+
+    // 나이 계산 (birthyear가 있으면)
+    let calculatedAge = null;
+    if (birthyear) {
+      const currentYear = new Date().getFullYear();
+      calculatedAge = currentYear - parseInt(birthyear);
+    }
+
+    logger.info(`📧 Extracted - Email: ${email}, Nickname: ${nickname}, Kakao ID: ${kakaoId}, Phone: ${formattedPhone}, Age: ${calculatedAge}`);
 
     if (!email) {
       res.status(400).json({
@@ -964,58 +1188,150 @@ router.post('/kakao/callback', async (req: Request, res: Response) => {
       return;
     }
 
-    // 3. 기존 사용자 확인 또는 새 사용자 생성
-    let user = await prisma.user.findUnique({
-      where: { email },
+    // 3. 카카오 ID로 기존 소셜 계정 확인
+    let socialAccount = await prisma.userSso.findUnique({
+      where: {
+        provider_providerId: {
+          provider: 'KAKAO',
+          providerId: String(kakaoId),
+        },
+      },
       include: {
-        userRoles: true,
+        user: {
+          include: {
+            userRoles: true,
+          },
+        },
       },
     });
 
-    if (!user) {
-      // 새 사용자 생성 (카카오 로그인)
-      // 카카오 로그인 사용자는 비밀번호가 없으므로 랜덤 해시 생성
-      const randomPassword = Math.random().toString(36).slice(-12);
-      const hashedPassword = await bcrypt.hash(randomPassword, Number(process.env.BCRYPT_ROUNDS) || 10);
+    let user;
+    let isNewUser = false;
 
-      user = await prisma.user.create({
+    if (socialAccount) {
+      // 기존 카카오 계정 - User 사용
+      logger.info(`✅ 기존 카카오 계정 로그인: ${email}`);
+      user = socialAccount.user;
+
+      // UserSso 정보 업데이트 (프로필 변경 반영)
+      await prisma.userSso.update({
+        where: { id: socialAccount.id },
         data: {
           email,
-          password: hashedPassword,
-          name: nickname || 'Kakao User',
-          nickname: nickname,
-          isVerified: true, // 카카오 인증을 통해 이메일 검증됨
-          emailVerifiedAt: new Date(),
-          userRoles: {
-            create: {
-              roleCode: 'USER',
-              isPrimary: true,
-            },
-          },
+          name,
+          nickname,
+          profileImage,
+          thumbnailImage,
+          phoneNumber: formattedPhone, // 포맷된 전화번호
+          ageRange,
+          birthyear,
+          birthday,
+          gender,
+          accessToken: access_token, // 새 토큰 저장
+          lastLoginAt: new Date(),
         },
+      });
+    } else {
+      // 신규 카카오 로그인 - 이메일로 기존 User 확인
+      user = await prisma.user.findUnique({
+        where: { email },
         include: {
           userRoles: true,
         },
       });
 
-      // 사용자 레벨 초기화
-      await prisma.userLevel.create({
-        data: {
-          userId: user.id,
-          level: 1,
-          growthPoints: 0,
-        },
-      });
+      if (user) {
+        // 기존 User에 카카오 계정 연동
+        logger.info(`🔗 기존 회원에 카카오 계정 연동: ${email}`);
+        await prisma.userSso.create({
+          data: {
+            userId: user.id,
+            provider: 'KAKAO',
+            providerId: String(kakaoId),
+            email,
+            name,
+            nickname,
+            profileImage,
+            thumbnailImage,
+            phoneNumber: formattedPhone, // 포맷된 전화번호
+            ageRange,
+            birthyear,
+            birthday,
+            gender,
+            accessToken: access_token,
+            lastLoginAt: new Date(),
+          },
+        });
+      } else {
+        // 완전 신규 회원 - User + SocialAccount 생성
+        isNewUser = true;
+        logger.info(`✨ 신규 회원 가입 진행: ${email}`);
 
-      // 사용자 스트릭 초기화
-      await prisma.userStreak.create({
-        data: {
-          userId: user.id,
-          currentStreak: 0,
-          longestStreak: 0,
-          lastActivityDate: new Date(),
-        },
-      });
+        user = await prisma.user.create({
+          data: {
+            email,
+            password: null, // 소셜 로그인 전용 계정
+            name: name || nickname || 'Kakao User',
+            nickname: nickname,
+            phone: formattedPhone, // 포맷된 전화번호 (821012345678 → 01012345678)
+            gender: gender?.toUpperCase(), // male → MALE
+            age: calculatedAge, // birthyear로 계산된 나이
+            birthyear,
+            birthday,
+            ageRange,
+            isVerified: true, // 카카오 인증을 통해 이메일 검증됨
+            emailVerifiedAt: new Date(),
+            userRoles: {
+              create: {
+                roleCode: 'USER',
+                isPrimary: true,
+              },
+            },
+            userSso: {
+              create: {
+                provider: 'KAKAO',
+                providerId: String(kakaoId),
+                email,
+                name,
+                nickname,
+                profileImage,
+                thumbnailImage,
+                phoneNumber: formattedPhone, // 포맷된 전화번호
+                ageRange,
+                birthyear,
+                birthday,
+                gender,
+                accessToken: access_token,
+                lastLoginAt: new Date(),
+              },
+            },
+          },
+          include: {
+            userRoles: true,
+          },
+        });
+
+        // 사용자 레벨 초기화
+        await prisma.userLevel.create({
+          data: {
+            userId: user.id,
+            level: 1,
+            growthPoints: 0,
+          },
+        });
+
+        // 사용자 스트릭 초기화
+        await prisma.userStreak.create({
+          data: {
+            userId: user.id,
+            currentStreak: 0,
+            longestStreak: 0,
+            lastActivityDate: new Date(),
+          },
+        });
+
+        logger.info(`✅ 신규 회원 가입 완료: ${user.id}`);
+      }
     }
 
     // 4. JWT 토큰 생성
@@ -1047,15 +1363,19 @@ router.post('/kakao/callback', async (req: Request, res: Response) => {
     res.json({
       success: true,
       message: 'Kakao login successful',
-      token,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        nickname: user.nickname,
-        isVerified: user.isVerified,
-        roles: user.userRoles.map((ur: any) => ur.roleCode),
+      data: {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          nickname: user.nickname,
+          role: primaryRole,
+          roles: roles,
+          isVerified: user.isVerified,
+        },
+        token,
+        isNewUser,
+        refreshToken,
       },
     });
   } catch (error) {

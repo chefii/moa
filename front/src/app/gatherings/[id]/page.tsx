@@ -398,9 +398,9 @@ export default function GatheringDetailPage() {
             </h2>
             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
               <div className="w-14 h-14 bg-moa-primary rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
-                {gathering.host.profileImage ? (
+                {gathering.host.profileImage?.url ? (
                   <Image
-                    src={getImageUrl(gathering.host.profileImage)}
+                    src={getImageUrl(gathering.host.profileImage.url)}
                     alt={gathering.host.name}
                     width={56}
                     height={56}
@@ -444,9 +444,9 @@ export default function GatheringDetailPage() {
                   className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-200"
                 >
                   <div className="w-10 h-10 bg-moa-primary rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                    {participant.user.profileImage ? (
+                    {participant.user.profileImage?.url ? (
                       <Image
-                        src={getImageUrl(participant.user.profileImage)}
+                        src={getImageUrl(participant.user.profileImage.url)}
                         alt={participant.user.name}
                         width={40}
                         height={40}

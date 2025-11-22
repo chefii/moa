@@ -1,4 +1,3 @@
-import logger from '../config/logger';
 import { Router, Request, Response } from 'express';
 import { prisma } from '../config/prisma';
 import { authenticate } from '../middlewares/auth';
@@ -91,7 +90,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
 
     // Get read status for each notification
     const notificationsWithReadStatus = await Promise.all(
-      notifications.map(async (notification) => {
+      notifications.map(async (notification: any) => {
         const read = await prisma.notificationRead.findUnique({
           where: {
             notificationId_userId: {
@@ -120,7 +119,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    logger.error('Get notifications error:', error);
+    console.error('Get notifications error:', error);
     res.status(500).json({
       success: false,
       message: '알림 목록 조회에 실패했습니다.',
@@ -172,7 +171,7 @@ router.get('/unread-count', authenticate, async (req: Request, res: Response) =>
       select: { id: true },
     });
 
-    const notificationIds = allNotifications.map((n) => n.id);
+    const notificationIds = allNotifications.map((n: any) => n.id);
 
     // Get read notification IDs
     const readNotifications = await prisma.notificationRead.findMany({
@@ -183,7 +182,7 @@ router.get('/unread-count', authenticate, async (req: Request, res: Response) =>
       select: { notificationId: true },
     });
 
-    const readIds = new Set(readNotifications.map((r) => r.notificationId));
+    const readIds = new Set(readNotifications.map((r: any) => r.notificationId));
     const unreadCount = notificationIds.length - readIds.size;
 
     res.json({
@@ -193,7 +192,7 @@ router.get('/unread-count', authenticate, async (req: Request, res: Response) =>
       },
     });
   } catch (error) {
-    logger.error('Get unread count error:', error);
+    console.error('Get unread count error:', error);
     res.status(500).json({
       success: false,
       message: '미읽음 알림 개수 조회에 실패했습니다.',
@@ -276,7 +275,7 @@ router.post('/:id/read', authenticate, async (req: Request, res: Response) => {
       message: '알림을 읽음 처리했습니다.',
     });
   } catch (error) {
-    logger.error('Mark notification as read error:', error);
+    console.error('Mark notification as read error:', error);
     res.status(500).json({
       success: false,
       message: '알림 읽음 처리에 실패했습니다.',
@@ -326,7 +325,7 @@ router.post('/read-all', authenticate, async (req: Request, res: Response) => {
     });
 
     // Create read records for all notifications
-    const readRecords = notifications.map((n) => ({
+    const readRecords = notifications.map((n: any) => ({
       notificationId: n.id,
       userId: user.userId,
     }));
@@ -352,7 +351,7 @@ router.post('/read-all', authenticate, async (req: Request, res: Response) => {
       message: '모든 알림을 읽음 처리했습니다.',
     });
   } catch (error) {
-    logger.error('Mark all notifications as read error:', error);
+    console.error('Mark all notifications as read error:', error);
     res.status(500).json({
       success: false,
       message: '알림 일괄 읽음 처리에 실패했습니다.',

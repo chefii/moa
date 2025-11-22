@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import apiClient from '@/lib/api/client';
@@ -10,8 +10,14 @@ export default function KakaoCallbackPage() {
   const searchParams = useSearchParams();
   const { login } = useAuthStore();
   const [error, setError] = useState<string>('');
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate requests (React Strict Mode + re-renders)
+    if (hasProcessed.current) {
+      return;
+    }
+
     const handleKakaoCallback = async () => {
       // Get authorization code from URL
       const code = searchParams.get('code');
@@ -29,6 +35,9 @@ export default function KakaoCallbackPage() {
         return;
       }
 
+      // Mark as processed to prevent duplicate requests
+      hasProcessed.current = true;
+
       try {
         // Send code to backend
         const response = await apiClient.post('/api/auth/kakao/callback', {
@@ -38,25 +47,33 @@ export default function KakaoCallbackPage() {
         if (response.data.success) {
           // Login with received tokens
           login({
-            ...response.data.user,
-            token: response.data.token,
-            refreshToken: response.data.refreshToken,
+            ...response.data.data.user,
+            token: response.data.data.token,
+            refreshToken: response.data.data.refreshToken,
           });
 
-          // Redirect based on role
-          const userRole = response.data.user.roles?.[0] || 'USER';
+          // 신규 회원인지 확인
+          const isNewUserFlag = response.data.data.isNewUser;
 
-          // Admin roles
-          if (['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'CONTENT_MANAGER', 'SUPPORT_MANAGER', 'SETTLEMENT_MANAGER'].includes(userRole)) {
-            router.push('/admin');
-          }
-          // Business roles
-          else if (['BUSINESS_USER', 'BUSINESS_MANAGER', 'BUSINESS_PENDING'].includes(userRole)) {
-            router.push('/business');
-          }
-          // Regular users
-          else {
-            router.push('/profile');
+          if (isNewUserFlag) {
+            // 신규 회원: 즉시 메인 페이지로 이동하면서 환영 플래그 전달
+            router.push('/?welcome=true');
+          } else {
+            // 기존 회원: role에 따라 리다이렉트
+            const userRole = response.data.data.user.role;
+
+            // Admin roles
+            if (['SUPER_ADMIN', 'ADMIN', 'MODERATOR', 'CONTENT_MANAGER', 'SUPPORT_MANAGER', 'SETTLEMENT_MANAGER'].includes(userRole)) {
+              router.push('/admin');
+            }
+            // Business roles
+            else if (['BUSINESS_USER', 'BUSINESS_MANAGER', 'BUSINESS_PENDING'].includes(userRole)) {
+              router.push('/business');
+            }
+            // Regular users
+            else {
+              router.push('/profile');
+            }
           }
         } else {
           setError(response.data.message || '로그인에 실패했습니다.');

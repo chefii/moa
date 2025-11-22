@@ -61,17 +61,20 @@ export default function LoginPage() {
         router.push('/profile');
       }
     } catch (err: any) {
+      console.log(" ===================================================== ");
       console.error('Login error:', err);
+
       setError(err.response?.data?.message || '로그인에 실패했습니다.');
       setLoading(false);
     }
   };
 
   const handleKakaoLogin = () => {
-    const KAKAO_CLIENT_ID = 'OGOx0hHDcFMb4BRAjkqyXtN1d7nHwwwF';
-    const REDIRECT_URI = 'http://localhost:3000/auth/kakao/callback';
-
-    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code`;
+    const KAKAO_CLIENT_ID = 'fafcda2f92e74628b5e3f38ce5fe238c';
+    // 현재 접속한 호스트에 맞게 동적으로 redirect_uri 생성
+    const REDIRECT_URI = `${window.location.origin}/auth/kakao/callback`;
+    console.log("REDIRECT_URI : "+REDIRECT_URI);
+    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code`;
 
     window.location.href = kakaoAuthUrl;
   };
