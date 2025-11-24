@@ -223,6 +223,13 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN
               email: true,
             },
           },
+          post: {
+            select: {
+              id: true,
+              title: true,
+              content: true,
+            },
+          },
           reasonCommonCode: {
             select: {
               code: true,
@@ -334,6 +341,13 @@ router.get('/:id', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_AD
             id: true,
             name: true,
             email: true,
+          },
+        },
+        post: {
+          select: {
+            id: true,
+            title: true,
+            content: true,
           },
         },
         reasonCommonCode: {

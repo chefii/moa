@@ -562,6 +562,7 @@ model Report {
   reporterId   String    @map("reporter_id")
   reportedId   String    @map("reported_id")
   gatheringId  String?   @map("gathering_id")
+  postId       String?   @map("post_id") // 게시글 신고용
   reasonCode   String    @map("reason_code")
   customReason String?   @map("custom_reason") // "기타" 선택 시 직접 입력
   description  String?
@@ -574,6 +575,7 @@ model Report {
   reporter         User                  @relation("SentReports", fields: [reporterId], references: [id])
   reported         User                  @relation("ReceivedReports", fields: [reportedId], references: [id])
   gathering        Gathering?            @relation(fields: [gatheringId], references: [id])
+  post             BoardPost?            @relation(fields: [postId], references: [id])
   reasonCommonCode CommonCode            @relation("ReportReasons", fields: [reasonCode], references: [code])
   statusCommonCode CommonCode            @relation("ReportStatus", fields: [statusCode], references: [code])
   actionHistory    ReportActionHistory[]
@@ -1250,6 +1252,7 @@ model BoardPost {
   category Category?       @relation("BoardPostCategory", fields: [categoryId], references: [id], onDelete: SetNull)
   comments BoardComment[]
   likes    BoardPostLike[]
+  reports  Report[]
 
   @@index([authorId])
   @@index([categoryId])

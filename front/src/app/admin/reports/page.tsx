@@ -22,6 +22,7 @@ import {
   UpdateReportStatusDto,
 } from '@/lib/api/admin/reports';
 import { useBadgeStore } from '@/store/badgeStore';
+import UserDetailModal from '@/components/UserDetailModal';
 
 const REPORT_STATUSES: { value: ReportStatus; label: string; color: string }[] = [
   { value: 'PENDING', label: '대기', color: 'bg-yellow-100 text-yellow-700' },
@@ -33,6 +34,7 @@ const REPORT_STATUSES: { value: ReportStatus; label: string; color: string }[] =
 const REPORT_TYPES: { value: ReportType; label: string }[] = [
   { value: 'USER', label: '사용자 신고' },
   { value: 'GATHERING', label: '모임 신고' },
+  { value: 'POST', label: '게시글 신고' },
   { value: 'COMMENT', label: '댓글 신고' },
   { value: 'OTHER', label: '기타' },
 ];
@@ -125,6 +127,8 @@ export default function ReportsPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [adminNote, setAdminNote] = useState('');
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchReports();
@@ -193,6 +197,11 @@ export default function ReportsPage() {
       console.error('Failed to update report status:', error);
       alert('상태 업데이트에 실패했습니다.');
     }
+  };
+
+  const handleViewUser = (userId: string) => {
+    setSelectedUserId(userId);
+    setShowUserModal(true);
   };
 
   const filteredReports = reports.filter((report) =>
@@ -329,12 +338,13 @@ export default function ReportsPage() {
               ) : (
                 filteredReports.map((report) => {
                   const statusInfo = REPORT_STATUSES.find((s) => s.value === report.statusCode);
+                  const reportType = report.postId ? '게시글' : report.gatheringId ? '모임' : '사용자';
 
                   return (
                     <tr key={report.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <span className="inline-block px-2.5 py-1 bg-moa-primary/10 text-moa-primary text-xs font-semibold rounded-full">
-                          사용자
+                          {reportType}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -486,13 +496,20 @@ export default function ReportsPage() {
 
                 <div>
                   <h3 className="text-sm font-semibold text-gray-700 mb-2">신고 대상</h3>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => selectedReport.reported && handleViewUser(selectedReport.reported.id)}
+                    disabled={!selectedReport.reported}
+                    className={`w-full flex items-center gap-3 p-3 bg-gray-50 rounded-xl transition-colors ${
+                      selectedReport.reported ? 'hover:bg-gray-100 cursor-pointer' : ''
+                    }`}
+                  >
                     {selectedReport.reported ? (
                       <>
                         <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
                           <User className="w-5 h-5 text-gray-600" />
                         </div>
-                        <div>
+                        <div className="text-left flex-1">
                           <p className="font-medium text-gray-900">
                             {selectedReport.reported.name}
                           </p>
@@ -500,13 +517,33 @@ export default function ReportsPage() {
                             {selectedReport.reported.email}
                           </p>
                         </div>
+                        <Eye className="w-5 h-5 text-gray-400" />
                       </>
                     ) : (
                       <p className="text-gray-500">대상 정보 없음</p>
                     )}
-                  </div>
+                  </button>
                 </div>
               </div>
+
+              {/* Post Info if it's a post report */}
+              {selectedReport.postId && selectedReport.post && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">신고된 게시글</h3>
+                  <div className="bg-gray-50 p-3 rounded-xl">
+                    <p className="font-medium text-gray-900 mb-1">{selectedReport.post.title}</p>
+                    <p className="text-sm text-gray-600 line-clamp-2">{selectedReport.post.content}</p>
+                    <a
+                      href={`/board/${selectedReport.postId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:underline mt-2 inline-block"
+                    >
+                      게시글 보기 →
+                    </a>
+                  </div>
+                </div>
+              )}
 
               {/* Report Details */}
               <div>
@@ -591,6 +628,15 @@ export default function ReportsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* User Detail Modal */}
+      {showUserModal && selectedUserId && (
+        <UserDetailModal
+          isOpen={showUserModal}
+          onClose={() => setShowUserModal(false)}
+          userId={selectedUserId}
+        />
       )}
     </div>
   );

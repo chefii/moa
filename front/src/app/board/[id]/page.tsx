@@ -14,9 +14,12 @@ import {
   Trash2,
   Send,
   MoreVertical,
+  Flag,
 } from 'lucide-react';
 import { boardApi, BoardPost, BoardComment } from '@/lib/api/board';
 import { useAuthStore } from '@/store/authStore';
+import ReportModal from '@/components/ReportModal';
+import Toast, { ToastType } from '@/components/Toast';
 
 export default function BoardDetailPage() {
   const router = useRouter();
@@ -36,6 +39,8 @@ export default function BoardDetailPage() {
   const hasLoadedRef = useRef<string | null>(null);
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
   const [showPostMenu, setShowPostMenu] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   const toggleReplies = (commentId: string) => {
     setExpandedReplies(prev => {
@@ -202,6 +207,27 @@ export default function BoardDetailPage() {
     }
   };
 
+  const handleReportPost = () => {
+    if (!isAuthenticated) {
+      alert('로그인이 필요합니다');
+      router.push('/login');
+      return;
+    }
+    setShowPostMenu(false);
+    setShowReportModal(true);
+  };
+
+  const handleSubmitReport = async (reasonCode: string, description: string) => {
+    try {
+      await boardApi.reportPost(params.id as string, reasonCode, description);
+      setToast({ message: '신고가 접수되었습니다', type: 'success' });
+    } catch (error: any) {
+      console.error('Failed to report post:', error);
+      const message = error.response?.data?.message || '신고 처리 중 오류가 발생했습니다';
+      setToast({ message, type: 'error' });
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString('ko-KR', {
@@ -266,50 +292,64 @@ export default function BoardDetailPage() {
                 </span>
               )}
 
-              {isAuthor && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowPostMenu(!showPostMenu)}
-                    className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
-                  >
-                    <MoreVertical className="w-5 h-5" />
-                  </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowPostMenu(!showPostMenu)}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
 
-                  {showPostMenu && (
-                    <>
-                      {/* Backdrop */}
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setShowPostMenu(false)}
-                      />
+                {showPostMenu && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowPostMenu(false)}
+                    />
 
-                      {/* Dropdown Menu */}
-                      <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                    {/* Dropdown Menu */}
+                    <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                      {isAuthor ? (
+                        <>
+                          <button
+                            onClick={() => {
+                              setShowPostMenu(false);
+                              const params = new URLSearchParams();
+                              params.set('id', post.id);
+                              if (fromCategory !== 'all') params.set('from', fromCategory);
+                              if (fromSort !== 'recent') params.set('sort', fromSort);
+                              router.push(`/board/write?${params.toString()}`);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          >
+                            <Edit className="w-4 h-4" />
+                            수정
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowPostMenu(false);
+                              handleDeletePost();
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            삭제
+                          </button>
+                        </>
+                      ) : (
                         <button
-                          onClick={() => {
-                            setShowPostMenu(false);
-                            router.push(`/board/write?id=${post.id}`);
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                          onClick={handleReportPost}
+                          className="w-full px-4 py-2 text-left text-sm text-orange-600 hover:bg-orange-50 flex items-center gap-2"
                         >
-                          <Edit className="w-4 h-4" />
-                          수정
+                          <Flag className="w-4 h-4" />
+                          신고
                         </button>
-                        <button
-                          onClick={() => {
-                            setShowPostMenu(false);
-                            handleDeletePost();
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          삭제
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             <h1 className="text-3xl font-bold text-gray-900 mb-4">{post.title}</h1>
@@ -613,6 +653,23 @@ export default function BoardDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        onSubmit={handleSubmitReport}
+        reportType="BOARD"
+      />
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </MobileLayout>
   );
 }

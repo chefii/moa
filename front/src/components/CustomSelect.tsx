@@ -47,7 +47,7 @@ export default function CustomSelect({ value, onChange, options, className = '' 
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-[100] overflow-hidden">
           {options.map((option) => (
             <button
               key={option.value}

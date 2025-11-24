@@ -2,13 +2,14 @@ import apiClient from '../client';
 import { ApiResponse } from '../types';
 
 export type ReportStatus = 'PENDING' | 'REVIEWING' | 'RESOLVED' | 'REJECTED';
-export type ReportType = 'USER' | 'GATHERING' | 'COMMENT' | 'OTHER';
+export type ReportType = 'USER' | 'GATHERING' | 'POST' | 'COMMENT' | 'OTHER';
 
 export interface Report {
   id: string;
   reporterId: string;
   reportedId: string;
   gatheringId?: string;
+  postId?: string;
   reasonCode: string;
   customReason?: string;
   description?: string;
@@ -26,6 +27,11 @@ export interface Report {
     id: string;
     name: string;
     email: string;
+  };
+  post?: {
+    id: string;
+    title: string;
+    content: string;
   };
   reasonCommonCode?: {
     code: string;

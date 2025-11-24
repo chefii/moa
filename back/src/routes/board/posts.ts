@@ -636,4 +636,116 @@ router.post('/:id/like', authenticate, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/board/posts/{id}/report:
+ *   post:
+ *     summary: 게시글 신고
+ *     tags: [Board]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 게시글 ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reasonCode
+ *             properties:
+ *               reasonCode:
+ *                 type: string
+ *                 description: 신고 사유 코드
+ *               description:
+ *                 type: string
+ *                 description: 상세 설명
+ *     responses:
+ *       201:
+ *         description: 신고 성공
+ *       401:
+ *         description: 인증 필요
+ *       404:
+ *         description: 게시글을 찾을 수 없음
+ */
+router.post('/:id/report', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { reasonCode, description } = req.body;
+    const userId = (req as any).user.userId;
+
+    if (!reasonCode) {
+      return res.status(400).json({
+        success: false,
+        message: '신고 사유를 선택해주세요',
+      });
+    }
+
+    // Check if post exists
+    const post = await prisma.boardPost.findUnique({
+      where: { id },
+      select: { id: true, authorId: true },
+    });
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: '게시글을 찾을 수 없습니다',
+      });
+    }
+
+    // Check if user is trying to report their own post
+    if (post.authorId === userId) {
+      return res.status(400).json({
+        success: false,
+        message: '자신의 게시글은 신고할 수 없습니다',
+      });
+    }
+
+    // Check if user already reported this post
+    const existingReport = await prisma.report.findFirst({
+      where: {
+        reporterId: userId,
+        postId: id,
+      },
+    });
+
+    if (existingReport) {
+      return res.status(400).json({
+        success: false,
+        message: '이미 신고한 게시글입니다',
+      });
+    }
+
+    // Create report
+    const report = await prisma.report.create({
+      data: {
+        reporterId: userId,
+        reportedId: post.authorId,
+        postId: id,
+        reasonCode,
+        description: description || null,
+        statusCode: 'PENDING',
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      data: report,
+    });
+  } catch (error) {
+    logger.error('Error reporting post:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to report post',
+    });
+  }
+});
+
 export default router;

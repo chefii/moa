@@ -16,6 +16,7 @@ import {
   RefreshCw,
   BarChart3,
 } from 'lucide-react';
+import CustomSelect from '@/components/CustomSelect';
 import { adminBoardsApi, AdminBoardPost, BoardStats } from '@/lib/api/admin/boards';
 import { categoriesApi, Category } from '@/lib/api/categories';
 
@@ -208,8 +209,8 @@ export default function AdminBoardsPage() {
       )}
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-200">
-        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white rounded-xl shadow-sm p-6 mb-6 border border-gray-200 relative">
+        <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-4 relative z-10">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
@@ -221,35 +222,38 @@ export default function AdminBoardsPage() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={selectedCategory}
-            onChange={(e) => {
-              setSelectedCategory(e.target.value);
-              setPage(1);
+            onChange={(value) => {
+              if (value !== selectedCategory) {
+                setSelectedCategory(value);
+                setPage(1);
+              }
             }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-moa-primary focus:border-transparent"
-          >
-            <option value="">전체 카테고리</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.displayName || category.name}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: '전체 카테고리' },
+              ...categories.map((category) => ({
+                value: category.id,
+                label: category.displayName || category.name,
+              })),
+            ]}
+          />
 
-          <select
+          <CustomSelect
             value={selectedStatus}
-            onChange={(e) => {
-              setSelectedStatus(e.target.value);
-              setPage(1);
+            onChange={(value) => {
+              if (value !== selectedStatus) {
+                setSelectedStatus(value);
+                setPage(1);
+              }
             }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-moa-primary focus:border-transparent"
-          >
-            <option value="">전체 상태</option>
-            <option value="PUBLISHED">공개</option>
-            <option value="HIDDEN">숨김</option>
-            <option value="DELETED">삭제</option>
-          </select>
+            options={[
+              { value: '', label: '전체 상태' },
+              { value: 'PUBLISHED', label: '공개' },
+              { value: 'HIDDEN', label: '숨김' },
+              { value: 'DELETED', label: '삭제' },
+            ]}
+          />
 
           <button
             type="button"

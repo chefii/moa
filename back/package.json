@@ -20,6 +20,7 @@
     "prisma:seed-gender": "ts-node prisma/seed-gender.ts",
     "prisma:seed-badges": "ts-node prisma/seed-badges.ts",
     "prisma:seed-report-status": "ts-node prisma/seed-report-status.ts",
+    "prisma:seed-report-codes": "ts-node prisma/seed-report-codes.ts",
     "prisma:seed-reports": "ts-node prisma/seed-reports.ts",
     "prisma:seed-condition-types": "ts-node prisma/seed-condition-types.ts",
     "prisma:seed-all": "ts-node prisma/seed-all.ts",

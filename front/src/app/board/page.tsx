@@ -210,7 +210,13 @@ export default function BoardPage() {
       router.push('/login');
       return;
     }
-    router.push('/board/write');
+
+    const params = new URLSearchParams();
+    if (selectedCategory !== 'all') params.set('from', selectedCategory);
+    if (sortBy !== 'recent') params.set('sort', sortBy);
+
+    const url = params.toString() ? `/board/write?${params.toString()}` : '/board/write';
+    router.push(url);
   };
 
   const formatDate = (dateString: string) => {

@@ -17,6 +17,8 @@ export default function BoardWritePage() {
   const { isAuthenticated } = useAuthStore();
 
   const editId = searchParams.get('id');
+  const fromCategory = searchParams.get('from') || 'all';
+  const fromSort = searchParams.get('sort') || 'recent';
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -147,12 +149,22 @@ export default function BoardWritePage() {
         // Update existing post
         await boardApi.updatePost(editId, postData);
         alert('게시글이 수정되었습니다');
-        router.push(`/board/${editId}`);
+
+        const params = new URLSearchParams();
+        if (fromCategory !== 'all') params.set('from', fromCategory);
+        if (fromSort !== 'recent') params.set('sort', fromSort);
+        const url = params.toString() ? `/board/${editId}?${params.toString()}` : `/board/${editId}`;
+        router.push(url);
       } else {
         // Create new post
         const post = await boardApi.createPost(postData);
         alert('게시글이 작성되었습니다');
-        router.push(`/board/${post.id}`);
+
+        const params = new URLSearchParams();
+        if (fromCategory !== 'all') params.set('from', fromCategory);
+        if (fromSort !== 'recent') params.set('sort', fromSort);
+        const url = params.toString() ? `/board/${post.id}?${params.toString()}` : `/board/${post.id}`;
+        router.push(url);
       }
     } catch (error) {
       console.error('Failed to submit post:', error);
@@ -169,7 +181,21 @@ export default function BoardWritePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6 mt-4">
           <Link
-            href="/board"
+            href={(() => {
+              if (editId) {
+                // 수정 중이면 해당 게시글 상세로
+                const params = new URLSearchParams();
+                if (fromCategory !== 'all') params.set('from', fromCategory);
+                if (fromSort !== 'recent') params.set('sort', fromSort);
+                return params.toString() ? `/board/${editId}?${params.toString()}` : `/board/${editId}`;
+              } else {
+                // 새 글 작성이면 목록으로
+                const params = new URLSearchParams();
+                if (fromCategory !== 'all') params.set('category', fromCategory);
+                if (fromSort !== 'recent') params.set('sort', fromSort);
+                return params.toString() ? `/board?${params.toString()}` : '/board';
+              }
+            })()}
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -294,7 +320,21 @@ export default function BoardWritePage() {
           {/* Submit Button */}
           <div className="flex gap-3">
             <Link
-              href="/board"
+              href={(() => {
+                if (editId) {
+                  // 수정 중이면 해당 게시글 상세로
+                  const params = new URLSearchParams();
+                  if (fromCategory !== 'all') params.set('from', fromCategory);
+                  if (fromSort !== 'recent') params.set('sort', fromSort);
+                  return params.toString() ? `/board/${editId}?${params.toString()}` : `/board/${editId}`;
+                } else {
+                  // 새 글 작성이면 목록으로
+                  const params = new URLSearchParams();
+                  if (fromCategory !== 'all') params.set('category', fromCategory);
+                  if (fromSort !== 'recent') params.set('sort', fromSort);
+                  return params.toString() ? `/board?${params.toString()}` : '/board';
+                }
+              })()}
               className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 text-center"
             >
               취소

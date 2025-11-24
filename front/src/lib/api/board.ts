@@ -191,4 +191,12 @@ export const boardApi = {
     >(`/api/board/comments/${id}/like`);
     return response.data.data!;
   },
+
+  // 게시글 신고
+  reportPost: async (id: string, reasonCode: string, description?: string): Promise<void> => {
+    await apiClient.post(`/api/board/posts/${id}/report`, {
+      reasonCode,
+      description,
+    });
+  },
 };
