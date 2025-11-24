@@ -15,7 +15,7 @@ const options: swaggerJsdoc.Options = {
 
 **3. API 호출**: 🔒 아이콘이 있는 엔드포인트 사용 가능
 
-📝 **테스트 계정** - 일반: \`user@test.com\` / \`test1234\` | 관리자: \`admin@test.com\` / \`admin1234\`
+📝 **테스트 계정** - 일반: \`user@test.com\` / \`test1234\` | 관리자: \`asdf@asdf.com\` / \`1234\`
       `,
       contact: {
         name: 'API Support',

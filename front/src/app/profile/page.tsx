@@ -66,10 +66,10 @@ export default function ProfilePage() {
     console.log('  - isAuthenticated:', isAuthenticated);
     console.log('  - user:', user);
 
-    // If not authenticated after hydration, don't try to fetch
     if (!isAuthenticated || !user) {
       console.log('[Profile] No authentication, showing login prompt');
-      return;
+    } else {
+      console.log('[Profile] User is authenticated, showing profile');
     }
   }, [isHydrated, isAuthenticated, user]);
 

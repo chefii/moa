@@ -51,19 +51,47 @@ moa/
 
 ### Prerequisites
 - Node.js 20+
-- Docker & Docker Compose
+- Docker Desktop
 - npm
 
-### 1. 데이터베이스 실행 (Docker Compose)
+### 1. Docker 서비스 실행
+
+#### Docker Desktop 실행
+먼저 Docker Desktop을 실행합니다. Docker가 실행되면 자동으로 다음 컨테이너들이 시작됩니다:
+
+```bash
+# Docker Desktop이 실행되면 자동으로 시작되는 컨테이너:
+# - moa-postgres (PostgreSQL 15) - 포트 5432
+# - moa-redis (Redis 7) - 포트 6379
+# - moa-pgadmin (pgAdmin 4) - 포트 5050
+
+# 컨테이너 상태 확인
+docker ps
+```
+
+#### 수동으로 컨테이너 시작하기 (필요한 경우)
 ```bash
 # 프로젝트 루트에서
 docker-compose up -d
+
+# 또는 개별 컨테이너 시작
+docker start moa-postgres moa-redis moa-pgadmin
 ```
 
-이 명령으로 다음 서비스들이 실행됩니다:
-- **PostgreSQL** (포트 5432)
-- **Redis** (포트 6379)
-- **pgAdmin** (포트 5050)
+**실행되는 서비스:**
+- **PostgreSQL 15**
+  - 포트: 5432
+  - 데이터베이스: moa
+  - 사용자: moa / moa123
+
+- **Redis 7**
+  - 포트: 6379
+  - 캐싱 및 세션 관리용
+
+- **pgAdmin 4**
+  - 포트: 5050
+  - 웹 인터페이스: http://localhost:5050/browser/
+  - 로그인: admin@moa.com / admin123
 
 ### 2. Backend 설정 및 실행
 ```bash
@@ -111,14 +139,120 @@ npm run dev
 3. 역할 선택 (일반 사용자 / 비즈니스 관리자 / 플랫폼 관리자)
 4. 역할에 맞는 대시보드 확인
 
-### 5. pgAdmin으로 데이터베이스 확인 (선택)
-1. http://localhost:5050 접속
+### 5. pgAdmin으로 데이터베이스 확인
+1. http://localhost:5050/browser/ 접속
 2. 로그인: `admin@moa.com` / `admin123`
-3. 서버 추가:
-   - Host: `postgres`
-   - Port: `5432`
-   - Username: `moa`
-   - Password: `moa123`
+3. 좌측 메뉴에서 "Servers" > "moa" 클릭하여 연결
+   - 비밀번호 입력: `moa123`
+4. 데이터베이스 구조 확인
+
+**pgAdmin 서버 정보 (새 서버 추가 시):**
+- Name: moa
+- Host name/address: `postgres` (Docker 네트워크 내) 또는 `localhost` (로컬)
+- Port: `5432`
+- Maintenance database: `moa`
+- Username: `moa`
+- Password: `moa123`
+
+---
+
+## 🔧 개발 환경 설정
+
+### 네트워크 IP 설정 (선택사항)
+
+로컬 네트워크에서 다른 디바이스(스마트폰 등)로 접속하려면 IP 주소를 업데이트해야 합니다.
+
+#### 1. 현재 IP 주소 확인
+```bash
+ifconfig | grep "inet " | grep -v 127.0.0.1
+# 예: inet 172.30.1.85
+```
+
+#### 2. 프론트엔드 환경 변수 업데이트
+`front/.env.local` 파일 수정:
+```bash
+NEXT_PUBLIC_API_URL=http://YOUR_IP:4000
+# 예: NEXT_PUBLIC_API_URL=http://172.30.1.85:4000
+```
+
+#### 3. 프론트엔드 Next.js 설정 업데이트
+`front/next.config.js` 파일에서 IP 주소 수정:
+```javascript
+{
+  protocol: 'http',
+  hostname: 'YOUR_IP',  // 예: '172.30.1.85'
+  port: '4000',
+  pathname: '/uploads/**',
+}
+```
+
+#### 4. 백엔드 CORS 설정 업데이트
+`back/.env.development` 파일 수정:
+```bash
+CORS_ORIGIN=http://localhost:3000,http://YOUR_IP:3000
+# 예: CORS_ORIGIN=http://localhost:3000,http://172.30.1.85:3000
+```
+
+#### 5. 서버 재시작
+```bash
+# 백엔드와 프론트엔드 모두 재시작
+# Ctrl+C로 종료 후 다시 npm run dev
+```
+
+---
+
+## 🐛 문제 해결
+
+### Docker 컨테이너가 실행되지 않을 때
+```bash
+# Docker Desktop이 실행 중인지 확인
+# 컨테이너 상태 확인
+docker ps -a
+
+# 중지된 컨테이너 시작
+docker start moa-postgres moa-redis moa-pgadmin
+
+# 또는 전체 재시작
+docker-compose down
+docker-compose up -d
+```
+
+### "Network Error" 또는 "ERR_CONNECTION_REFUSED" 발생 시
+1. 백엔드 서버가 실행 중인지 확인
+2. IP 주소가 변경되었는지 확인 (위의 "네트워크 IP 설정" 참조)
+3. 포트가 충돌하지 않는지 확인:
+```bash
+# 포트 사용 확인
+lsof -i :4000  # 백엔드
+lsof -i :3000  # 프론트엔드
+lsof -i :5432  # PostgreSQL
+lsof -i :6379  # Redis
+```
+
+### Redis 연결 오류 발생 시
+```bash
+# Docker Redis가 실행 중인지 확인
+docker ps | grep moa-redis
+
+# Redis 연결 테스트
+docker exec moa-redis redis-cli ping
+# 응답: PONG
+```
+
+### PostgreSQL 연결 오류 발생 시
+```bash
+# Docker PostgreSQL이 실행 중인지 확인
+docker ps | grep moa-postgres
+
+# PostgreSQL 연결 테스트
+docker exec moa-postgres psql -U moa -d moa -c "SELECT version();"
+```
+
+### 포트가 이미 사용 중일 때
+```bash
+# 해당 포트를 사용하는 프로세스 종료
+lsof -ti:4000 | xargs kill -9
+```
 
 ---
 

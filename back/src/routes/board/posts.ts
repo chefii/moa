@@ -1,7 +1,7 @@
 import logger from '../../config/logger';
 import { Router, Request, Response } from 'express';
 import { BoardPostStatus } from '@prisma/client';
-import { authenticate, authorize } from '../../middlewares/auth';
+import { authenticate, authorize, optionalAuthenticate } from '../../middlewares/auth';
 import { prisma } from '../../config/prisma';
 
 const router = Router();
@@ -41,6 +41,7 @@ router.get('/', async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const categoryId = req.query.categoryId as string;
     const search = req.query.search as string;
+    const sort = req.query.sort as string || 'recent'; // recent, popular, views
     const skip = (page - 1) * limit;
 
     const where: any = {
@@ -58,15 +59,30 @@ router.get('/', async (req: Request, res: Response) => {
       ];
     }
 
+    // Determine sorting order
+    let orderBy: any[] = [{ isPinned: 'desc' }];
+
+    switch (sort) {
+      case 'popular':
+        orderBy.push({ likeCount: 'desc' });
+        orderBy.push({ createdAt: 'desc' }); // Secondary sort
+        break;
+      case 'views':
+        orderBy.push({ viewCount: 'desc' });
+        orderBy.push({ createdAt: 'desc' }); // Secondary sort
+        break;
+      case 'recent':
+      default:
+        orderBy.push({ createdAt: 'desc' });
+        break;
+    }
+
     const [posts, total] = await Promise.all([
       prisma.boardPost.findMany({
         where,
         skip,
         take: limit,
-        orderBy: [
-          { isPinned: 'desc' },
-          { createdAt: 'desc' },
-        ],
+        orderBy,
         include: {
           author: {
             select: {
@@ -81,6 +97,7 @@ router.get('/', async (req: Request, res: Response) => {
               name: true,
               displayName: true,
               slug: true,
+              color: true,
             },
           },
           _count: {
@@ -133,9 +150,13 @@ router.get('/', async (req: Request, res: Response) => {
  *       404:
  *         description: 게시글을 찾을 수 없음
  */
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', optionalAuthenticate, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const userId = (req as any).user?.userId; // Optional: may be undefined if not authenticated
+    logger.info(`[GET /posts/${id}] Full user object:`, (req as any).user);
+    logger.info(`[GET /posts/${id}] userId from token: ${userId}`);
+    logger.info(`[GET /posts/${id}] Authorization header:`, req.headers.authorization?.substring(0, 30) + '...');
 
     const post = await prisma.boardPost.findUnique({
       where: { id },
@@ -153,6 +174,7 @@ router.get('/:id', async (req: Request, res: Response) => {
             name: true,
             displayName: true,
             slug: true,
+            color: true,
           },
         },
         comments: {
@@ -171,12 +193,26 @@ router.get('/:id', async (req: Request, res: Response) => {
             },
             replies: {
               where: { isDeleted: false },
+              orderBy: { createdAt: 'asc' },
               include: {
                 author: {
                   select: {
                     id: true,
                     nickname: true,
                     profileImageId: true,
+                  },
+                },
+                replies: {
+                  where: { isDeleted: false },
+                  orderBy: { createdAt: 'asc' },
+                  include: {
+                    author: {
+                      select: {
+                        id: true,
+                        nickname: true,
+                        profileImageId: true,
+                      },
+                    },
                   },
                 },
               },
@@ -198,15 +234,85 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    // Increment view count
-    await prisma.boardPost.update({
+    // Increment view count and return updated data
+    const updatedPost = await prisma.boardPost.update({
       where: { id },
       data: { viewCount: { increment: 1 } },
+      select: { viewCount: true },
     });
+
+    // Merge updated view count with post data
+    post.viewCount = updatedPost.viewCount;
+
+    // Check if current user liked this post
+    let isLiked = false;
+    if (userId) {
+      logger.info(`[GET /posts/${id}] Checking like status for userId: ${userId}, postId: ${id}`);
+      const userLike = await prisma.boardPostLike.findUnique({
+        where: {
+          postId_userId: {
+            postId: id,
+            userId,
+          },
+        },
+      });
+      isLiked = !!userLike;
+      logger.info(`[GET /posts/${id}] userLike record:`, userLike);
+      logger.info(`[GET /posts/${id}] User ${userId} isLiked for post ${id}: ${isLiked}`);
+    } else {
+      logger.info(`[GET /posts/${id}] No userId - skipping like check`);
+    }
+
+    // Check if current user liked any comments (including nested replies)
+    let commentsWithLikeStatus = post.comments;
+    if (userId && post.comments && post.comments.length > 0) {
+      // Get all comment IDs (including nested replies)
+      const getAllCommentIds = (comments: any[]): string[] => {
+        const ids: string[] = [];
+        for (const comment of comments) {
+          ids.push(comment.id);
+          if (comment.replies && comment.replies.length > 0) {
+            ids.push(...getAllCommentIds(comment.replies));
+          }
+        }
+        return ids;
+      };
+
+      const allCommentIds = getAllCommentIds(post.comments);
+
+      // Fetch all comment likes for this user in one query
+      const userCommentLikes = await prisma.boardCommentLike.findMany({
+        where: {
+          userId,
+          commentId: { in: allCommentIds },
+        },
+        select: {
+          commentId: true,
+        },
+      });
+
+      // Create a Set for O(1) lookup
+      const likedCommentIds = new Set(userCommentLikes.map(like => like.commentId));
+
+      // Recursively add isLiked to all comments and replies
+      const addIsLikedToComments = (comments: any[]): any[] => {
+        return comments.map(comment => ({
+          ...comment,
+          isLiked: likedCommentIds.has(comment.id),
+          replies: comment.replies ? addIsLikedToComments(comment.replies) : undefined,
+        }));
+      };
+
+      commentsWithLikeStatus = addIsLikedToComments(post.comments);
+    }
 
     res.json({
       success: true,
-      data: post,
+      data: {
+        ...post,
+        isLiked,
+        comments: commentsWithLikeStatus,
+      },
     });
   } catch (error) {
     logger.error('Error fetching board post:', error);
@@ -479,23 +585,27 @@ router.post('/:id/like', authenticate, async (req: Request, res: Response) => {
 
     if (existingLike) {
       // Unlike
-      await prisma.$transaction([
+      const [, updatedPost] = await prisma.$transaction([
         prisma.boardPostLike.delete({
           where: { id: existingLike.id },
         }),
         prisma.boardPost.update({
           where: { id },
           data: { likeCount: { decrement: 1 } },
+          select: { likeCount: true },
         }),
       ]);
 
       return res.json({
         success: true,
-        data: { liked: false },
+        data: {
+          liked: false,
+          likeCount: updatedPost.likeCount,
+        },
       });
     } else {
       // Like
-      await prisma.$transaction([
+      const [, updatedPost] = await prisma.$transaction([
         prisma.boardPostLike.create({
           data: {
             postId: id,
@@ -505,12 +615,16 @@ router.post('/:id/like', authenticate, async (req: Request, res: Response) => {
         prisma.boardPost.update({
           where: { id },
           data: { likeCount: { increment: 1 } },
+          select: { likeCount: true },
         }),
       ]);
 
       return res.json({
         success: true,
-        data: { liked: true },
+        data: {
+          liked: true,
+          likeCount: updatedPost.likeCount,
+        },
       });
     }
   } catch (error) {

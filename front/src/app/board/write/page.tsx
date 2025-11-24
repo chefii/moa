@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Upload, X } from 'lucide-react';
+import MobileLayout from '@/components/MobileLayout';
+import MobileHeader from '@/components/MobileHeader';
 import { categoriesApi, Category } from '@/lib/api/categories';
 import { boardApi } from '@/lib/api/board';
 import { filesApi } from '@/lib/api/files';
@@ -161,10 +163,11 @@ export default function BoardWritePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <MobileLayout>
+      <MobileHeader />
+      <div className="px-4 pb-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6 mt-4">
           <Link
             href="/board"
             className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
@@ -172,14 +175,14 @@ export default function BoardWritePage() {
             <ArrowLeft className="w-5 h-5" />
             취소
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-gray-900">
             {editId ? '게시글 수정' : '게시글 작성'}
           </h1>
-          <div className="w-20" /> {/* Spacer for center alignment */}
+          <div className="w-16" /> {/* Spacer for center alignment */}
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8">
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-6">
           {/* Category */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -306,6 +309,6 @@ export default function BoardWritePage() {
           </div>
         </form>
       </div>
-    </div>
+    </MobileLayout>
   );
 }

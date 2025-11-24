@@ -90,9 +90,30 @@ export const redis = new Redis({
   },
 });
 
+// Redis error handling
+redis.on('error', (err) => {
+  logger.error('Redis connection error:', err);
+});
+
+redis.on('connect', () => {
+  logger.info('✅ Redis connected successfully');
+});
+
+redis.on('ready', () => {
+  logger.info('✅ Redis is ready to accept commands');
+});
+
+redis.on('close', () => {
+  logger.warn('⚠️  Redis connection closed');
+});
+
+redis.on('reconnecting', () => {
+  logger.info('🔄 Reconnecting to Redis...');
+});
+
 // Initialize Express App
 const app: Express = express();
-const PORT = process.env.PORT || 4000;
+const PORT = Number(process.env.PORT) || 4000;
 
 // Middleware
 app.use(helmet({
@@ -102,7 +123,7 @@ app.use(helmet({
 // CORS 설정 - 여러 origin 허용
 const allowedOrigins = [
   'http://localhost:3000',
-  'http://172.30.1.22:3000',
+  'http://172.30.1.42:3000',
   'http://192.168.0.0:3000', // 다른 로컬 IP 대역도 필요시 추가
   ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : []),
 ];
@@ -283,7 +304,7 @@ process.on('SIGINT', async () => {
 });
 
 // Start Server
-app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   const serverInfo = `
   ╔═══════════════════════════════════════════════╗
   ║                                               ║
@@ -292,9 +313,9 @@ app.listen(PORT, () => {
   ║   Port: ${PORT}                              ${PORT.toString().length === 4 ? ' ' : ''}   ║
   ║   Environment: ${process.env.NODE_ENV || 'development'} ${(process.env.NODE_ENV || 'development').length === 10 ? '' : ' '}                  ║
   ║                                               ║
-  ║  Health Check: http://localhost:${PORT}/health   ║
-  ║  API Docs: http://localhost:${PORT}/api          ║
-  ║  Swagger UI: http://localhost:${PORT}/api-docs   ║
+  ║  Local:   http://localhost:${PORT}              ║
+  ║  Network: http://172.30.1.42:${PORT}            ║
+  ║  API Docs: http://172.30.1.42:${PORT}/api-docs  ║
   ║                                               ║
   ╚═══════════════════════════════════════════════╝
   `;

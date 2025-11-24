@@ -37,7 +37,7 @@ const router = Router();
  */
 router.post('/', authenticate, async (req: Request, res: Response) => {
   try {
-    const { postId, content, parentId } = req.body;
+    const { postId, content, parentId, isAnonymous } = req.body;
     const userId = (req as any).user.userId;
 
     if (!postId || !content) {
@@ -53,6 +53,7 @@ router.post('/', authenticate, async (req: Request, res: Response) => {
         authorId: userId,
         content,
         parentId: parentId || null,
+        isAnonymous: isAnonymous || false,
       },
       include: {
         author: {
@@ -279,23 +280,27 @@ router.post('/:id/like', authenticate, async (req: Request, res: Response) => {
 
     if (existingLike) {
       // Unlike
-      await prisma.$transaction([
+      const [, updatedComment] = await prisma.$transaction([
         prisma.boardCommentLike.delete({
           where: { id: existingLike.id },
         }),
         prisma.boardComment.update({
           where: { id },
           data: { likeCount: { decrement: 1 } },
+          select: { likeCount: true },
         }),
       ]);
 
       return res.json({
         success: true,
-        data: { liked: false },
+        data: {
+          liked: false,
+          likeCount: updatedComment.likeCount,
+        },
       });
     } else {
       // Like
-      await prisma.$transaction([
+      const [, updatedComment] = await prisma.$transaction([
         prisma.boardCommentLike.create({
           data: {
             commentId: id,
@@ -305,12 +310,16 @@ router.post('/:id/like', authenticate, async (req: Request, res: Response) => {
         prisma.boardComment.update({
           where: { id },
           data: { likeCount: { increment: 1 } },
+          select: { likeCount: true },
         }),
       ]);
 
       return res.json({
         success: true,
-        data: { liked: true },
+        data: {
+          liked: true,
+          likeCount: updatedComment.likeCount,
+        },
       });
     }
   } catch (error) {

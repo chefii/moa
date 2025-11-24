@@ -116,12 +116,12 @@ export const boardApi = {
     search?: string;
     sort?: 'recent' | 'popular' | 'views';
   }): Promise<PostListResponse> => {
-    const response = await apiClient.get<ApiResponse<BoardPost[]>>('/api/board/posts', {
+    const response = await apiClient.get<ApiResponse<{ posts: BoardPost[]; pagination: any }>>('/api/board/posts', {
       params,
     });
     return {
-      data: response.data.data || [],
-      pagination: response.data.pagination || {
+      data: response.data.data?.posts || [],
+      pagination: response.data.data?.pagination || {
         total: 0,
         page: 1,
         limit: 20,

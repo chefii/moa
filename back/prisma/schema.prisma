@@ -1238,6 +1238,7 @@ model BoardPost {
   likeCount    Int             @default(0) @map("like_count")
   commentCount Int             @default(0) @map("comment_count")
   isPinned     Boolean         @default(false) @map("is_pinned")
+  isAnonymous  Boolean         @default(false) @map("is_anonymous") // 익명 게시글 여부
   status       BoardPostStatus @default(PUBLISHED)
   images       String[]        @default([])
   isDeleted    Boolean         @default(false) @map("is_deleted") // 소프트 삭제 여부
@@ -1259,16 +1260,17 @@ model BoardPost {
 }
 
 model BoardComment {
-  id        String    @id @default(uuid())
-  postId    String    @map("post_id")
-  authorId  String    @map("author_id")
-  content   String    @db.Text
-  likeCount Int       @default(0) @map("like_count")
-  parentId  String?   @map("parent_id") // For nested comments
-  isDeleted Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt DateTime? @map("deleted_at") // 삭제 일시
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id          String    @id @default(uuid())
+  postId      String    @map("post_id")
+  authorId    String    @map("author_id")
+  content     String    @db.Text
+  likeCount   Int       @default(0) @map("like_count")
+  parentId    String?   @map("parent_id") // For nested comments
+  isAnonymous Boolean   @default(false) @map("is_anonymous") // 익명 작성 여부
+  isDeleted   Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
+  deletedAt   DateTime? @map("deleted_at") // 삭제 일시
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   post    BoardPost          @relation(fields: [postId], references: [id], onDelete: Cascade)
   author  User               @relation("BoardComments", fields: [authorId], references: [id], onDelete: Cascade)

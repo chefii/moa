@@ -112,3 +112,42 @@ export const authorize = (...roles: string[]) => {
     next();
   };
 };
+
+// Optional authenticate - doesn't reject if no token, just sets req.user if token exists
+export const optionalAuthenticate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+
+      try {
+        const decoded = verifyToken(token);
+        req.user = decoded;
+
+        if (process.env.NODE_ENV === 'development') {
+          logger.debug('🔐 Optional Auth: Token verified', {
+            userId: maskUUID(decoded.userId),
+            url: req.url,
+          });
+        }
+      } catch (error) {
+        // Token invalid but we don't reject - just don't set req.user
+        if (process.env.NODE_ENV === 'development') {
+          logger.debug('🔐 Optional Auth: Invalid token ignored', {
+            url: req.url,
+          });
+        }
+      }
+    }
+
+    next();
+  } catch (error) {
+    // Should not happen, but just in case
+    next();
+  }
+};

@@ -12,7 +12,7 @@ const nextConfig = {
       // 현재 IP 주소
       {
         protocol: 'http',
-        hostname: '172.30.1.22',
+        hostname: '172.30.1.85',
         port: '4000',
         pathname: '/uploads/**',
       },

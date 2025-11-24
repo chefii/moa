@@ -57,13 +57,20 @@ router.get('/', async (req: Request, res: Response) => {
 
     // Filter by type if provided
     if (type && typeof type === 'string') {
-      // 부모 카테고리의 type으로 필터링하여 2뎁스 카테고리 반환
-      whereClause.depth = 1;
-      whereClause.parent = {
-        type: {
+      // BOARD 타입은 1뎁스 카테고리로 직접 필터링
+      if (type === 'BOARD') {
+        whereClause.type = {
           has: type,
-        },
-      };
+        };
+      } else {
+        // 다른 타입은 부모 카테고리의 type으로 필터링하여 2뎁스 카테고리 반환
+        whereClause.depth = 1;
+        whereClause.parent = {
+          type: {
+            has: type,
+          },
+        };
+      }
     }
 
     // Filter by featured if provided

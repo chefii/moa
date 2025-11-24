@@ -538,14 +538,20 @@ export default function CategoriesPage() {
                             <td className="py-3 px-4">
                               <div className="flex justify-end gap-2">
                                 <button
-                                  onClick={() => handleEditChild(child)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditChild(child);
+                                  }}
                                   className="p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
                                   title="수정"
                                 >
                                   <Edit2 className="w-4 h-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteChild(child.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteChild(child.id);
+                                  }}
                                   className="p-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
                                   title="삭제"
                                 >

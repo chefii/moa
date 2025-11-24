@@ -44,7 +44,9 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request
   try {
     const { isActive, includeChildren } = req.query;
 
-    const where: any = {};
+    const where: any = {
+      isDeleted: false, // 삭제된 카테고리 제외
+    };
     if (isActive !== undefined) where.isActive = isActive === 'true';
 
     // 계층 구조로 조회하려면 최상위 카테고리만 가져오기
@@ -57,6 +59,7 @@ router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Request
       orderBy: { order: 'asc' },
       include: includeChildren === 'true' ? {
         children: {
+          where: { isDeleted: false }, // 하위 카테고리도 삭제된 것 제외
           orderBy: { order: 'asc' },
         },
       } : undefined,
@@ -148,6 +151,22 @@ router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Reques
     // parentId가 있으면 depth=1, 없으면 depth=0
     const depth = parentId ? 1 : 0;
 
+    // 부모 카테고리의 type을 상속받기
+    let categoryType = type || [];
+    if (parentId && (!type || type.length === 0)) {
+      const parent = await prisma.category.findUnique({
+        where: { id: parentId },
+        select: { type: true, slug: true },
+      });
+
+      // 특별 케이스: 게시판의 하위 카테고리는 BOARD 타입을 가져야 함
+      if (parent && parent.slug === 'board') {
+        categoryType = ['BOARD'];
+      } else if (parent && parent.type) {
+        categoryType = parent.type;
+      }
+    }
+
     const category = await prisma.category.create({
       data: {
         name,
@@ -159,7 +178,7 @@ router.post('/', authenticate, authorize('ROLE_SUPER_ADMIN'), async (req: Reques
         parentId,
         depth,
         order: order || 0,
-        type: type || [],
+        type: categoryType,
         isActive: isActive !== undefined ? isActive : true,
       },
       include: {
