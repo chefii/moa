@@ -199,4 +199,13 @@ export const boardApi = {
       description,
     });
   },
+
+  reportUser: async (userId: string, reasonCode: string, description?: string): Promise<void> => {
+    await apiClient.post(`/api/reports`, {
+      reportedUserId: userId,
+      reasonCode,
+      description,
+      reportType: 'USER',
+    });
+  },
 };

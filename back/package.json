@@ -23,6 +23,7 @@
     "prisma:seed-report-codes": "ts-node prisma/seed-report-codes.ts",
     "prisma:seed-reports": "ts-node prisma/seed-reports.ts",
     "prisma:seed-condition-types": "ts-node prisma/seed-condition-types.ts",
+    "prisma:seed-board-comments": "ts-node prisma/seed-board-comments.ts",
     "prisma:seed-all": "ts-node prisma/seed-all.ts",
     "prisma:reset": "ts-node prisma/reset-database.ts",
     "prisma:reset-and-seed": "ts-node prisma/reset-database.ts && ts-node prisma/seed-all.ts",

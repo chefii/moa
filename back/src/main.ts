@@ -35,6 +35,7 @@ import bannersRoutes from './routes/banners';
 import filesRoutes from './routes/files';
 import boardRoutes from './routes/board';
 import regionsRoutes from './routes/regions';
+import reportsRoutes from './routes/reports';
 
 // Admin routes
 import adminCommonCodesRoutes from './routes/admin/common-codes';
@@ -255,6 +256,7 @@ app.use('/api/banners', bannersRoutes);
 app.use('/api/files', filesRoutes);
 app.use('/api/board', boardRoutes);
 app.use('/api/regions', regionsRoutes);
+app.use('/api/reports', reportsRoutes);
 
 // Static file serving for uploaded files
 const uploadDir = process.env.UPLOAD_DIR || '/Users/philip/project/moa_file';

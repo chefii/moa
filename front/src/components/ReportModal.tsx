@@ -40,6 +40,11 @@ export default function ReportModal({ isOpen, onClose, onSubmit, reportType }: R
       };
 
       loadReasonCodes();
+    } else {
+      // Reset form when modal closes
+      setSelectedReason('');
+      setDescription('');
+      setIsDropdownOpen(false);
     }
   }, [isOpen, reportType]);
 
@@ -66,12 +71,27 @@ export default function ReportModal({ isOpen, onClose, onSubmit, reportType }: R
 
   if (!isOpen) return null;
 
+  const getTitle = () => {
+    switch (reportType) {
+      case 'BOARD':
+        return '게시글 신고';
+      case 'COMMENT':
+        return '댓글 신고';
+      case 'USER':
+        return '사용자 신고';
+      case 'GATHERING':
+        return '모임 신고';
+      default:
+        return '신고하기';
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200] p-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">게시글 신고</h2>
+          <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"

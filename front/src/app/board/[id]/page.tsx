@@ -15,6 +15,7 @@ import {
   Send,
   MoreVertical,
   Flag,
+  MessageCircle,
 } from 'lucide-react';
 import { boardApi, BoardPost, BoardComment } from '@/lib/api/board';
 import { useAuthStore } from '@/store/authStore';
@@ -45,6 +46,9 @@ export default function BoardDetailPage() {
   const [showDeletePostConfirm, setShowDeletePostConfirm] = useState(false);
   const [showDeleteCommentConfirm, setShowDeleteCommentConfirm] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
+  const [showUserMenu, setShowUserMenu] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [reportType, setReportType] = useState<'BOARD' | 'USER'>('BOARD');
 
   const toggleReplies = (commentId: string) => {
     setExpandedReplies(prev => {
@@ -216,15 +220,24 @@ export default function BoardDetailPage() {
       return;
     }
     setShowPostMenu(false);
+    setReportType('BOARD');
+    setSelectedUserId(null);
     setShowReportModal(true);
   };
 
   const handleSubmitReport = async (reasonCode: string, description: string) => {
     try {
-      await boardApi.reportPost(params.id as string, reasonCode, description);
-      setToast({ message: '신고가 접수되었습니다', type: 'success' });
+      if (reportType === 'USER' && selectedUserId) {
+        // User report
+        await boardApi.reportUser(selectedUserId, reasonCode, description);
+        setToast({ message: '사용자 신고가 접수되었습니다', type: 'success' });
+      } else {
+        // Post report
+        await boardApi.reportPost(params.id as string, reasonCode, description);
+        setToast({ message: '게시글 신고가 접수되었습니다', type: 'success' });
+      }
     } catch (error: any) {
-      console.error('Failed to report post:', error);
+      console.error('Failed to report:', error);
       const message = error.response?.data?.message || '신고 처리 중 오류가 발생했습니다';
       setToast({ message, type: 'error' });
     }
@@ -471,13 +484,57 @@ export default function BoardDetailPage() {
             {post.comments?.map((comment) => (
               <div key={comment.id} className="border-l-2 border-gray-200 pl-4">
                 <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <span className="font-medium text-gray-900">
-                      {comment.isAnonymous
-                        ? '익명'
-                        : comment.author?.nickname || comment.author?.name}
-                    </span>
-                    <span className="ml-3 text-sm text-gray-500">
+                  <div className="flex items-center gap-2">
+                    {!comment.isAnonymous && comment.authorId && user?.id !== comment.authorId ? (
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowUserMenu(showUserMenu === comment.id ? null : comment.id)}
+                          className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                        >
+                          {comment.author?.nickname || comment.author?.name}
+                        </button>
+
+                        {showUserMenu === comment.id && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setShowUserMenu(null)}
+                            />
+                            <div className="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                              <button
+                                onClick={() => {
+                                  setSelectedUserId(comment.authorId);
+                                  setReportType('USER');
+                                  setShowReportModal(true);
+                                  setShowUserMenu(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                              >
+                                <Flag className="w-4 h-4" />
+                                신고하기
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setToast({ message: '쪽지 기능은 준비중입니다', type: 'info' });
+                                  setShowUserMenu(null);
+                                }}
+                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                                쪽지 보내기
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="font-medium text-gray-900">
+                        {comment.isAnonymous
+                          ? '익명'
+                          : comment.author?.nickname || comment.author?.name}
+                      </span>
+                    )}
+                    <span className="text-sm text-gray-500">
                       {formatDate(comment.createdAt)}
                     </span>
                   </div>
@@ -544,13 +601,57 @@ export default function BoardDetailPage() {
                     ).map((reply) => (
                       <div key={reply.id}>
                         <div className="flex items-start justify-between mb-2">
-                          <div>
-                            <span className="font-medium text-gray-900">
-                              {reply.isAnonymous
-                                ? '익명'
-                                : reply.author?.nickname || reply.author?.name}
-                            </span>
-                            <span className="ml-3 text-sm text-gray-500">
+                          <div className="flex items-center gap-2">
+                            {!reply.isAnonymous && reply.authorId && user?.id !== reply.authorId ? (
+                              <div className="relative">
+                                <button
+                                  onClick={() => setShowUserMenu(showUserMenu === reply.id ? null : reply.id)}
+                                  className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                                >
+                                  {reply.author?.nickname || reply.author?.name}
+                                </button>
+
+                                {showUserMenu === reply.id && (
+                                  <>
+                                    <div
+                                      className="fixed inset-0 z-10"
+                                      onClick={() => setShowUserMenu(null)}
+                                    />
+                                    <div className="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                                      <button
+                                        onClick={() => {
+                                          setSelectedUserId(reply.authorId);
+                                          setReportType('USER');
+                                          setShowReportModal(true);
+                                          setShowUserMenu(null);
+                                        }}
+                                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                      >
+                                        <Flag className="w-4 h-4" />
+                                        신고하기
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setToast({ message: '쪽지 기능은 준비중입니다', type: 'info' });
+                                          setShowUserMenu(null);
+                                        }}
+                                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                      >
+                                        <MessageCircle className="w-4 h-4" />
+                                        쪽지 보내기
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="font-medium text-gray-900">
+                                {reply.isAnonymous
+                                  ? '익명'
+                                  : reply.author?.nickname || reply.author?.name}
+                              </span>
+                            )}
+                            <span className="text-sm text-gray-500">
                               {formatDate(reply.createdAt)}
                             </span>
                           </div>
@@ -601,13 +702,57 @@ export default function BoardDetailPage() {
                             {reply.replies.map((nestedReply: any) => (
                               <div key={nestedReply.id}>
                                 <div className="flex items-start justify-between mb-1">
-                                  <div>
-                                    <span className="font-medium text-gray-900 text-sm">
-                                      {nestedReply.isAnonymous
-                                        ? '익명'
-                                        : nestedReply.author?.nickname || nestedReply.author?.name}
-                                    </span>
-                                    <span className="ml-2 text-xs text-gray-500">
+                                  <div className="flex items-center gap-2">
+                                    {!nestedReply.isAnonymous && nestedReply.authorId && user?.id !== nestedReply.authorId ? (
+                                      <div className="relative">
+                                        <button
+                                          onClick={() => setShowUserMenu(showUserMenu === nestedReply.id ? null : nestedReply.id)}
+                                          className="font-medium text-gray-900 text-sm hover:text-blue-600 transition-colors"
+                                        >
+                                          {nestedReply.author?.nickname || nestedReply.author?.name}
+                                        </button>
+
+                                        {showUserMenu === nestedReply.id && (
+                                          <>
+                                            <div
+                                              className="fixed inset-0 z-10"
+                                              onClick={() => setShowUserMenu(null)}
+                                            />
+                                            <div className="absolute left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden">
+                                              <button
+                                                onClick={() => {
+                                                  setSelectedUserId(nestedReply.authorId);
+                                                  setReportType('USER');
+                                                  setShowReportModal(true);
+                                                  setShowUserMenu(null);
+                                                }}
+                                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                              >
+                                                <Flag className="w-4 h-4" />
+                                                신고하기
+                                              </button>
+                                              <button
+                                                onClick={() => {
+                                                  setToast({ message: '쪽지 기능은 준비중입니다', type: 'info' });
+                                                  setShowUserMenu(null);
+                                                }}
+                                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                              >
+                                                <MessageCircle className="w-4 h-4" />
+                                                쪽지 보내기
+                                              </button>
+                                            </div>
+                                          </>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="font-medium text-gray-900 text-sm">
+                                        {nestedReply.isAnonymous
+                                          ? '익명'
+                                          : nestedReply.author?.nickname || nestedReply.author?.name}
+                                      </span>
+                                    )}
+                                    <span className="text-xs text-gray-500">
                                       {formatDate(nestedReply.createdAt)}
                                     </span>
                                   </div>
@@ -670,7 +815,7 @@ export default function BoardDetailPage() {
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
         onSubmit={handleSubmitReport}
-        reportType="BOARD"
+        reportType={reportType}
       />
 
       {/* Toast */}
