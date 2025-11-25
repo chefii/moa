@@ -20,6 +20,7 @@ import { boardApi, BoardPost, BoardComment } from '@/lib/api/board';
 import { useAuthStore } from '@/store/authStore';
 import ReportModal from '@/components/ReportModal';
 import Toast, { ToastType } from '@/components/Toast';
+import ConfirmModal from '@/components/ConfirmModal';
 
 export default function BoardDetailPage() {
   const router = useRouter();
@@ -41,6 +42,9 @@ export default function BoardDetailPage() {
   const [showPostMenu, setShowPostMenu] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
+  const [showDeletePostConfirm, setShowDeletePostConfirm] = useState(false);
+  const [showDeleteCommentConfirm, setShowDeleteCommentConfirm] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   const toggleReplies = (commentId: string) => {
     setExpandedReplies(prev => {
@@ -177,33 +181,31 @@ export default function BoardDetailPage() {
   };
 
   const handleDeletePost = async () => {
-    if (!confirm('정말 삭제하시겠습니까?')) {
-      return;
-    }
-
     try {
       await boardApi.deletePost(params.id as string);
-      alert('게시글이 삭제되었습니다');
-      router.push('/board');
+      setToast({ message: '게시글이 삭제되었습니다', type: 'success' });
+      setTimeout(() => {
+        router.push('/board');
+      }, 1000);
     } catch (error) {
       console.error('Failed to delete post:', error);
-      alert('삭제 중 오류가 발생했습니다');
+      setToast({ message: '삭제 중 오류가 발생했습니다', type: 'error' });
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) {
-      return;
-    }
+  const handleDeleteComment = async () => {
+    if (!commentToDelete) return;
 
     try {
-      await boardApi.deleteComment(commentId);
+      await boardApi.deleteComment(commentToDelete);
       const updatedPost = await boardApi.getPostById(params.id as string);
       setPost(updatedPost);
-      alert('댓글이 삭제되었습니다');
+      setToast({ message: '댓글이 삭제되었습니다', type: 'success' });
     } catch (error) {
       console.error('Failed to delete comment:', error);
-      alert('삭제 중 오류가 발생했습니다');
+      setToast({ message: '삭제 중 오류가 발생했습니다', type: 'error' });
+    } finally {
+      setCommentToDelete(null);
     }
   };
 
@@ -329,7 +331,7 @@ export default function BoardDetailPage() {
                           <button
                             onClick={() => {
                               setShowPostMenu(false);
-                              handleDeletePost();
+                              setShowDeletePostConfirm(true);
                             }}
                             className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                           >
@@ -482,7 +484,10 @@ export default function BoardDetailPage() {
 
                   {user?.id === comment.authorId && (
                     <button
-                      onClick={() => handleDeleteComment(comment.id)}
+                      onClick={() => {
+                        setCommentToDelete(comment.id);
+                        setShowDeleteCommentConfirm(true);
+                      }}
                       className="text-gray-400 hover:text-red-600"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -552,7 +557,10 @@ export default function BoardDetailPage() {
 
                           {user?.id === reply.authorId && (
                             <button
-                              onClick={() => handleDeleteComment(reply.id)}
+                              onClick={() => {
+                                setCommentToDelete(reply.id);
+                                setShowDeleteCommentConfirm(true);
+                              }}
                               className="text-gray-400 hover:text-red-600"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -606,7 +614,10 @@ export default function BoardDetailPage() {
 
                                   {user?.id === nestedReply.authorId && (
                                     <button
-                                      onClick={() => handleDeleteComment(nestedReply.id)}
+                                      onClick={() => {
+                                        setCommentToDelete(nestedReply.id);
+                                        setShowDeleteCommentConfirm(true);
+                                      }}
                                       className="text-gray-400 hover:text-red-600"
                                     >
                                       <Trash2 className="w-3 h-3" />
@@ -670,6 +681,33 @@ export default function BoardDetailPage() {
           onClose={() => setToast(null)}
         />
       )}
+
+      {/* Delete Post Confirm Modal */}
+      <ConfirmModal
+        isOpen={showDeletePostConfirm}
+        onClose={() => setShowDeletePostConfirm(false)}
+        onConfirm={handleDeletePost}
+        title="게시글 삭제"
+        message="정말 삭제하시겠습니까?"
+        confirmText="삭제"
+        cancelText="취소"
+        confirmColor="red"
+      />
+
+      {/* Delete Comment Confirm Modal */}
+      <ConfirmModal
+        isOpen={showDeleteCommentConfirm}
+        onClose={() => {
+          setShowDeleteCommentConfirm(false);
+          setCommentToDelete(null);
+        }}
+        onConfirm={handleDeleteComment}
+        title="댓글 삭제"
+        message="정말 삭제하시겠습니까?"
+        confirmText="삭제"
+        cancelText="취소"
+        confirmColor="red"
+      />
     </MobileLayout>
   );
 }

@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Upload, X } from 'lucide-react';
+import { ArrowLeft, Upload, X, ChevronDown } from 'lucide-react';
 import MobileLayout from '@/components/MobileLayout';
 import MobileHeader from '@/components/MobileHeader';
 import { categoriesApi, Category } from '@/lib/api/categories';
 import { boardApi } from '@/lib/api/board';
 import { filesApi } from '@/lib/api/files';
 import { useAuthStore } from '@/store/authStore';
+import Toast, { ToastType } from '@/components/Toast';
 
 export default function BoardWritePage() {
   const router = useRouter();
@@ -31,6 +32,8 @@ export default function BoardWritePage() {
   });
   const [imagePreview, setImagePreview] = useState<string>('');
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -44,8 +47,22 @@ export default function BoardWritePage() {
       try {
         const data = await categoriesApi.getCategories({ type: 'BOARD' });
         setCategories(data);
-        if (data.length > 0 && !formData.categoryId) {
-          setFormData((prev) => ({ ...prev, categoryId: data[0].id }));
+
+        // 수정 모드가 아닐 때만 카테고리 자동 선택
+        if (data.length > 0 && !formData.categoryId && !editId) {
+          // URL의 from 파라미터로 전달된 카테고리 ID가 있으면 해당 카테고리 선택
+          if (fromCategory && fromCategory !== 'all') {
+            const categoryExists = data.find((c) => c.id === fromCategory);
+            if (categoryExists) {
+              setFormData((prev) => ({ ...prev, categoryId: fromCategory }));
+            } else {
+              // 카테고리가 없으면 첫 번째 카테고리 선택
+              setFormData((prev) => ({ ...prev, categoryId: data[0].id }));
+            }
+          } else {
+            // from 파라미터가 없거나 'all'이면 첫 번째 카테고리 선택
+            setFormData((prev) => ({ ...prev, categoryId: data[0].id }));
+          }
         }
       } catch (error) {
         console.error('Failed to load categories:', error);
@@ -112,17 +129,17 @@ export default function BoardWritePage() {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-      alert('제목을 입력해주세요');
+      setToast({ message: '제목을 입력해주세요', type: 'error' });
       return;
     }
 
     if (!formData.content.trim()) {
-      alert('내용을 입력해주세요');
+      setToast({ message: '내용을 입력해주세요', type: 'error' });
       return;
     }
 
     if (!formData.categoryId) {
-      alert('카테고리를 선택해주세요');
+      setToast({ message: '카테고리를 선택해주세요', type: 'error' });
       return;
     }
 
@@ -148,28 +165,33 @@ export default function BoardWritePage() {
       if (editId) {
         // Update existing post
         await boardApi.updatePost(editId, postData);
-        alert('게시글이 수정되었습니다');
+        setToast({ message: '게시글이 수정되었습니다', type: 'success' });
 
-        const params = new URLSearchParams();
-        if (fromCategory !== 'all') params.set('from', fromCategory);
-        if (fromSort !== 'recent') params.set('sort', fromSort);
-        const url = params.toString() ? `/board/${editId}?${params.toString()}` : `/board/${editId}`;
-        router.push(url);
+        // Toast 표시 후 이동
+        setTimeout(() => {
+          const params = new URLSearchParams();
+          if (fromCategory !== 'all') params.set('from', fromCategory);
+          if (fromSort !== 'recent') params.set('sort', fromSort);
+          const url = params.toString() ? `/board/${editId}?${params.toString()}` : `/board/${editId}`;
+          router.push(url);
+        }, 1000);
       } else {
         // Create new post
         const post = await boardApi.createPost(postData);
-        alert('게시글이 작성되었습니다');
+        setToast({ message: '게시글이 작성되었습니다', type: 'success' });
 
-        const params = new URLSearchParams();
-        if (fromCategory !== 'all') params.set('from', fromCategory);
-        if (fromSort !== 'recent') params.set('sort', fromSort);
-        const url = params.toString() ? `/board/${post.id}?${params.toString()}` : `/board/${post.id}`;
-        router.push(url);
+        // Toast 표시 후 이동
+        setTimeout(() => {
+          const params = new URLSearchParams();
+          if (fromCategory !== 'all') params.set('from', fromCategory);
+          if (fromSort !== 'recent') params.set('sort', fromSort);
+          const url = params.toString() ? `/board/${post.id}?${params.toString()}` : `/board/${post.id}`;
+          router.push(url);
+        }, 1000);
       }
     } catch (error) {
       console.error('Failed to submit post:', error);
-      alert('게시글 작성 중 오류가 발생했습니다');
-    } finally {
+      setToast({ message: '게시글 작성 중 오류가 발생했습니다', type: 'error' });
       setLoading(false);
     }
   };
@@ -214,21 +236,56 @@ export default function BoardWritePage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               카테고리 <span className="text-red-500">*</span>
             </label>
-            <select
-              value={formData.categoryId}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, categoryId: e.target.value }))
-              }
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              required
-            >
-              <option value="">카테고리 선택</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.displayName || category.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg text-left flex items-center justify-between hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <span className={formData.categoryId ? 'text-gray-900' : 'text-gray-500'}>
+                  {formData.categoryId
+                    ? categories.find((c) => c.id === formData.categoryId)?.displayName ||
+                      categories.find((c) => c.id === formData.categoryId)?.name
+                    : '카테고리 선택'}
+                </span>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transition-transform ${
+                    isCategoryDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {isCategoryDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsCategoryDropdownOpen(false)}
+                  />
+                  <div className="absolute z-20 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                    {categories.map((category) => (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({ ...prev, categoryId: category.id }));
+                          setIsCategoryDropdownOpen(false);
+                        }}
+                        className={`w-full px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
+                          formData.categoryId === category.id
+                            ? 'bg-blue-50 text-blue-600 font-medium'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        <p className="font-medium">{category.displayName || category.name}</p>
+                        {category.description && (
+                          <p className="text-xs text-gray-500 mt-0.5">{category.description}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Title */}
@@ -349,6 +406,15 @@ export default function BoardWritePage() {
           </div>
         </form>
       </div>
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </MobileLayout>
   );
 }

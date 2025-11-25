@@ -3,7 +3,7 @@ import DailyRotateFile from 'winston-daily-rotate-file';
 import path from 'path';
 
 // 로그 디렉토리 설정
-const logDir = process.env.LOG_DIR || path.join(__dirname, '/Users/philip/project/moa_file/logs');
+const logDir = process.env.LOG_DIR || '/Users/philip/project/moa_file/logs';
 
 // 로그 포맷 정의
 const logFormat = winston.format.combine(
