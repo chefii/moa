@@ -86,7 +86,7 @@ const router = Router();
 // Register
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { email, password, name, phone, role, nickname, location, interests, gender, age } = req.body;
+    const { email, password, name, phone, role, nickname, location, interests, gender, age, marketingAgreed, agreedTermsIds } = req.body;
 
     // Validation
     if (!email || !password || !name) {
@@ -152,6 +152,9 @@ router.post('/register', async (req: Request, res: Response) => {
         location,
         gender: formattedGender,
         age: age ? parseInt(age) : null,
+        marketingAgreed: marketingAgreed || false,
+        marketingAgreedAt: marketingAgreed ? new Date() : null,
+        marketingAgreedMethod: marketingAgreed ? 'EMAIL' : null,
       },
       select: {
         id: true,
@@ -162,6 +165,7 @@ router.post('/register', async (req: Request, res: Response) => {
         location: true,
         gender: true,
         age: true,
+        marketingAgreed: true,
       },
     });
 
@@ -195,6 +199,23 @@ router.post('/register', async (req: Request, res: Response) => {
         isPrimary: true, // 첫 번째 역할은 주요 역할로 설정
       },
     });
+
+    // Save terms agreements
+    if (agreedTermsIds && Array.isArray(agreedTermsIds) && agreedTermsIds.length > 0) {
+      // IP 주소 가져오기
+      const ipAddress = req.ip || req.socket.remoteAddress || null;
+      const userAgent = req.get('user-agent') || null;
+
+      await prisma.userTermsAgreement.createMany({
+        data: agreedTermsIds.map((termsId: string) => ({
+          userId: user.id,
+          termsId,
+          agreed: true,
+          ipAddress,
+          userAgent,
+        })),
+      });
+    }
 
     // TODO: Handle interests when Category data is seeded
     // if (interests && Array.isArray(interests) && interests.length > 0) {

@@ -20,6 +20,7 @@ import {
   UpdateBannerDto,
 } from '@/lib/api/admin/banners';
 import ImageUploader from '@/components/ImageUploader';
+import { getImageUrl } from '@/lib/utils/imageUrl';
 
 const BANNER_TYPES: { value: BannerType; label: string }[] = [
   { value: 'MAIN_BANNER', label: '메인 배너' },
@@ -102,7 +103,7 @@ export default function BannersPage() {
       type: banner.type,
       title: banner.title,
       description: banner.description || '',
-      imageId: banner.imageId,
+      imageId: banner.image?.url || banner.imageId, // Use image URL for preview
       linkUrl: banner.linkUrl || '',
       order: banner.order,
       startDate: banner.startDate.split('T')[0],
@@ -255,7 +256,7 @@ export default function BannersPage() {
                         <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                           {banner.image?.url ? (
                             <img
-                              src={banner.image.url}
+                              src={getImageUrl(banner.image.url)}
                               alt={banner.title}
                               className="w-full h-full object-cover"
                             />

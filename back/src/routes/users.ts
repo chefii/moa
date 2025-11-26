@@ -62,7 +62,7 @@ const router = Router();
  *         description: 권한 없음
  */
 // Get all users (Admin only)
-router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.get('/', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -174,7 +174,7 @@ router.get('/', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async 
  *         description: 사용자를 찾을 수 없음
  */
 // Get user by ID (Admin only)
-router.get('/:userId', authenticate, authorize('SUPER_ADMIN', 'BUSINESS_ADMIN'), async (req: Request, res: Response) => {
+router.get('/:userId', authenticate, authorize('ROLE_SUPER_ADMIN', 'ROLE_BUSINESS_ADMIN'), async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
@@ -337,6 +337,131 @@ router.get('/stats/overview', authenticate, authorize('ROLE_SUPER_ADMIN'), async
     res.status(500).json({
       success: false,
       message: 'Failed to fetch user statistics',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/{userId}/terms-agreements:
+ *   get:
+ *     summary: 특정 사용자의 약관 동의 내역 조회 (관리자 전용)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 사용자 ID
+ *     responses:
+ *       200:
+ *         description: 약관 동의 내역 조회 성공
+ *       401:
+ *         description: 인증 필요
+ *       403:
+ *         description: 권한 없음
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ */
+router.get('/:userId/terms-agreements', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+      return;
+    }
+
+    // Get all active terms
+    const allTerms = await prisma.terms.findMany({
+      where: { isActive: true },
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        version: true,
+        isRequired: true,
+      },
+      orderBy: [
+        { isRequired: 'desc' },
+        { type: 'asc' },
+      ],
+    });
+
+    // Get user's terms agreements
+    const userAgreements = await prisma.userTermsAgreement.findMany({
+      where: { userId },
+      include: {
+        terms: {
+          select: {
+            id: true,
+            type: true,
+            title: true,
+            version: true,
+            isRequired: true,
+          },
+        },
+      },
+      orderBy: {
+        agreedAt: 'desc',
+      },
+    });
+
+    // Create agreement map
+    const agreementMap = new Map(
+      userAgreements.map(agreement => [agreement.termsId, agreement])
+    );
+
+    // Combine all terms with agreement status
+    const termsWithStatus = allTerms.map(term => {
+      const agreement = agreementMap.get(term.id);
+      return {
+        ...term,
+        agreed: !!agreement,
+        agreedAt: agreement?.agreedAt || null,
+        ipAddress: agreement?.ipAddress || null,
+        userAgent: agreement?.userAgent || null,
+      };
+    });
+
+    // Calculate statistics
+    const totalTerms = allTerms.length;
+    const requiredTerms = allTerms.filter(t => t.isRequired).length;
+    const agreedTerms = userAgreements.length;
+    const agreedRequiredTerms = userAgreements.filter(a => a.terms.isRequired).length;
+
+    res.json({
+      success: true,
+      data: {
+        terms: termsWithStatus,
+        statistics: {
+          totalTerms,
+          requiredTerms,
+          agreedTerms,
+          agreedRequiredTerms,
+          completionRate: totalTerms > 0 ? Math.round((agreedTerms / totalTerms) * 100) : 0,
+          requiredCompletionRate: requiredTerms > 0 ? Math.round((agreedRequiredTerms / requiredTerms) * 100) : 0,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error('Get user terms agreements error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch user terms agreements',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }
@@ -730,6 +855,85 @@ router.delete('/me/background-images/:id', authenticate, async (req: Request, re
     res.status(500).json({
       success: false,
       message: 'Failed to delete background image',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
+
+/**
+ * @swagger
+ * /api/users/me/marketing-agreement:
+ *   patch:
+ *     summary: 마케팅 정보 수신 동의 업데이트
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - marketingAgreed
+ *             properties:
+ *               marketingAgreed:
+ *                 type: boolean
+ *                 example: true
+ *     responses:
+ *       200:
+ *         description: 마케팅 동의 업데이트 성공
+ *       401:
+ *         description: 인증 필요
+ */
+router.patch('/me/marketing-agreement', authenticate, async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).user?.userId;
+    const { marketingAgreed } = req.body;
+
+    if (!userId) {
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+      return;
+    }
+
+    if (typeof marketingAgreed !== 'boolean') {
+      res.status(400).json({
+        success: false,
+        message: 'marketingAgreed must be a boolean value',
+      });
+      return;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        marketingAgreed,
+        marketingAgreedAt: marketingAgreed ? new Date() : null,
+        marketingAgreedMethod: marketingAgreed ? 'EMAIL' : null,
+      },
+      select: {
+        id: true,
+        email: true,
+        marketingAgreed: true,
+        marketingAgreedAt: true,
+      },
+    });
+
+    logger.info(`✅ Marketing agreement updated for user: ${userId}`);
+
+    res.json({
+      success: true,
+      message: 'Marketing agreement updated successfully',
+      data: updatedUser,
+    });
+  } catch (error) {
+    logger.error('Update marketing agreement error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update marketing agreement',
       error: error instanceof Error ? error.message : 'Unknown error',
     });
   }

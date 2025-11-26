@@ -23,8 +23,11 @@ import {
   Users as UsersIcon,
   Lock,
   Edit2,
+  FileText,
+  Clock,
+  Info,
 } from 'lucide-react';
-import { usersApi as adminUsersApi, AdminUser, AdminUserDetail, GetUsersParams } from '@/lib/api/admin/users';
+import { usersApi as adminUsersApi, AdminUser, AdminUserDetail, GetUsersParams, TermsAgreement, TermsAgreementStatistics } from '@/lib/api/admin/users';
 import { usersVerificationApi } from '@/lib/api/admin/users-verification';
 import { useToast } from '@/contexts/ToastContext';
 import { useConfirm } from '@/contexts/ConfirmContext';
@@ -81,6 +84,11 @@ export default function UsersManagementPage() {
     cityCode: '',
     district: '',
   });
+
+  // Terms Agreements
+  const [termsAgreements, setTermsAgreements] = useState<TermsAgreement[]>([]);
+  const [termsStatistics, setTermsStatistics] = useState<TermsAgreementStatistics | null>(null);
+  const [loadingTerms, setLoadingTerms] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -165,8 +173,20 @@ export default function UsersManagementPage() {
     setShowUserModal(true);
     setIsEditingRoles(false); // Reset editing state
     try {
-      const response = await adminUsersApi.getUserById(userId);
-      setSelectedUser(response.data);
+      const [userResponse, termsResponse] = await Promise.all([
+        adminUsersApi.getUserById(userId),
+        adminUsersApi.getUserTermsAgreements(userId).catch(err => {
+          console.error('Failed to fetch terms agreements:', err);
+          return null;
+        }),
+      ]);
+
+      setSelectedUser(userResponse.data);
+
+      if (termsResponse) {
+        setTermsAgreements(termsResponse.data.terms);
+        setTermsStatistics(termsResponse.data.statistics);
+      }
     } catch (error) {
       console.error('Failed to fetch user detail:', error);
       setShowUserModal(false);
@@ -851,6 +871,85 @@ export default function UsersManagementPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Terms Agreements */}
+                {termsAgreements.length > 0 && (
+                  <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-moa-primary" />
+                      약관 동의 현황
+                    </h3>
+
+                    {/* Terms List - Clean Table Style */}
+                    <div className="overflow-hidden border border-gray-200 rounded-xl">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">약관명</th>
+                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 w-24">구분</th>
+                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 w-32">동의일시</th>
+                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-700 w-24">상태</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {termsAgreements.map((term) => (
+                            <tr key={term.id} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-gray-900">{term.title}</span>
+                                  <span className="text-xs text-gray-400">v{term.version}</span>
+                                </div>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold ${
+                                  term.isRequired
+                                    ? 'bg-red-50 text-red-700'
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}>
+                                  {term.isRequired ? '필수' : '선택'}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                {term.agreed && term.agreedAt ? (
+                                  <span className="text-xs text-gray-600">
+                                    {new Date(term.agreedAt).toLocaleDateString('ko-KR', {
+                                      year: 'numeric',
+                                      month: '2-digit',
+                                      day: '2-digit',
+                                    })}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-gray-400">-</span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                {term.agreed ? (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                    <span className="text-xs font-semibold text-green-700">동의</span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <X className="w-4 h-4 text-gray-400" />
+                                    <span className="text-xs font-semibold text-gray-500">미동의</span>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Warning for missing required terms */}
+                    {termsStatistics && termsStatistics.requiredCompletionRate < 100 && (
+                      <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-orange-600 flex-shrink-0" />
+                        <p className="text-xs text-orange-700">일부 필수 약관에 동의하지 않았습니다.</p>
+                      </div>
+                    )}
                   </div>
                 )}
 

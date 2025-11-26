@@ -388,18 +388,28 @@ async function seedMenu() {
         },
         {
           categoryId: systemManagementCategory.id,
+          name: '약관 관리',
+          nameEn: 'Terms Management',
+          path: '/admin/terms-management',
+          icon: 'FileText',
+          order: 2,
+          isActive: true,
+          requiredRoles: ['ROLE_SUPER_ADMIN'],
+        },
+        {
+          categoryId: systemManagementCategory.id,
           name: '관리자 권한',
           nameEn: 'Admin Roles',
           path: '/admin/roles',
           icon: 'Shield',
-          order: 2,
+          order: 3,
           isActive: true,
           requiredRoles: ['ROLE_SUPER_ADMIN'],
         },
       ],
     });
 
-    console.log('✅ Created: 시스템 관리 category with 3 items');
+    console.log('✅ Created: 시스템 관리 category with 4 items');
 
     // Verify data
     const categoriesCount = await prisma.menuCategory.count();
@@ -415,7 +425,7 @@ async function seedMenu() {
     console.log('   4. 신뢰 시스템 (4 items)');
     console.log('   5. 콘텐츠 관리 (4 items)');
     console.log('   6. 고객 지원 (3 items)');
-    console.log('   7. 시스템 관리 (3 items)');
+    console.log('   7. 시스템 관리 (4 items)');
     console.log('\n✨ Menu seeding completed successfully!\n');
   } catch (error) {
     console.error('❌ Error seeding menu data:', error);

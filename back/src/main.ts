@@ -36,6 +36,7 @@ import filesRoutes from './routes/files';
 import boardRoutes from './routes/board';
 import regionsRoutes from './routes/regions';
 import reportsRoutes from './routes/reports';
+import termsRoutes from './routes/terms';
 
 // Admin routes
 import adminCommonCodesRoutes from './routes/admin/common-codes';
@@ -52,6 +53,7 @@ import adminUsersRoutes from './routes/admin/users';
 import adminBadgesRoutes from './routes/admin/badges';
 import adminGatheringsRoutes from './routes/admin/gatherings';
 import adminBoardsRoutes from './routes/admin/boards';
+import adminTermsRoutes from './routes/admin/terms';
 
 // ===========================================
 // 환경별 설정 파일 자동 로드
@@ -257,6 +259,7 @@ app.use('/api/files', filesRoutes);
 app.use('/api/board', boardRoutes);
 app.use('/api/regions', regionsRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/terms', termsRoutes);
 
 // Static file serving for uploaded files
 const uploadDir = process.env.UPLOAD_DIR || '/Users/philip/project/moa_file';
@@ -280,6 +283,7 @@ app.use('/api/admin/users', adminUsersRoutes);
 app.use('/api/admin/badges', adminBadgesRoutes);
 app.use('/api/admin/gatherings', adminGatheringsRoutes);
 app.use('/api/admin/boards', adminBoardsRoutes);
+app.use('/api/admin/terms', adminTermsRoutes);
 
 // 404 Not Found Handler
 app.use(notFoundHandler);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
 import { categoriesApi, Category } from '@/lib/api/categories';
 import { commonCodesApi, Region, CommonCode } from '@/lib/api/common-codes';
+import { termsApi, Terms } from '@/lib/api/terms';
 import { useAuthStore, UserRole } from '@/store/authStore';
 import {
   ArrowRight,
@@ -22,13 +23,44 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  FileText,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 export default function SignUpPage() {
   const router = useRouter();
   const { login } = useAuthStore();
   const [step, setStep] = useState(1);
-  const totalSteps = 8;
+  const totalSteps = 9;
+
+  // 브라우저 뒤로가기 방지 및 단계 이동 처리
+  useEffect(() => {
+    // 현재 URL에 step 정보 추가
+    const currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('step', step.toString());
+    window.history.replaceState({ step }, '', currentUrl);
+
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.step) {
+        // 저장된 step으로 이동
+        setStep(event.state.step);
+      } else if (step > 1) {
+        // step 1이 아니면 이전 단계로
+        event.preventDefault();
+        setStep((prev) => Math.max(1, prev - 1));
+      } else {
+        // step 1이면 로그인 페이지로
+        router.push('/login');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [step, router]);
 
   // Form data
   const [email, setEmail] = useState('');
@@ -47,29 +79,82 @@ export default function SignUpPage() {
   const [regions, setRegions] = useState<Region[]>([]);
   const [districts, setDistricts] = useState<Region[]>([]);
   const [genders, setGenders] = useState<CommonCode[]>([]);
+  const [terms, setTerms] = useState<Terms[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Terms agreement
+  const [agreedTerms, setAgreedTerms] = useState<Record<string, boolean>>({});
+  const [allAgreed, setAllAgreed] = useState(false);
+  const [expandedTerms, setExpandedTerms] = useState<Record<string, boolean>>({});
+  const [marketingAgreed, setMarketingAgreed] = useState(false);
 
   // Nickname validation
   const [nicknameChecking, setNicknameChecking] = useState(false);
   const [nicknameAvailable, setNicknameAvailable] = useState<boolean | null>(null);
   const [nicknameMessage, setNicknameMessage] = useState('');
 
-  // Load categories, regions, and genders on mount
+  // Load categories, regions, genders, and terms on mount
   useEffect(() => {
     const loadData = async () => {
       try {
         setDataLoading(true);
-        const [categoriesData, regionsData, genderData] = await Promise.all([
+        const [categoriesData, regionsData, genderData, termsData] = await Promise.all([
           categoriesApi.getCategories(),
           commonCodesApi.getRegions(),
           commonCodesApi.getCommonCodes('GENDER'),
+          termsApi.getAllTerms(),
         ]);
         setCategories(categoriesData);
         setRegions(regionsData);
         setGenders(genderData);
+        setTerms(termsData);
+
+        // 저장된 step 복원 (약관 상세 페이지에서 돌아온 경우)
+        const savedStep = sessionStorage.getItem('signup_current_step');
+        if (savedStep) {
+          const stepNum = parseInt(savedStep);
+          setStep(stepNum);
+          // step 복원 후 sessionStorage에서 제거
+          sessionStorage.removeItem('signup_current_step');
+          // 히스토리 업데이트
+          window.history.replaceState({ step: stepNum }, '', `?step=${stepNum}`);
+        }
+
+        // 저장된 폼 데이터 복원
+        const savedFormData = sessionStorage.getItem('signup_form_data');
+        if (savedFormData) {
+          const formData = JSON.parse(savedFormData);
+          setEmail(formData.email || '');
+          setPassword(formData.password || '');
+          setName(formData.name || '');
+          setNickname(formData.nickname || '');
+          setGender(formData.gender || '');
+          setAge(formData.age || '');
+          setSelectedInterests(formData.selectedInterests || []);
+          setSelectedCity(formData.selectedCity || '');
+          setSelectedCityCode(formData.selectedCityCode || '');
+          setSelectedDistrict(formData.selectedDistrict || '');
+        }
+
+        // 저장된 약관 동의 상태 복원
+        const savedAgreedTerms = sessionStorage.getItem('signup_agreed_terms');
+        const savedMarketingAgreed = sessionStorage.getItem('signup_marketing_agreed');
+
+        if (savedAgreedTerms) {
+          const parsedAgreedTerms = JSON.parse(savedAgreedTerms);
+          setAgreedTerms(parsedAgreedTerms);
+
+          // 모든 약관에 동의했는지 확인
+          const allChecked = termsData.every((t) => parsedAgreedTerms[t.id]);
+          setAllAgreed(allChecked);
+        }
+
+        if (savedMarketingAgreed) {
+          setMarketingAgreed(JSON.parse(savedMarketingAgreed));
+        }
       } catch (error) {
         console.error('Failed to load data:', error);
         setError('데이터를 불러오는데 실패했습니다.');
@@ -165,9 +250,20 @@ export default function SignUpPage() {
       setError('지역을 선택해주세요');
       return;
     }
+    if (step === 9) {
+      const requiredTerms = terms.filter((t) => t.isRequired);
+      const allRequiredAgreed = requiredTerms.every((t) => agreedTerms[t.id]);
+      if (!allRequiredAgreed) {
+        setError('필수 약관에 모두 동의해주세요');
+        return;
+      }
+    }
 
     if (step < totalSteps) {
-      setStep(step + 1);
+      const nextStep = step + 1;
+      setStep(nextStep);
+      // 히스토리에 다음 단계 추가
+      window.history.pushState({ step: nextStep }, '', `?step=${nextStep}`);
     } else {
       handleSubmit();
     }
@@ -175,8 +271,12 @@ export default function SignUpPage() {
 
   const handleBack = () => {
     if (step > 1) {
-      setStep(step - 1);
+      // 브라우저 뒤로가기 사용
+      window.history.back();
       setError('');
+    } else {
+      // step 1이면 로그인 페이지로
+      router.push('/login');
     }
   };
 
@@ -188,11 +288,60 @@ export default function SignUpPage() {
     }
   };
 
+  const handleAllAgree = (checked: boolean) => {
+    setAllAgreed(checked);
+    const newAgreedTerms: Record<string, boolean> = {};
+    const newExpandedTerms: Record<string, boolean> = {};
+
+    terms.forEach((term) => {
+      newAgreedTerms[term.id] = checked;
+      // 전체 동의 클릭 시 모든 약관 펼치기
+      if (checked) {
+        newExpandedTerms[term.id] = true;
+      }
+    });
+
+    setAgreedTerms(newAgreedTerms);
+    if (checked) {
+      setExpandedTerms(newExpandedTerms);
+    }
+
+    // 마케팅 약관 동의 여부 업데이트
+    const marketingTerm = terms.find((t) => t.type === 'MARKETING');
+    if (marketingTerm) {
+      setMarketingAgreed(checked);
+    }
+  };
+
+  const handleTermAgree = (termId: string, checked: boolean) => {
+    const newAgreedTerms = { ...agreedTerms, [termId]: checked };
+    setAgreedTerms(newAgreedTerms);
+
+    // 마케팅 약관 동의 여부 업데이트
+    const term = terms.find((t) => t.id === termId);
+    if (term?.type === 'MARKETING') {
+      setMarketingAgreed(checked);
+    }
+
+    // 모든 약관에 동의했는지 확인
+    const allChecked = terms.every((t) => newAgreedTerms[t.id]);
+    setAllAgreed(allChecked);
+  };
+
+  const toggleTermExpand = (termId: string) => {
+    setExpandedTerms((prev) => ({ ...prev, [termId]: !prev[termId] }));
+  };
+
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
 
     try {
+      // 동의한 약관 ID 목록 생성
+      const agreedTermsIds = Object.entries(agreedTerms)
+        .filter(([_, agreed]) => agreed)
+        .map(([termId, _]) => termId);
+
       const response = await authApi.register({
         email,
         password,
@@ -203,6 +352,8 @@ export default function SignUpPage() {
         age: age ? parseInt(age) : undefined,
         location: `${selectedCity} ${selectedDistrict}`,
         interests: selectedInterests,
+        marketingAgreed,
+        agreedTermsIds, // 동의한 약관 ID 배열 추가
       });
 
       login({
@@ -210,6 +361,12 @@ export default function SignUpPage() {
         token: response.token,
         refreshToken: response.refreshToken,
       });
+
+      // 회원가입 완료 시 저장된 모든 임시 데이터 삭제
+      sessionStorage.removeItem('signup_agreed_terms');
+      sessionStorage.removeItem('signup_marketing_agreed');
+      sessionStorage.removeItem('signup_current_step');
+      sessionStorage.removeItem('signup_form_data');
 
       router.push('/profile');
     } catch (err: any) {
@@ -467,6 +624,140 @@ export default function SignUpPage() {
               {selectedInterests.length > 0 && (
                 <div className="mt-4 text-center text-sm text-moa-primary font-semibold">
                   {selectedInterests.length}개 선택됨
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 9: Terms Agreement */}
+          {step === 9 && (
+            <div className="animate-fadeIn">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-moa-primary to-moa-accent rounded-full mb-4 shadow-xl shadow-moa-primary/20">
+                  <FileText className="w-10 h-10 text-white" />
+                </div>
+                <h1 className="text-4xl font-black text-gray-900 mb-3 bg-gradient-to-r from-moa-primary to-moa-accent bg-clip-text text-transparent">
+                  거의 다 왔어요!
+                </h1>
+                <p className="text-lg text-gray-600">약관에 동의하고 모아를 시작해보세요</p>
+              </div>
+
+              {dataLoading ? (
+                <div className="flex justify-center items-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-moa-primary"></div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* All Agree - Compact & Clean */}
+                  <div className="bg-white rounded-2xl p-5 border-2 border-gray-200">
+                    <label
+                      className="flex items-center gap-3 cursor-pointer group"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAllAgree(!allAgreed);
+                      }}
+                    >
+                      <div className={`flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                        allAgreed
+                          ? 'bg-moa-primary border-moa-primary'
+                          : 'border-gray-300 group-hover:border-moa-primary'
+                      }`}>
+                        {allAgreed && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+                      </div>
+                      <span className="text-base font-bold text-gray-900 group-hover:text-moa-primary transition-colors">
+                        모두 동의합니다
+                      </span>
+                    </label>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="relative py-3">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200"></div>
+                    </div>
+                  </div>
+
+                  {/* Individual Terms - Modern Compact Style */}
+                  <div className="space-y-2 max-h-[50vh] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                    {terms.map((term) => {
+                      const isAgreed = agreedTerms[term.id] || false;
+
+                      return (
+                        <div
+                          key={term.id}
+                          className={`group rounded-2xl overflow-hidden transition-all duration-300 ${
+                            isAgreed
+                              ? 'bg-gradient-to-br from-blue-50 to-indigo-50 ring-2 ring-moa-primary/20'
+                              : 'bg-white hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="p-4">
+                            <div className="flex items-center gap-3">
+                              <div
+                                onClick={() => handleTermAgree(term.id, !isAgreed)}
+                                className="flex-shrink-0 cursor-pointer"
+                              >
+                                <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                                  isAgreed
+                                    ? 'bg-moa-primary border-moa-primary'
+                                    : 'border-gray-300 hover:border-moa-primary'
+                                }`}>
+                                  {isAgreed && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
+                                </div>
+                              </div>
+
+                              <div
+                                onClick={() => handleTermAgree(term.id, !isAgreed)}
+                                className="flex-1 cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold ${
+                                    term.isRequired
+                                      ? 'bg-red-100 text-red-700'
+                                      : 'bg-gray-100 text-gray-600'
+                                  }`}>
+                                    {term.isRequired ? '필수' : '선택'}
+                                  </span>
+                                  <span className="font-semibold text-gray-900 text-sm">
+                                    {term.title}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => {
+                                  // 약관 상세 페이지로 이동하면서 현재 상태 저장
+                                  sessionStorage.setItem('signup_agreed_terms', JSON.stringify(agreedTerms));
+                                  sessionStorage.setItem('signup_marketing_agreed', JSON.stringify(marketingAgreed));
+                                  sessionStorage.setItem('signup_current_step', '9'); // 현재 step 저장
+
+                                  // 폼 데이터 저장
+                                  const formData = {
+                                    email,
+                                    password,
+                                    name,
+                                    nickname,
+                                    gender,
+                                    age,
+                                    selectedInterests,
+                                    selectedCity,
+                                    selectedCityCode,
+                                    selectedDistrict,
+                                  };
+                                  sessionStorage.setItem('signup_form_data', JSON.stringify(formData));
+
+                                  router.push(`/signup/terms?id=${term.id}`);
+                                }}
+                                className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-moa-primary hover:bg-moa-primary/10 rounded-lg transition-all"
+                              >
+                                내용보기
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

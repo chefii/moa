@@ -180,14 +180,17 @@ model User {
   birthday  String? // 생일 (MMDD 형식, 예: "0222")
   ageRange  String? // 연령대 (예: "30~39", 카카오/네이버에서 제공)
 
-  isVerified      Boolean   @default(false) @map("is_verified")
-  isPhoneVerified Boolean   @default(false) @map("is_phone_verified")
-  emailVerifiedAt DateTime? @map("email_verified_at")
-  phoneVerifiedAt DateTime? @map("phone_verified_at")
-  isDeleted       Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
-  deletedAt       DateTime? @map("deleted_at") // 삭제 일시
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  isVerified            Boolean   @default(false) @map("is_verified")
+  isPhoneVerified       Boolean   @default(false) @map("is_phone_verified")
+  emailVerifiedAt       DateTime? @map("email_verified_at")
+  phoneVerifiedAt       DateTime? @map("phone_verified_at")
+  marketingAgreed       Boolean   @default(false) @map("marketing_agreed") // 마케팅 정보 수신 동의
+  marketingAgreedAt     DateTime? @map("marketing_agreed_at") // 마케팅 동의 일시
+  marketingAgreedMethod String?   @map("marketing_agreed_method") // 동의 방법 (EMAIL, SMS, PUSH)
+  isDeleted             Boolean   @default(false) @map("is_deleted") // 소프트 삭제 여부
+  deletedAt             DateTime? @map("deleted_at") // 삭제 일시
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   // Relations
   profileImage      File?                  @relation("ProfileImage", fields: [profileImageId], references: [id], onDelete: SetNull)
@@ -231,6 +234,9 @@ model User {
   boardComments     BoardComment[]     @relation("BoardComments")
   boardPostLikes    BoardPostLike[]    @relation("BoardPostLikes")
   boardCommentLikes BoardCommentLike[] @relation("BoardCommentLikes")
+
+  // Terms Agreement Relations
+  termsAgreements UserTermsAgreement[]
 
   @@map("users")
 }
@@ -964,7 +970,30 @@ model Terms {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  // Relations
+  userTermsAgreements UserTermsAgreement[]
+
   @@map("terms")
+}
+
+// 사용자 약관 동의 내역
+model UserTermsAgreement {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  termsId   String   @map("terms_id")
+  agreed    Boolean  @default(true) // 동의 여부
+  agreedAt  DateTime @default(now()) @map("agreed_at") // 동의 시간
+  ipAddress String?  @map("ip_address") // 동의 시 IP 주소 (법적 증빙)
+  userAgent String?  @map("user_agent") @db.Text // 동의 시 User Agent
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  terms Terms @relation(fields: [termsId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, termsId]) // 같은 사용자가 같은 약관에 중복 동의 방지
+  @@index([userId])
+  @@index([termsId])
+  @@map("user_terms_agreements")
 }
 
 // Admin Menu Management

@@ -125,6 +125,35 @@ export interface GetRoleStatisticsResponse {
   data: RoleStatistics;
 }
 
+export interface TermsAgreement {
+  id: string;
+  type: string;
+  title: string;
+  version: string;
+  isRequired: boolean;
+  agreed: boolean;
+  agreedAt: string | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+}
+
+export interface TermsAgreementStatistics {
+  totalTerms: number;
+  requiredTerms: number;
+  agreedTerms: number;
+  agreedRequiredTerms: number;
+  completionRate: number;
+  requiredCompletionRate: number;
+}
+
+export interface GetUserTermsAgreementsResponse {
+  success: boolean;
+  data: {
+    terms: TermsAgreement[];
+    statistics: TermsAgreementStatistics;
+  };
+}
+
 export const usersApi = {
   // Get all users with filtering
   getUsers: async (params?: GetUsersParams): Promise<GetUsersResponse> => {
@@ -159,6 +188,12 @@ export const usersApi = {
   // Reset user password to 1234
   resetPassword: async (id: string): Promise<{ success: boolean; message: string }> => {
     const response = await apiClient.post(`/api/admin/users/${id}/reset-password`);
+    return response.data;
+  },
+
+  // Get user terms agreements
+  getUserTermsAgreements: async (id: string): Promise<GetUserTermsAgreementsResponse> => {
+    const response = await apiClient.get(`/api/users/${id}/terms-agreements`);
     return response.data;
   },
 };

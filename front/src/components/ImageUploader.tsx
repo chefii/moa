@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, ChangeEvent, useCallback } from 'react';
+import { useState, useRef, ChangeEvent, useCallback, useEffect } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2, Check } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import { Area } from 'react-easy-crop';
@@ -51,6 +51,15 @@ export default function ImageUploader({
     video: 'aspect-video',
     wide: 'aspect-[21/9]',
   };
+
+  // Update preview when value changes (for edit mode)
+  useEffect(() => {
+    if (value && value !== preview) {
+      setPreview(value);
+    } else if (!value && preview) {
+      setPreview(null);
+    }
+  }, [value]);
 
   const onCropComplete = useCallback((croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
